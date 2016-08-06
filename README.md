@@ -15,3 +15,7 @@ Will print:
 [word('газета'), quote('«'), word('Коммерсантъ'), quote('»')]
 """
 ```
+
+# Internals
+
+`yargy` parses russian text into AST, adds morphology information to `word` tags, then compares AST to given rules.
