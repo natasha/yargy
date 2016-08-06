@@ -53,17 +53,25 @@ class FactParser(object):
                 yield stack
                 stack = []
                 rule_index = 0
-                continue
-            if token.head == rule_type:
-                stack.append(token)
-                rule_index += 1
-                continue
+            elif token.head == rule_type:
+                labels = rule_options.get("labels", [])
+                if all(self.check_labels(token, labels, stack)):
+                    stack.append(token)
+                    rule_index += 1
+                else:
+                    stack = []
+                    rule_index = 0
             else:
                 stack = []
                 rule_index = 0
         else:
             if stack and rule_index == len(rules) - 1:
                 yield stack
+
+    def check_labels(self, token, labels, stack):
+        for label in labels:
+            for name, value in label.items():
+                yield LABELS_LOOKUP_MAP[name](token, value, stack)
 
 TEXT_GRAMMAR = Grammar(r"""
     start: (word | float | int | dot | comma | quote)?* ;
@@ -78,3 +86,10 @@ TEXT_GRAMMAR = Grammar(r"""
 TEXT_CLEANING_REGEX = re.compile(r'[^\w\d\s\-\n\.\"\'«»`,]', flags=re.M | re.U | re.I)
 TEXT_TRANSFORMER = TokenTransformer()
 
+
+def gram_label(token, value, stack):
+    return value in token.grammemes
+
+LABELS_LOOKUP_MAP = {
+    "gram": gram_label,
+}
