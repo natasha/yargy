@@ -71,3 +71,6 @@ class FactParser(object):
             else:
                 stack = []
                 rule_index = 0
+        else:
+            if stack and rule_index == len(rules) - 1:
+                yield stack
