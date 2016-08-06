@@ -4,6 +4,16 @@ import re
 from plyplus import Grammar, STransformer
 from pymorphy2 import MorphAnalyzer
 
+TEXT_GRAMMAR = Grammar(r"""
+    start: (word | float | int | dot | comma | quote)?* ;
+    word: '[\w]+' | '[\w+\-]*[\w]+' ;
+    int: '[+-]?[\d]+' ; 
+    float: '[+-]?[\d]+[\.][\d]+' ; 
+    dot: '\.' ; 
+    comma: ',' ; 
+    quote: '[\"\'«»`]' ; 
+    SPACES: '[ \n\r\t]+' (%ignore) ;
+""")
 
 class TokenTransformer(STransformer):
 
@@ -33,17 +43,7 @@ class FactParser(object):
 
     def __init__(self, rules):
         self.rules = rules
-        self.text_grammar = Grammar(r"""
-            start: (word | float | int | dot | comma | quote)?* ;
-
-            word: '[\w]+' | '[\w+\-]*[\w]+' ;
-            int: '[+-]?[\d]+' ; 
-            float: '[+-]?[\d]+[\.][\d]+' ; 
-            dot: '\.' ; 
-            comma: ',' ; 
-            quote: '[\"\'«»`]' ; 
-            SPACES: '[ \n\r\t]+' (%ignore) ;
-        """)
+        self.text_grammar = TEXT_GRAMMAR
         self.text_cleaning_regex = re.compile(r'[^\w\d\s\-\n\.\"\'«»`,]', flags=re.M | re.U | re.I)
         self.text_transformer = TokenTransformer()
 
