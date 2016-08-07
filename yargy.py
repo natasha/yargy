@@ -49,21 +49,31 @@ class FactParser(object):
         while len(tokens.tail):
             token = tokens.tail.pop(0)
             rule_type, rule_options = rules[rule_index]
+            rule_labels = rule_options.get("labels", [])
+            rule_repeat = rule_options.get("repeat", [])
             if rule_type == "$":
                 yield stack
                 stack = []
                 rule_index = 0
             elif token.head == rule_type:
-                labels = rule_options.get("labels", [])
-                if all(self.check_labels(token, labels, stack)):
+                if all(self.check_labels(token, rule_labels, stack)):
                     stack.append(token)
+                    if not rule_repeat:
+                        rule_index += 1
+                else:
+                    if rule_repeat:
+                        tokens.tail.insert(0, token)
+                        rule_index += 1
+                    else:
+                        stack = []
+                        rule_index = 0
+            else:
+                if rule_repeat:
+                    tokens.tail.insert(0, token)
                     rule_index += 1
                 else:
                     stack = []
                     rule_index = 0
-            else:
-                stack = []
-                rule_index = 0
         else:
             if stack and rule_index == len(rules) - 1:
                 yield stack
