@@ -1,6 +1,7 @@
 # coding: utf-8
 import re
 
+from collections import deque
 from plyplus import Grammar, STransformer
 from pymorphy2 import MorphAnalyzer
 
@@ -41,13 +42,13 @@ class FactParser(object):
         text = self.text_cleaning_regex.sub(" ", text)
         ast = self.text_grammar.parse(text)
         tokens = self.text_transformer.transform(ast)
-        return self.extract(tokens, self.rules)
+        return self.extract(deque(tokens.tail), self.rules)
 
     def extract(self, tokens, rules):
         stack = []
         rule_index = 0
-        while len(tokens.tail):
-            token = tokens.tail.pop(0)
+        while len(tokens):
+            token = tokens.popleft()
             rule_type, rule_options = rules[rule_index]
             rule_labels = rule_options.get("labels", [])
             rule_repeat = rule_options.get("repeat", [])
@@ -62,14 +63,14 @@ class FactParser(object):
                         rule_index += 1
                 else:
                     if rule_repeat:
-                        tokens.tail.insert(0, token)
+                        tokens.appendleft(token)
                         rule_index += 1
                     else:
                         stack = []
                         rule_index = 0
             else:
                 if rule_repeat:
-                    tokens.tail.insert(0, token)
+                    tokens.appendleft(token)
                     rule_index += 1
                 else:
                     stack = []
