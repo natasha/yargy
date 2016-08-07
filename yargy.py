@@ -85,7 +85,7 @@ class FactParser(object):
 
 TEXT_GRAMMAR = Grammar(r"""
     start: (word | float | int | dot | comma | quote)?* ;
-    word: '[\w]+' | '[\w+\-]*[\w]+' ;
+    word: '[\w]+' | '[\w\-]*[\w]+' | '[\w]*[\'][\w]+' ;
     int: '[+-]?[\d]+' ; 
     float: '[+-]?[\d]+[\.][\d]+' ; 
     dot: '\.' ; 
