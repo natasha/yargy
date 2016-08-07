@@ -19,9 +19,12 @@ class FactParser(object):
         return self.extract(deque(tokens.tail), self.rules)
 
     def extract(self, tokens, rules):
+        """
+        Actually, only God knows what going there
+        """
         stack = []
         rule_index = 0
-        while len(tokens):
+        while tokens:
             token = tokens.popleft()
             rule_type, rule_options = rules[rule_index]
             rule_labels = rule_options.get("labels", [])
