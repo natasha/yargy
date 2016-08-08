@@ -31,8 +31,8 @@ class FactParserTestCase(unittest.TestCase):
     def test_gram_label(self):
         text = "маленький принц красиво пел"
         parser = yargy.FactParser((
-            ("word", {"labels": [{"gram": "ADJS"}]}),
-            ("word", {"labels": [{"gram": "VERB"}]}),
+            ("word", {"labels": [("gram", "ADJS")]}),
+            ("word", {"labels": [("gram", "VERB")]}),
             ("$", {}))
         )
         results = parser.parse(text)
@@ -41,8 +41,8 @@ class FactParserTestCase(unittest.TestCase):
     def test_optional_rules(self):
         text = "великий новгород, москва."
         parser = yargy.FactParser((
-            ("word", {"labels": [{"gram": "ADJF"}], "optional": True}),
-            ("word", {"labels": [{"gram": "NOUN", "gram": "Geox"}]}),
+            ("word", {"labels": [("gram", "ADJF")], "optional": True}),
+            ("word", {"labels": [("gram", "NOUN"), ("gram", "Geox")]}),
             ("$", {}))
         )
         results = parser.parse(text)
@@ -50,9 +50,9 @@ class FactParserTestCase(unittest.TestCase):
         
         text = "иван иванович иванов, анна смирнова"
         parser = yargy.FactParser((
-            ("word", {"labels": [{"gram": "NOUN"}, {"gram": "Name"}]}),
-            ("word", {"labels": [{"gram": "NOUN"}, {"gram": "Patr"}], "optional": True}),
-            ("word", {"labels": [{"gram": "NOUN"}, {"gram": "Surn"}]}),
+            ("word", {"labels": [("gram", "NOUN"), ("gram", "Name")]}),
+            ("word", {"labels": [("gram", "NOUN"), ("gram", "Patr")], "optional": True}),
+            ("word", {"labels": [("gram", "NOUN"), ("gram", "Surn")]}),
             ("$", {}))
         )
         results = parser.parse(text)

@@ -58,6 +58,5 @@ class FactParser(object):
                 yield stack
 
     def check_labels(self, token, labels, stack):
-        for label in labels:
-            for name, value in label.items():
-                yield LABELS_LOOKUP_MAP[name](token, value, stack)
+        for (name, value) in labels:
+            yield LABELS_LOOKUP_MAP[name](token, value, stack)
