@@ -12,11 +12,9 @@ class TokenTransformer(STransformer):
 
     def word(self, node):
         node.value = node.tail[0]
-        node.pos = set()
         node.grammemes = set()
         node.forms = set()
         for form in self.morph.parse(node.value):
-            node.pos = node.pos | {form.tag.POS}
             node.grammemes = node.grammemes | set(form.tag.grammemes)
             node.forms = node.forms | {form.normal_form}
         return node
