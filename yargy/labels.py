@@ -1,4 +1,4 @@
-GENDERS = ("masc", "femn", "neut", "Ms-f")
+GENDERS = ("masc", "femn", "neut", "Ms-f", "GNdr")
 
 def gram_label(token, value, stack):
     return value in token.grammemes
@@ -9,13 +9,15 @@ def gram_not_label(token, value, stack):
 def gender_match_label(token, index, stack, genders=GENDERS):
     results = ((g in t.grammemes for g in genders) for t in (stack[index], token))
 
-    *case_token_genders, case_token_msf = next(results)
-    *candidate_token_genders, candidate_token_msf = next(results)
+    *case_token_genders, case_token_msf, case_token_gndr = next(results)
+    *candidate_token_genders, candidate_token_msf, candidate_token_gndr = next(results)
 
     if not candidate_token_genders == case_token_genders:
         if case_token_msf:
             if any(candidate_token_genders[:2]):
                 return True
+        elif case_token_gndr or candidate_token_gndr:
+            return True
     else:
         return True
     return False
