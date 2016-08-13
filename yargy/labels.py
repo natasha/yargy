@@ -21,7 +21,7 @@ def gender_match_label(token, index, stack, genders=GENDERS):
                 return True
         elif case_token_gndr or candidate_token_gndr:
             return True
-    elif all(("plur" in stack[index].grammemes, "plur" in token.grammemes)):
+    elif all(("plur" in stack[index][3]["grammemes"], "plur" in token[3]["grammemes"])):
         return True
     else:
         return True
