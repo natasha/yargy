@@ -39,25 +39,19 @@ class FactParser(object):
                     yield stack.flatten()
                 stack = Stack()
                 rule_index = 0
+                continue
             elif token[0] == rule_type:
                 if all(self.check_labels(token, rule_labels, stack)):
                     stack.append((rule_index, token))
                     if not rule_repeat:
                         rule_index += 1
-                else:
-                    if rule_repeat and stack.have_matches_by_rule_index(rule_index):
-                        tokens.appendleft(token)
-                        rule_index += 1
-                    else:
-                        stack = Stack()
-                        rule_index = 0
+                    continue
+            if rule_repeat and stack.have_matches_by_rule_index(rule_index):
+                tokens.appendleft(token)
+                rule_index += 1
             else:
-                if rule_repeat and stack.have_matches_by_rule_index(rule_index):
-                    tokens.appendleft(token)
-                    rule_index += 1
-                else:
-                    stack = Stack()
-                    rule_index = 0
+                stack = Stack()
+                rule_index = 0
         else:
             if stack and rule_index == len(rules) - 1:
                 yield stack.flatten()
