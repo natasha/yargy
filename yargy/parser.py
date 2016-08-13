@@ -5,7 +5,7 @@ from yargy.labels import LABELS_LOOKUP_MAP
 
 class Stack(list):
 
-    def has_matches_by_rule_index(self, rule_index):
+    def have_matches_by_rule_index(self, rule_index):
         return any((rule == rule_index for (rule, _) in self))
 
     def flatten(self):
@@ -45,14 +45,14 @@ class FactParser(object):
                     if not rule_repeat:
                         rule_index += 1
                 else:
-                    if rule_repeat and stack.has_matches_by_rule_index(rule_index):
+                    if rule_repeat and stack.have_matches_by_rule_index(rule_index):
                         tokens.appendleft(token)
                         rule_index += 1
                     else:
                         stack = Stack()
                         rule_index = 0
             else:
-                if rule_repeat and stack.has_matches_by_rule_index(rule_index):
+                if rule_repeat and stack.have_matches_by_rule_index(rule_index):
                     tokens.appendleft(token)
                     rule_index += 1
                 else:
