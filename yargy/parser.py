@@ -25,6 +25,7 @@ class FactParser(object):
         """
         Actually, only God knows what going there
         Stack = [(rule_index, match), ...]
+        Token = (type, value, (position_start, position_end), attributes)
         """
         stack = Stack()
         rule_index = 0
@@ -41,7 +42,7 @@ class FactParser(object):
                 rule_index = 0
                 continue
             elif token[0] == rule_type:
-                if all(self.check_labels(token, rule_labels, stack)):
+                if all(self.check_labels(token, rule_labels, stack.flatten())):
                     stack.append((rule_index, token))
                     if not rule_repeat:
                         rule_index += 1

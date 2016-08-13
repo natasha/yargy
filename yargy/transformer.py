@@ -25,15 +25,15 @@ class TokenTransformer(object):
         self.morph = MorphAnalyzer()
 
     @functools.lru_cache(maxsize=50000)
-    def get_word_options(self, word):
-        options = {
+    def get_word_attributes(self, word):
+        attributes = {
             "grammemes": set(),
             "forms": set(),
         }
         for form in self.morph.parse(word):
-            options["grammemes"] = options["grammemes"] | set(form.tag.grammemes)
-            options["forms"] = options["forms"] | {form.normal_form}
-        return options
+            attributes["grammemes"] = attributes["grammemes"] | set(form.tag.grammemes)
+            attributes["forms"] = attributes["forms"] | {form.normal_form}
+        return attributes
 
     def transform(self, text):
         for match in re.finditer(token_regex, text):
@@ -41,7 +41,7 @@ class TokenTransformer(object):
             value = match.group(0)
             position = match.span()
             if group == "russian":
-                token = ("word", value, position, self.get_word_options(value))
+                token = ("word", value, position, self.get_word_attributes(value))
             elif group == "latin":
                 token = ("word", value, position, {"grammemes": set(), "forms": set()})
             elif group == "quote":
