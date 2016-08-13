@@ -28,7 +28,7 @@ def gender_match_label(token, index, stack, genders=GENDERS):
     return False
 
 def dictionary_label(token, values, stack):
-    return any((n in values) for n in token.forms)
+    return any((n in values) for n in token[3]["forms"])
 
 LABELS_LOOKUP_MAP = {
     "gram": gram_label,
