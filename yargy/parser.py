@@ -1,22 +1,16 @@
 from collections import deque
-from yargy.transformer import (TEXT_GRAMMAR,
-                               TEXT_CLEANING_REGEX,
-                               TEXT_TRANSFORMER)
+from yargy.transformer import TEXT_TRANSFORMER
 from yargy.labels import LABELS_LOOKUP_MAP
 
 class FactParser(object):
 
     def __init__(self, rules):
         self.rules = rules
-        self.text_grammar = TEXT_GRAMMAR
-        self.text_cleaning_regex = TEXT_CLEANING_REGEX
         self.text_transformer = TEXT_TRANSFORMER
 
     def parse(self, text):
-        text = self.text_cleaning_regex.sub(" ", text)
-        ast = self.text_grammar.parse(text)
-        tokens = self.text_transformer.transform(ast)
-        return self.extract(deque(tokens.tail), self.rules)
+        tokens = self.text_transformer.transform(text)
+        return self.extract(deque(tokens), self.rules)
 
     def extract(self, tokens, rules):
         """
@@ -31,10 +25,11 @@ class FactParser(object):
             rule_repeat = rule_options.get("repeat", False)
             rule_optional = rule_options.get("optional", False)
             if rule_type == "$":
-                yield stack
+                if stack:
+                    yield stack
                 stack = []
                 rule_index = 0
-            elif token.head == rule_type:
+            elif token[0] == rule_type:
                 if all(self.check_labels(token, rule_labels, stack)):
                     stack.append(token)
                     if (not rule_repeat) or rule_optional:

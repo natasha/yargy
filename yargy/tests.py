@@ -14,7 +14,7 @@ class FactParserTestCase(unittest.TestCase):
             ("$", {}))
         )
         results = parser.parse(text)
-        self.assertEqual(sum([[w.tail[0] for w in n] for n in results], []), ['газета', '«', 'Коммерсантъ', '»'])
+        self.assertEqual(sum([[w[1] for w in n] for n in results], []), ['газета', '«', 'Коммерсантъ', '»'])
 
     def test_repeat_rules(self):
         text = "... ООО «Коммерсантъ КАРТОТЕКА» уполномочено ..."
@@ -25,7 +25,7 @@ class FactParserTestCase(unittest.TestCase):
             ("$", {}))
         )
         results = parser.parse(text)
-        self.assertEqual(sum([[w.tail[0] for w in n] for n in results], []), ['«', 'Коммерсантъ', 'КАРТОТЕКА', '»'])
+        self.assertEqual(sum([[w[1] for w in n] for n in results], []), ['«', 'Коммерсантъ', 'КАРТОТЕКА', '»'])
 
 
     def test_gram_label(self):
@@ -36,7 +36,7 @@ class FactParserTestCase(unittest.TestCase):
             ("$", {}))
         )
         results = parser.parse(text)
-        self.assertEqual(sum([[w.tail[0] for w in n] for n in results], []), ['красиво', 'пел'])
+        self.assertEqual(sum([[w[1] for w in n] for n in results], []), ['красиво', 'пел'])
 
     def test_optional_rules(self):
         text = "великий новгород, москва."
@@ -46,7 +46,7 @@ class FactParserTestCase(unittest.TestCase):
             ("$", {}))
         )
         results = parser.parse(text)
-        self.assertEqual([[w.tail[0] for w in n] for n in results], [['великий', 'новгород'], ['москва']])
+        self.assertEqual([[w[1] for w in n] for n in results], [['великий', 'новгород'], ['москва']])
         
         text = "иван иванович иванов, анна смирнова"
         parser = yargy.FactParser((
@@ -56,5 +56,5 @@ class FactParserTestCase(unittest.TestCase):
             ("$", {}))
         )
         results = parser.parse(text)
-        self.assertEqual([[w.tail[0] for w in n] for n in results], [['иван', 'иванович', 'иванов'], ['анна', 'смирнова']])
+        self.assertEqual([[w[1] for w in n] for n in results], [['иван', 'иванович', 'иванов'], ['анна', 'смирнова']])
 
