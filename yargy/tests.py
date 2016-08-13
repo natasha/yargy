@@ -38,8 +38,18 @@ class FactParserTestCase(unittest.TestCase):
         results = parser.parse(text)
         self.assertEqual(sum([[w[1] for w in n] for n in results], []), ['красиво', 'пел'])
 
+    def test_gram_not_label(self):
+        text = "Иван выпил чаю. И ушел."
+        parser = yargy.FactParser((
+            ("word", {"labels": [("gram", "Name"), ("gram-not", "Abbr")]}),
+            ("word", {"labels": [("gram", "VERB")]}),
+            ("$", {}))
+        )
+        results = parser.parse(text)
+        self.assertEqual(sum([[w[1] for w in n] for n in results], []), ['Иван', 'выпил'])
+
     def test_optional_rules(self):
-        text = "великий новгород, москва."
+        text = "великий новгород москва."
         parser = yargy.FactParser((
             ("word", {"labels": [("gram", "ADJF")], "optional": True}),
             ("word", {"labels": [("gram", "NOUN"), ("gram", "Geox")]}),
