@@ -12,7 +12,12 @@ for result in parser.parse(text):
 
 """
 Will print:
-[word('газета'), quote('«'), word('Коммерсантъ'), quote('»')]
+[
+    ('word', 'газета', (0, 6), {'grammemes': {'nomn', 'NOUN', 'sing', 'femn', 'inan'}, 'forms': {'газета'}}),
+    ('quote', '«', (7, 8), None),
+    ('word', 'Коммерсантъ', (8, 19), {'grammemes': {'Fixd', 'loct', 'anim', 'accs', 'gent', 'NOUN', 'ablt', 'plur', 'masc', 'datv', 'sing', 'nomn'}, 'forms': {'коммерсантъ'}}),
+    ('quote', '»', (19, 20), None)
+]
 """
 ```
 
@@ -41,17 +46,21 @@ for line in text.splitlines():
 
 """
 Will print:
-[word('Василий'), word('говорил')]
-[word('Василий'), word('желал')]
-[word('Василий'), word('поморщился')]
-[word('Пьер'), word('был')]
-[word('Пьер'), word('пробурлил')]
-[word('Пьер'), word('сделал')]
-[word('Элен'), word('улыбалась')]
-[word('Элен'), word('была')]
-[word('Элен'), word('перешла')]
-[word('Ипполит'), word('перенес')]
-[word('Ипполит'), word('поражал')]
+[
+    ('word', 'Василий', (292, 299), {'grammemes': {'nomn', 'Name', 'masc', 'anim', 'NOUN', 'sing'}, 'forms': {'василий'}}), 
+    ('word', 'говорил', (300, 307), {'grammemes': {'impf', 'tran', 'masc', 'indc', 'past', 'VERB', 'sing'}, 'forms': {'говорить'}})
+]
+[
+    ('word', 'Пьер', (771, 775), {'grammemes': {'nomn', 'Name', 'masc', 'anim', 'NOUN', 'sing'}, 'forms': {'пьер'}}),
+    ('word', 'был', (776, 779), {'grammemes': {'intr', 'impf', 'masc', 'indc', 'past', 'VERB', 'sing'}, 'forms': {'быть'}})
+]
+[
+    ('word', 'Элен', (40, 44), {'grammemes': {'Name', 'Fixd', 'Sgtm', 'loct', 'anim', 'accs', 'NOUN', 'gent', 'ablt', 'femn', 'plur', 'datv', 'sing', 'nomn'}, 'forms': {'элен', 'элена'}}),
+    ('word', 'сказала', (49, 56), {'grammemes': {'tran', 'indc', 'past', 'VERB', 'sing', 'perf', 'femn'}, 'forms': {'сказать'}})]
+[
+    ('word', 'Ипполит', (6, 13), {'grammemes': {'nomn', 'Name', 'masc', 'anim', 'NOUN', 'sing'}, 'forms': {'ипполит'}}),
+    ('word', 'перенес', (14, 21), {'grammemes': {'tran', 'masc', 'indc', 'past', 'VERB', 'sing', 'perf'}, 'forms': {'перенести'}})
+]
 """
 ```
 
