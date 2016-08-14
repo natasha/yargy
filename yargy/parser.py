@@ -48,7 +48,7 @@ class FactParser(object):
                         if not rule_repeat:
                             rule_index += 1
                         continue
-                if rule_repeat and stack.have_matches_by_rule_index(rule_index):
+                if (rule_repeat and stack.have_matches_by_rule_index(rule_index)) or rule_optional:
                     tokens.appendleft(token)
                     rule_index += 1
                 else:
