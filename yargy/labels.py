@@ -6,8 +6,14 @@ def get_token_features(candidate, case, grammemes):
 def gram_label(token, value, stack):
     return value in token[3]["grammemes"]
 
+def gram_in_label(token, values, stack):
+    return all(gram_label(token, value, stack) for value in values)
+
 def gram_not_label(token, value, stack):
     return not value in token[3]["grammemes"]
+
+def gram_not_in_label(token, values, stack):
+    return all(gram_not_label(token, value, stack) for value in values)
 
 def gender_match_label(token, index, stack, genders=GENDERS):
     results = get_token_features(token, stack[index], genders)
@@ -32,7 +38,9 @@ def dictionary_label(token, values, stack):
 
 LABELS_LOOKUP_MAP = {
     "gram": gram_label,
+    "gram-in": gram_in_label,
     "gram-not": gram_not_label,
+    "gram-not-in": gram_not_in_label,
     "dictionary": dictionary_label,
     "gender-match": gender_match_label,
 }
