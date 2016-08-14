@@ -1,5 +1,5 @@
 from collections import deque
-from yargy.transformer import TEXT_TRANSFORMER
+from yargy.tokenizer import Tokenizer
 from yargy.labels import LABELS_LOOKUP_MAP
 
 
@@ -13,9 +13,9 @@ class Stack(list):
 
 class FactParser(object):
 
-    def __init__(self, rules):
+    def __init__(self, rules, cache_size=50000):
         self.rules = rules
-        self.text_transformer = TEXT_TRANSFORMER
+        self.text_transformer = Tokenizer(cache_size=cache_size)
 
     def parse(self, text):
         tokens = self.text_transformer.transform(text)

@@ -19,12 +19,12 @@ complete_token_regex = r'|'.join((
 
 token_regex = re.compile(complete_token_regex, re.UNICODE | re.IGNORECASE)
 
-class TokenTransformer(object):
+class Tokenizer(object):
 
-    def __init__(self):
+    def __init__(self, cache_size):
         self.morph = MorphAnalyzer()
+        self.cache = functools.lru_cache(maxsize=cache_size)(self.get_word_attributes)
 
-    @functools.lru_cache(maxsize=50000)
     def get_word_attributes(self, word):
         attributes = {
             "grammemes": set(),
@@ -41,7 +41,7 @@ class TokenTransformer(object):
             value = match.group(0)
             position = match.span()
             if group == "russian":
-                token = ("word", value, position, self.get_word_attributes(value))
+                token = ("word", value, position, self.cache(value))
             elif group == "latin":
                 token = ("word", value, position, {"grammemes": set(), "forms": set()})
             elif group == "quote":
@@ -53,5 +53,3 @@ class TokenTransformer(object):
             else:
                 raise NotImplementedError
             yield token
-
-TEXT_TRANSFORMER = TokenTransformer()
