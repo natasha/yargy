@@ -54,7 +54,7 @@ class FactParser(object):
                 else:
                     if rule_index > 0:
                         tokens.appendleft(token)
-                        for token in stack[1:]:
+                        for token in reversed(stack):
                             tokens.appendleft(token)
                     stack = Stack()
                     rule_index = 0
