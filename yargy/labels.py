@@ -22,12 +22,17 @@ def gender_match_label(token, index, stack, genders=GENDERS):
     *candidate_token_genders, candidate_token_msf, candidate_token_gndr = next(results)
 
     if not candidate_token_genders == case_token_genders:
-        if case_token_msf:
-            if any(candidate_token_genders[:2]):
+        if case_token_msf or candidate_token_msf:
+            if any(case_token_genders[:2]) and any(candidate_token_genders[:2]):
                 return True
         elif case_token_gndr or candidate_token_gndr:
             return True
-    elif all(("plur" in stack[index][3]["grammemes"], "plur" in token[3]["grammemes"])):
+        else:
+            if case_token_genders[0] == candidate_token_genders[0] or \
+               case_token_genders[1] == candidate_token_genders[1] or \
+               case_token_genders[2] == candidate_token_genders[2]:
+               return True
+    elif "plur" in stack[index][3]["grammemes"] and "plur" in token[3]["grammemes"]:
         return True
     else:
         return True
