@@ -1,7 +1,17 @@
 GENDERS = ("masc", "femn", "neut", "Ms-f", "GNdr")
+NUMBERS = ("sing", "plur")
 
 def get_token_features(candidate, case, grammemes):
     return ((g in t[3]["grammemes"] for g in grammemes) for t in (case, candidate))
+
+def is_lower_label(token, _, stack):
+    return token[1].islower()
+
+def is_upper_label(token, _, stack):
+    return token[1].isupper()
+
+def is_capitalized_label(token, _, stack):
+    return token[1].istitle()
 
 def gram_label(token, value, stack):
     return value in token[3]["grammemes"]
@@ -46,6 +56,9 @@ LABELS_LOOKUP_MAP = {
     "gram-in": gram_in_label,
     "gram-not": gram_not_label,
     "gram-not-in": gram_not_in_label,
-    "dictionary": dictionary_label,
     "gender-match": gender_match_label,
+    "dictionary": dictionary_label,
+    "is-lower": is_lower_label,
+    "is-upper": is_upper_label,
+    "is-capitalized": is_capitalized_label,
 }
