@@ -57,9 +57,9 @@ class FactParserTestCase(unittest.TestCase):
         results = parser.parse(text)
         self.assertEqual(sum([[w[1] for w in n] for n in results], []), ['Иван', 'выпил'])
 
-        text = "Дрова были"
+        text = "Дрова были сырыми, но мальчики распилили их."
         results = parser.parse(text)
-        self.assertEqual(sum([[w[1] for w in n] for n in results], []), ['Дрова', 'были'])
+        self.assertEqual([[w[1] for w in n] for n in results], [['Дрова', 'были'], ['мальчики', 'распилили']])
 
         text = "Саша была красивой, а её брат Саша был сильным"
         results = parser.parse(text)
