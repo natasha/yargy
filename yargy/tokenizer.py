@@ -43,7 +43,7 @@ class Tokenizer(object):
             if group == "russian":
                 token = ("word", value, position, self.cache(value))
             elif group == "latin":
-                token = ("word", value, position, {"grammemes": set(), "forms": set()})
+                token = ("word", value, position, {"grammemes": set('LATN'), "forms": set()})
             elif group == "quote":
                 token = ("quote", value, position, None)
             elif group == "float":
