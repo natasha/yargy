@@ -13,6 +13,21 @@ def is_upper_label(token, _, stack):
 def is_capitalized_label(token, _, stack):
     return token[1].istitle()
 
+def eq_label(token, value, stack):
+    return token[1] == value
+
+def gt_label(token, value, stack):
+    return token[1] > value
+
+def lt_label(token, value, stack):
+    return token[1] < value
+
+def gte_label(token, value, stack):
+    return token[1] >= value
+
+def lte_label(token, value, stack):
+    return token[1] <= value
+
 def gram_label(token, value, stack):
     return value in token[3]["grammemes"]
 
@@ -57,8 +72,15 @@ LABELS_LOOKUP_MAP = {
     "gram-not": gram_not_label,
     "gram-not-in": gram_not_in_label,
     "gender-match": gender_match_label,
+
     "dictionary": dictionary_label,
     "is-lower": is_lower_label,
     "is-upper": is_upper_label,
     "is-capitalized": is_capitalized_label,
+
+    "eq": eq_label,
+    "gt": gt_label,
+    "lt": lt_label,
+    "gte": gte_label,
+    "lte": lte_label,
 }
