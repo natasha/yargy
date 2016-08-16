@@ -14,10 +14,10 @@ class Stack(list):
 class FactParser(object):
 
     def __init__(self, cache_size=50000):
-        self.text_transformer = Tokenizer(cache_size=cache_size)
+        self.tokenizer = Tokenizer(cache_size=cache_size)
 
     def parse(self, text, rules):
-        tokens = deque(self.text_transformer.transform(text))
+        tokens = deque(self.tokenizer.transform(text))
         return self.extract(tokens, rules)
 
     def extract(self, tokens, rules):
