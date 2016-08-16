@@ -18,6 +18,7 @@ class FactParser(object):
 
     def parse(self, text, rules):
         tokens = deque(self.tokenizer.transform(text))
+        tokens.append(None)
         return self.extract(tokens, rules)
 
     def extract(self, tokens, rules):
@@ -41,6 +42,8 @@ class FactParser(object):
                 continue
             else:
                 token = tokens.popleft()
+                if not token:
+                    break
                 if token[0] == rule_type:
                     if all(self.check_labels(token, rule_labels, stack.flatten())):
                         stack.append((rule_index, token))
@@ -53,13 +56,15 @@ class FactParser(object):
                 else:
                     if rule_index > 0:
                         tokens.appendleft(token)
-                        for token in reversed(stack):
+                        flatten = stack.flatten()
+                        for token in reversed(flatten[1:]):
                             tokens.appendleft(token)
+                        for token in reversed(flatten):
+                            tokens.append(token)
                     stack = Stack()
                     rule_index = 0
-        else:
-            if stack and rule_index == len(rules) - 1:
-                yield stack.flatten()
+        if stack and rule_index == len(rules) - 1:
+            yield stack.flatten()
 
     def check_labels(self, token, labels, stack):
         for (name, value) in labels:
