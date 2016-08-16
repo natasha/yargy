@@ -31,6 +31,9 @@ def lte_label(token, value, stack):
 def gram_label(token, value, stack):
     return value in token[3]["grammemes"]
 
+def gram_any_label(token, values, stack):
+    return any(gram_label(token, value, stack) for value in values)
+
 def gram_in_label(token, values, stack):
     return all(gram_label(token, value, stack) for value in values)
 
@@ -68,12 +71,13 @@ def dictionary_label(token, values, stack):
 
 LABELS_LOOKUP_MAP = {
     "gram": gram_label,
+    "gram-any": gram_any_label,
     "gram-in": gram_in_label,
     "gram-not": gram_not_label,
     "gram-not-in": gram_not_in_label,
+
     "gender-match": gender_match_label,
 
-    "dictionary": dictionary_label,
     "is-lower": is_lower_label,
     "is-upper": is_upper_label,
     "is-capitalized": is_capitalized_label,
@@ -83,4 +87,5 @@ LABELS_LOOKUP_MAP = {
     "lt": lt_label,
     "gte": gte_label,
     "lte": lte_label,
+    "dictionary": dictionary_label,
 }
