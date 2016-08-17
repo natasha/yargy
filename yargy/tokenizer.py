@@ -7,9 +7,11 @@ from pymorphy2 import MorphAnalyzer
 russian_token_regex = r'(?P<russian>[а-яё\-]+)'
 latin_token_regex = r'(?P<latin>[a-z\-\']+)'
 int_token_regex = r'(?P<int>[+-]?[0-9]+)'
-float_token_regex = r'(?P<float>[+-]?[\d]+\.[\d]+)'
+float_token_regex = r'(?P<float>[+-]?[\d]+[\.\,][\d]+)'
 quote_token_regex = r'(?P<quote>[\"\'«»])'
+punct_token_regex = r'(?P<punct>[\.\,\;])'
 complete_token_regex = r'|'.join((
+    punct_token_regex,
     float_token_regex,
     int_token_regex,
     russian_token_regex,
@@ -47,9 +49,11 @@ class Tokenizer(object):
             elif group == "quote":
                 token = ("quote", value, position, None)
             elif group == "float":
-                token = ("float", float(value), position, None)
+                token = ("float", float(value.replace(",", ".")), position, None)
             elif group == "int":
                 token = ("int", int(value), position, None)
+            elif group == "punct":
+                token = ("punct", value, position, None)
             else:
                 raise NotImplementedError
             yield token
