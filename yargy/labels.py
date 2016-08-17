@@ -51,7 +51,7 @@ def gender_match_label(token, index, stack, genders=GENDERS):
 
     if not candidate_token_genders == case_token_genders:
         if case_token_msf or candidate_token_msf:
-            if any(case_token_genders[:2]) and any(candidate_token_genders[:2]):
+            if any(case_token_genders[:2]) or any(candidate_token_genders[:2]):
                 return True
         elif case_token_gndr or candidate_token_gndr:
             return True
