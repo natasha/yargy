@@ -6,12 +6,16 @@ from pymorphy2 import MorphAnalyzer
 
 russian_token_regex = r'(?P<russian>[а-яё\-]+)'
 latin_token_regex = r'(?P<latin>[a-z\-\']+)'
+int_range_token_regexp = r'(?P<int_range>[+-]?[0-9]+\-[0-9]+)'
 int_token_regex = r'(?P<int>[+-]?[0-9]+)'
+float_range_token_regex = r'(?P<float_range>[+-]?[\d]+[\.\,][\d]+\-[\d]+[\.\,][\d]+)'
 float_token_regex = r'(?P<float>[+-]?[\d]+[\.\,][\d]+)'
 quote_token_regex = r'(?P<quote>[\"\'«»])'
 punctuation_token_regex = r'(?P<punct>[\.\-—,;:]+)'
 complete_token_regex = r'|'.join((
+    float_range_token_regex,
     float_token_regex,
+    int_range_token_regexp,
     int_token_regex,
     punctuation_token_regex,
     russian_token_regex,
@@ -52,6 +56,12 @@ class Tokenizer(object):
                 token = ("float", float(value.replace(",", ".")), position, None)
             elif group == "int":
                 token = ("int", int(value), position, None)
+            elif group == "int_range":
+                values = map(int, value.split("-"))
+                token = ("range", range(*values), position, None)
+            elif group == "float_range":
+                values = map(float, value.split("-"))
+                token = ("range", range(*values), position, None)
             elif group == "punct":
                 token = ("punct", value, position, None)
             else:
