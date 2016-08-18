@@ -9,7 +9,7 @@ latin_token_regex = r'(?P<latin>[a-z\-\']+)'
 int_token_regex = r'(?P<int>[+-]?[0-9]+)'
 float_token_regex = r'(?P<float>[+-]?[\d]+[\.\,][\d]+)'
 quote_token_regex = r'(?P<quote>[\"\'«»])'
-punctuation_token_regex = r'(?P<punct>[\.\-,;:]+)'
+punctuation_token_regex = r'(?P<punct>[\.\-—,;:]+)'
 complete_token_regex = r'|'.join((
     float_token_regex,
     int_token_regex,
