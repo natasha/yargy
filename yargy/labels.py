@@ -13,6 +13,12 @@ def is_upper_label(token, _, stack):
 def is_title_label(token, _, stack):
     return token[1].istitle()
 
+def is_capitalized_label(token, _, stack):
+    """
+    http://bugs.python.org/issue7008
+    """
+    return token[0].isupper() and token[-1].islower()
+
 def eq_label(token, value, stack):
     return token[1] == value
 
@@ -81,6 +87,7 @@ LABELS_LOOKUP_MAP = {
     "is-lower": is_lower_label,
     "is-upper": is_upper_label,
     "is-title": is_title_label,
+    "is-capitalized": is_capitalized_label,
 
     "eq": eq_label,
     "gt": gt_label,
