@@ -9,9 +9,11 @@ latin_token_regex = r'(?P<latin>[a-z\-\']+)'
 int_token_regex = r'(?P<int>[+-]?[0-9]+)'
 float_token_regex = r'(?P<float>[+-]?[\d]+[\.\,][\d]+)'
 quote_token_regex = r'(?P<quote>[\"\'«»])'
+punctuation_token_regex = r'(?P<punct>[\.\-,;:]+)'
 complete_token_regex = r'|'.join((
     float_token_regex,
     int_token_regex,
+    punctuation_token_regex,
     russian_token_regex,
     latin_token_regex,
     quote_token_regex,
@@ -50,6 +52,8 @@ class Tokenizer(object):
                 token = ("float", float(value.replace(",", ".")), position, None)
             elif group == "int":
                 token = ("int", int(value), position, None)
+            elif group == "punct":
+                token = ("punct", value, position, None)
             else:
                 raise NotImplementedError
             yield token

@@ -67,14 +67,14 @@ class FactParserTestCase(unittest.TestCase):
         self.assertEqual([[w[1] for w in n] for n in results], [['Саша', 'была'], ['Саша', 'был']])
 
     def test_optional_rules(self):
-        text = "великий новгород, москва."
+        text = "новгород великий, москва."
         parser = yargy.FactParser()
         results = parser.parse(text, (
-            ("word", {"labels": [("gram", "ADJF")], "optional": True}),
             ("word", {"labels": [("gram", "NOUN"), ("gram", "Geox")]}),
+            ("word", {"labels": [("gram", "ADJF")], "optional": True}),
             ("$", {}))
         )
-        self.assertEqual([[w[1] for w in n] for n in results], [['великий', 'новгород'], ['москва']])
+        self.assertEqual([[w[1] for w in n] for n in results], [['новгород', 'великий'], ['москва']])
         
         text = "иван иванович иванов, анна смирнова"
         parser = yargy.FactParser()
