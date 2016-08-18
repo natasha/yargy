@@ -17,7 +17,7 @@ def is_capitalized_label(token, _, stack):
     """
     http://bugs.python.org/issue7008
     """
-    return token[0].isupper() and token[-1].islower()
+    return token[1][0].isupper() and token[1][-1].islower()
 
 def eq_label(token, value, stack):
     return token[1] == value
