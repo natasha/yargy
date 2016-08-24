@@ -6,9 +6,9 @@ from pymorphy2 import MorphAnalyzer
 
 russian_token_regex = r'(?P<russian>[а-яё\-]+)'
 latin_token_regex = r'(?P<latin>[a-z\-\']+)'
-int_range_token_regexp = r'(?P<int_range>[+-]?[0-9]+\-[0-9]+)'
+int_range_token_regexp = r'(?P<int_range>[+-]?[0-9]+\s*?\-\s*?[0-9]+)'
 int_token_regex = r'(?P<int>[+-]?[0-9]+)'
-float_range_token_regex = r'(?P<float_range>[+-]?[\d]+[\.\,][\d]+\-[\d]+[\.\,][\d]+)'
+float_range_token_regex = r'(?P<float_range>[+-]?[\d]+[\.\,][\d]+\s*?\-\s*?[\d]+[\.\,][\d]+)'
 float_token_regex = r'(?P<float>[+-]?[\d]+[\.\,][\d]+)'
 quote_token_regex = r'(?P<quote>[\"\'«»])'
 punctuation_token_regex = r'(?P<punct>[\.\-—,;:]+)'
