@@ -1,5 +1,6 @@
 import yargy
 import unittest
+import collections
 
 
 class FactParserTestCase(unittest.TestCase):
@@ -86,3 +87,16 @@ class FactParserTestCase(unittest.TestCase):
         )
         self.assertEqual([[w[1] for w in n] for n in results], [['иван', 'иванович', 'иванов'], ['анна', 'смирнова']])
 
+    def test_output_deque(self):
+        text = "иван иванович иванов, анна смирнова"
+        parser = yargy.FactParser()
+        output = collections.deque()
+        results = parser.parse(text, (
+            ("word", {"labels": [("gram", "NOUN"), ("gram", "Name")]}),
+            ("word", {"labels": [("gram", "NOUN"), ("gram", "Patr")]}),
+            ("word", {"labels": [("gram", "NOUN"), ("gram", "Surn")]}),
+            ("$", {})),
+            output
+        )
+        self.assertEqual([[w[1] for w in n] for n in results], [['иван', 'иванович', 'иванов']])
+        self.assertEqual([n[1] for n in output], [',', 'анна', 'смирнова'])

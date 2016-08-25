@@ -16,11 +16,11 @@ class FactParser(object):
     def __init__(self, cache_size=50000):
         self.tokenizer = Tokenizer(cache_size=cache_size)
 
-    def parse(self, text, rules):
+    def parse(self, text, rules, out=None):
         tokens = deque(self.tokenizer.transform(text))
-        return self.extract(tokens, rules)
+        return self.extract(tokens, rules, out)
 
-    def extract(self, tokens, rules):
+    def extract(self, tokens, rules, out=None):
         """
         Actually, only God knows what going there
         Stack = [(rule_index, match), ...]
@@ -53,6 +53,11 @@ class FactParser(object):
                 else:
                     if rule_index > 0:
                         tokens.appendleft(token)
+                    if (stack or token) and not (out is None):
+                        if not rule_index > 0:
+                            out.append(token)
+                        for token in stack.flatten():
+                            out.append(token)
                     stack = Stack()
                     rule_index = 0
         else:
