@@ -1,5 +1,5 @@
 GENDERS = ("masc", "femn", "neut", "Ms-f", "GNdr")
-NUMBERS = ("sing", "plur")
+NUMBERS = ("sing", "plur", "Pltm")
 
 def get_token_features(candidate, case, grammemes):
     return ((g in t["grammemes"] for g in grammemes) for t in (case, candidate))
@@ -77,6 +77,23 @@ def gender_match_label(token, index, stack, genders=GENDERS):
                 return True
     return False
 
+def number_match_label(token, index, stack, numbers=NUMBERS):
+    for candidate_form in token[3]:
+        for case_form in stack[index][3]:
+            results = get_token_features(candidate_form, case_form, numbers)
+            *case_form_features, case_form_only_plur = next(results)
+            *candidate_form_features, candidate_form_only_plur = next(results)
+            if case_form_features == candidate_form_features:
+                return True
+            elif case_form_only_plur or candidate_form_only_plur:
+                if case_form_only_plur:
+                    if candidate_form_features[1]:
+                        return True
+                else:
+                    if case_form_features[1]:
+                        return True
+    return False
+
 def dictionary_label(token, values, stack):
     return any((form["normal_form"] in values) for form in token[3])
 
@@ -88,6 +105,7 @@ LABELS_LOOKUP_MAP = {
     "gram-not-in": gram_not_in_label,
 
     "gender-match": gender_match_label,
+    "number-match": number_match_label,
 
     "is-lower": is_lower_label,
     "is-upper": is_upper_label,
