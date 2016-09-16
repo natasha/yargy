@@ -11,7 +11,7 @@ int_token_regex = r'(?P<int>[+-]?[0-9]+)'
 float_range_token_regex = r'(?P<float_range>[+-]?[\d]+[\.\,][\d]+\s*?\-\s*?[\d]+[\.\,][\d]+)'
 float_token_regex = r'(?P<float>[+-]?[\d]+[\.\,][\d]+)'
 quote_token_regex = r'(?P<quote>[\"\'«»])'
-punctuation_token_regex = r'(?P<punct>[\.\-—,;:]+)'
+punctuation_token_regex = r'(?P<punct>[\.\-—,;:\\\/]+)'
 complete_token_regex = r'|'.join((
     float_range_token_regex,
     float_token_regex,
@@ -29,17 +29,16 @@ class Tokenizer(object):
 
     def __init__(self, cache_size):
         self.morph = MorphAnalyzer()
-        self.cache = functools.lru_cache(maxsize=cache_size)(self.get_word_attributes)
+        self.cache = functools.lru_cache(maxsize=cache_size)(self.get_word_forms)
 
-    def get_word_attributes(self, word):
-        attributes = {
-            "grammemes": set(),
-            "forms": set(),
-        }
+    def get_word_forms(self, word):
+        forms = []
         for form in self.morph.parse(word):
-            attributes["grammemes"] = attributes["grammemes"] | set(form.tag.grammemes)
-            attributes["forms"] = attributes["forms"] | {form.normal_form}
-        return attributes
+            token = {}
+            token["grammemes"] = set(form.tag.grammemes)
+            token["normal_form"] = form.normal_form
+            forms.append(token)
+        return forms
 
     def transform(self, text):
         for match in re.finditer(token_regex, text):

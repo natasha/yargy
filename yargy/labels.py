@@ -2,7 +2,7 @@ GENDERS = ("masc", "femn", "neut", "Ms-f", "GNdr")
 NUMBERS = ("sing", "plur")
 
 def get_token_features(candidate, case, grammemes):
-    return ((g in t[3]["grammemes"] for g in grammemes) for t in (case, candidate))
+    return ((g in t["grammemes"] for g in grammemes) for t in (case, candidate))
 
 def is_lower_label(token, _, stack):
     return token[1].islower()
@@ -35,7 +35,10 @@ def lte_label(token, value, stack):
     return token[1] <= value
 
 def gram_label(token, value, stack):
-    return value in token[3]["grammemes"]
+    for form in token[3]:
+        if value in form["grammemes"]:
+            return True
+    return False
 
 def gram_any_label(token, values, stack):
     return any(gram_label(token, value, stack) for value in values)
@@ -44,36 +47,38 @@ def gram_in_label(token, values, stack):
     return all(gram_label(token, value, stack) for value in values)
 
 def gram_not_label(token, value, stack):
-    return not value in token[3]["grammemes"]
+    return not gram_label(token, value, stack)
 
 def gram_not_in_label(token, values, stack):
     return all(gram_not_label(token, value, stack) for value in values)
 
 def gender_match_label(token, index, stack, genders=GENDERS):
-    results = get_token_features(token, stack[index], genders)
+    for candidate_form in token[3]:
+        for case_form in stack[index][3]:
+            results = get_token_features(candidate_form, case_form, genders)
 
-    *case_token_genders, case_token_msf, case_token_gndr = next(results)
-    *candidate_token_genders, candidate_token_msf, candidate_token_gndr = next(results)
+            *case_token_genders, case_token_msf, case_token_gndr = next(results)
+            *candidate_token_genders, candidate_token_msf, candidate_token_gndr = next(results)
 
-    if not candidate_token_genders == case_token_genders:
-        if case_token_msf or candidate_token_msf:
-            if any(case_token_genders[:2]) or any(candidate_token_genders[:2]):
+            if not candidate_token_genders == case_token_genders:
+                if case_token_msf or candidate_token_msf:
+                    if any(case_token_genders[:2]) or any(candidate_token_genders[:2]):
+                        return True
+                elif case_token_gndr or candidate_token_gndr:
+                    return True
+                elif "plur" in case_form["grammemes"] and "plur" in candidate_form["grammemes"]:
+                    return True
+                else:
+                    if (case_token_genders[0] and candidate_token_genders[0]) or \
+                       (case_token_genders[1] and candidate_token_genders[1]) or \
+                       (case_token_genders[2] and candidate_token_genders[2]):
+                       return True
+            else:
                 return True
-        elif case_token_gndr or candidate_token_gndr:
-            return True
-        elif "plur" in stack[index][3]["grammemes"] and "plur" in token[3]["grammemes"]:
-            return True
-        else:
-            if (case_token_genders[0] and candidate_token_genders[0]) or \
-               (case_token_genders[1] and candidate_token_genders[1]) or \
-               (case_token_genders[2] and candidate_token_genders[2]):
-               return True
-    else:
-        return True
     return False
 
 def dictionary_label(token, values, stack):
-    return any((n in values) for n in token[3]["forms"])
+    return any((form["normal_form"] in values) for form in token[3])
 
 LABELS_LOOKUP_MAP = {
     "gram": gram_label,
