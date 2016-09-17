@@ -54,7 +54,8 @@ Will print:
 | ---- | ----------- | ----- |
 | `gram` | Checks that word contains given grammeme | `('gram', 'NOUN')` |
 | `gram-any` | Checks that word contains any of given grammemes | `('gram-any', ['NOUN', 'VERB'])` |
-| `gram-in` | Checks that word contains all of given grammemes | `('gram-in', ["NOUN", "Name"])` |
+| `gram-in` | Checks that word contains all of given grammemes | `('gram-in', ['NOUN', 'Name'])` |
 | `gram-not` | Reversed version of `gram` | `('gram-not', 'NOUN')` |
 | `gram-not-in` | Reversed version of `gram-in` | `('gram-not-in', ['ADJS', 'ADJF'])` |
-| `dictionary` | Checks that normal form of word exists in given dictionary | `('dictionary', ['говорить'])`
+| `dictionary` | Checks that normal form of word exists in given dictionary | `('dictionary', ['говорить'])` - will match `говорил`, `говорила`, `говорили`.
+| `gender-match` | Checks that word have same gender as word at given index | `('gender-match', -1)` - will check candidate word with word at `-1` (actually, previous word) for gender equality. E.g. when previous_word=`Пьер` it will match `был` and not `была` |
