@@ -3,26 +3,6 @@
 ```python
 from yargy import FactParser
 
-text = "газета «Коммерсантъ» сообщила ..."
-rules = (("word", {}), ("quote", {}), ("word", {}), ("quote", {}), ("$", {}))
-parser = FactParser(rules)
-
-for result in parser.parse(text):
-    print(result)
-
-"""
-Will print:
-[
-    ('word', 'газета', (0, 6), {'grammemes': {'nomn', 'NOUN', 'sing', 'femn', 'inan'}, 'forms': {'газета'}}),
-    ('quote', '«', (7, 8), None),
-    ('word', 'Коммерсантъ', (8, 19), {'grammemes': {'Fixd', 'loct', 'anim', 'accs', 'gent', 'NOUN', 'ablt', 'plur', 'masc', 'datv', 'sing', 'nomn'}, 'forms': {'коммерсантъ'}}),
-    ('quote', '»', (19, 20), None)
-]
-"""
-```
-
-```python
-
 text = open("leo-tolstoy-war-and-peace.txt").read()
 
 rules = (("word", {"labels": [
@@ -67,3 +47,14 @@ Will print:
 # Internals
 
 `yargy` parses russian text into AST, adds morphology information to `word` tags, then compares AST to given rules.
+
+# Labels
+
+| Name | Description | Usage |
+| ---- | ----------- | ----- |
+| `gram` | Checks that word contains given grammeme | `('gram', 'NOUN')` |
+| `gram-any` | Checks that word contains any of given grammemes | `('gram-any', ['NOUN', 'VERB'])` |
+| `gram-in` | Checks that word contains all of given grammemes | `('gram-in', ["NOUN", "Name"])` |
+| `gram-not` | Reversed version of `gram` | `('gram-not', 'NOUN')` |
+| `gram-not-in` | Reversed version of `gram-in` | `('gram-not-in', ['ADJS', 'ADJF'])` |
+| `dictionary` | Checks that normal form of word exists in given dictionary | `('dictionary', ['говорить'])`
