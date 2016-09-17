@@ -55,6 +55,5 @@ Will print:
 | `gram-not-in` | Reversed version of `gram-in` | `('gram-not-in', ['ADJS', 'ADJF'])` |
 | `dictionary` | Checks that normal form of word exists in given dictionary | `('dictionary', ['говорить'])` - will match `говорил`, `говорила`, `говорили`.
 | `gender-match` | Checks that words have same gender grammemes | `('gender-match', -1)` - will check candidate word with word at `-1` index in stack (actually, previous word) for gender equality. E.g. when previous_word=`Пьер` it will match `был` and not `была` |
-| `number-match` | Checks that words have same number grammemes | `('number-match', -1)` - will match `были` for `
-дрова` and not `перенесли` for `ипполит` | 
+| `number-match` | Checks that words have same number grammemes | `('number-match', -1)` - will match `были` for `дрова` and not `перенесли` for `ипполит` | 
 | `case-match` | Checks that words have same case grammemes | `('case-match', -1)` - will match `красивому Ипполиту` and not `красивая Анну` |
