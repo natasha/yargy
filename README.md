@@ -44,10 +44,6 @@ Will print:
 """
 ```
 
-# Internals
-
-`yargy` parses russian text into AST, adds morphology information to `word` tags, then compares AST to given rules.
-
 # Labels
 
 | Name | Description | Usage |
@@ -58,4 +54,7 @@ Will print:
 | `gram-not` | Reversed version of `gram` | `('gram-not', 'NOUN')` |
 | `gram-not-in` | Reversed version of `gram-in` | `('gram-not-in', ['ADJS', 'ADJF'])` |
 | `dictionary` | Checks that normal form of word exists in given dictionary | `('dictionary', ['говорить'])` - will match `говорил`, `говорила`, `говорили`.
-| `gender-match` | Checks that word have same gender as word at given index | `('gender-match', -1)` - will check candidate word with word at `-1` (actually, previous word) for gender equality. E.g. when previous_word=`Пьер` it will match `был` and not `была` |
+| `gender-match` | Checks that words have same gender grammemes | `('gender-match', -1)` - will check candidate word with word at `-1` index in stack (actually, previous word) for gender equality. E.g. when previous_word=`Пьер` it will match `был` and not `была` |
+| `number-match` | Checks that words have same number grammemes | `('number-match', -1)` - will match `были` for `
+дрова` and not `перенесли` for `ипполит` | 
+| `case-match` | Checks that words have same case grammemes | `('case-match', -1)` - will match `красивому Ипполиту` and not `красивая Анну` |
