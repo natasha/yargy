@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='yargy',
-    version='0.1.0',
+    version='0.2.0',
     description='Tiny rule-based facts extraction package',
     url='https://github.com/bureaucratic-labs/yargy',
     author='Dmitry Veselov',
@@ -17,9 +17,9 @@ setup(
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
     ],
-    keywords='natural language processing russian morphology tomita',
+    keywords='natural language processing, russian morphology, tomita',
     packages=find_packages(),
     install_requires=[
-        'pymorphy2[fast]'
+        'pymorphy2'
     ],
 )
