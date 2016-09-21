@@ -23,6 +23,9 @@ def is_capitalized_label(token, _, stack):
 def eq_label(token, value, stack):
     return token[1] == value
 
+def in_label(token, value, stack):
+    return token[1] in value
+
 def gt_label(token, value, stack):
     return token[1] > value
 
@@ -114,6 +117,7 @@ LABELS_LOOKUP_MAP = {
     "gram-in": gram_in_label,
     "gram-not": gram_not_label,
     "gram-not-in": gram_not_in_label,
+    "dictionary": dictionary_label,
 
     "gender-match": gender_match_label,
     "number-match": number_match_label,
@@ -125,9 +129,9 @@ LABELS_LOOKUP_MAP = {
     "is-capitalized": is_capitalized_label,
 
     "eq": eq_label,
+    "in": in_label,
     "gt": gt_label,
     "lt": lt_label,
     "gte": gte_label,
     "lte": lte_label,
-    "dictionary": dictionary_label,
 }
