@@ -44,7 +44,7 @@ class FactParser(object):
                 if token[0] == rule_type:
                     if all(self.check_labels(token, rule_labels, stack.flatten())):
                         stack.append((rule_index, token))
-                        if not rule_repeat:
+                        if not rule_repeat or not tokens:
                             rule_index += 1
                         continue
                 if (rule_repeat and stack.have_matches_by_rule_index(rule_index)) or rule_optional:
