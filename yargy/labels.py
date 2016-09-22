@@ -1,6 +1,6 @@
 GENDERS = ("masc", "femn", "neut", "Ms-f", "GNdr")
 NUMBERS = ("sing", "plur", "Pltm")
-CASES = ("nomn", "gent", "datv", "accs", "ablt", "loct", "voct", "gen2", "acc2", "loc2")
+CASES = ("nomn", "gent", "datv", "accs", "ablt", "loct", "voct", "gen2", "acc2", "loc2", "Fixd")
 
 def get_token_features(candidate, case, grammemes):
     return ((g in t["grammemes"] for g in grammemes) for t in (case, candidate))
@@ -102,9 +102,11 @@ def case_match_label(token, index, stack, cases=CASES):
     for candidate_form in token[3]:
         for case_form in stack[index][3]:
             results = get_token_features(candidate_form, case_form, cases)
-            case_form_features = list(next(results))
-            candidate_form_features = list(next(results))
+            *case_form_features, is_case_fixed = next(results)
+            *candidate_form_features, is_candidate_fixed = next(results)
             if case_form_features == candidate_form_features:
+                return True
+            elif is_case_fixed or is_candidate_fixed:
                 return True
     return False
 
