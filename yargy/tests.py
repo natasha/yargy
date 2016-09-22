@@ -1,3 +1,4 @@
+import enum
 import yargy
 import unittest
 import collections
@@ -111,3 +112,49 @@ class FactParserTestCase(unittest.TestCase):
         )
         self.assertEqual([[w[1] for w in n] for n in results], [['иван', 'иванович', 'иванов']])
         self.assertEqual([n[1] for n in output], [',', 'анна', 'смирнова'])
+
+class CombinatorTestCase(unittest.TestCase):
+
+    class Person(enum.Enum):
+
+        Fullname = (
+            ('word', {
+                'labels': [
+                    ('gram', 'Name'),
+                ],
+            }),
+            ('word', {
+                'labels': [
+                    ('gram', 'Surn'),
+                ],
+            }),
+            ('$', {}),
+        )
+
+        Firstname = (
+            ('word', {
+                'labels': [
+                    ('gram', 'Name'),
+                ],
+            }),
+            ('$', {}),
+        )
+
+    class City(enum.Enum):
+
+        Default = (
+            ('word', {
+                'labels': [
+                    ('gram', 'Name'),
+                ],
+            }),
+            ('$', {}),
+        )
+
+    def test_resolve_matches(self):
+        text = 'владимир путин приехал в владимир'
+        combinator = yargy.Combinator([self.Person, self.City])
+        matches = list(combinator.extract(text))
+        self.assertEqual(len(matches), 5)
+        matches = combinator.resolve_matches(matches)
+        self.assertEqual([match[1] for match in matches], ['Default', 'Fullname'])
