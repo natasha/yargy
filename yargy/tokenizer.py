@@ -27,8 +27,8 @@ token_regex = re.compile(complete_token_regex, re.UNICODE | re.IGNORECASE)
 
 class Tokenizer(object):
 
-    def __init__(self, cache_size):
-        self.morph = MorphAnalyzer()
+    def __init__(self, cache_size=0, morph_analyzer=None):
+        self.morph = morph_analyzer or MorphAnalyzer()
         self.cache = functools.lru_cache(maxsize=cache_size)(self.get_word_forms)
 
     def get_word_forms(self, word):
