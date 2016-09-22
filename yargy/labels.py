@@ -108,6 +108,13 @@ def case_match_label(token, index, stack, cases=CASES):
                 return True
     return False
 
+def gnc_match_label(token, index, stack):
+    return all([
+        gender_match_label(token, index, stack),
+        number_match_label(token, index, stack),
+        case_match_label(token, index, stack),
+    ])
+
 def dictionary_label(token, values, stack):
     return any((form["normal_form"] in values) for form in token[3])
 
@@ -122,6 +129,7 @@ LABELS_LOOKUP_MAP = {
     "gender-match": gender_match_label,
     "number-match": number_match_label,
     "case-match": case_match_label,
+    "gnc-match": gnc_match_label,
 
     "is-lower": is_lower_label,
     "is-upper": is_upper_label,
