@@ -14,7 +14,7 @@ class FactParserTestCase(unittest.TestCase):
             (yargy.Token.Quote, {}),
             (yargy.Token.Word, {}),
             (yargy.Token.Quote, {}),
-            ("$", {}))
+            (yargy.Token.Term, {}))
         )
         self.assertEqual(sum([[w[1] for w in n] for n in results], []), ['газета', '«', 'Коммерсантъ', '»'])
 
@@ -25,7 +25,7 @@ class FactParserTestCase(unittest.TestCase):
             (yargy.Token.Quote, {}),
             (yargy.Token.Word, {"repeat": True}),
             (yargy.Token.Quote, {}),
-            ("$", {}))
+            (yargy.Token.Term, {}))
         )
         self.assertEqual(sum([[w[1] for w in n] for n in results], []), ['«', 'Коммерсантъ', 'КАРТОТЕКА', '»'])
 
@@ -35,7 +35,7 @@ class FactParserTestCase(unittest.TestCase):
         results = parser.parse(text, (
             (yargy.Token.Word, {"labels": [("gram", "ADJS")]}),
             (yargy.Token.Word, {"labels": [("gram", "VERB")]}),
-            ("$", {}))
+            (yargy.Token.Term, {}))
         )
         self.assertEqual(sum([[w[1] for w in n] for n in results], []), ['красиво', 'пел'])
 
@@ -45,7 +45,7 @@ class FactParserTestCase(unittest.TestCase):
         results = parser.parse(text, (
             (yargy.Token.Word, {"labels": [("gram", "Name"), ("gram-not", "Abbr")]}),
             (yargy.Token.Word, {"labels": [("gram", "VERB")]}),
-            ("$", {}))
+            (yargy.Token.Term, {}))
         )
         self.assertEqual(sum([[w[1] for w in n] for n in results], []), ['Иван', 'выпил'])
 
@@ -54,7 +54,7 @@ class FactParserTestCase(unittest.TestCase):
         rules = (
             (yargy.Token.Word, {"labels": [("gram", "NOUN")]}),
             (yargy.Token.Word, {"labels": [("gram", "VERB"), ("gender-match", 0)]}),
-            ("$", {})
+            (yargy.Token.Term, {})
         )
         parser = yargy.FactParser()
         results = parser.parse(text, rules)
@@ -73,7 +73,7 @@ class FactParserTestCase(unittest.TestCase):
         rules = (
             (yargy.Token.Word, {"labels": [("gram", "NOUN")]}),
             (yargy.Token.Word, {"labels": [("gram", "VERB"), ("number-match", 0)]}),
-            ("$", {})
+            (yargy.Token.Term, {})
         )
         parser = yargy.FactParser()
         results = parser.parse(text, rules)
@@ -85,7 +85,7 @@ class FactParserTestCase(unittest.TestCase):
         results = parser.parse(text, (
             (yargy.Token.Word, {"labels": [("gram", "NOUN"), ("gram", "Geox")]}),
             (yargy.Token.Word, {"labels": [("gram", "ADJF")], "optional": True}),
-            ("$", {}))
+            (yargy.Token.Term, {}))
         )
         self.assertEqual([[w[1] for w in n] for n in results], [['новгород', 'великий'], ['москва']])
         
@@ -95,7 +95,7 @@ class FactParserTestCase(unittest.TestCase):
             (yargy.Token.Word, {"labels": [("gram", "NOUN"), ("gram", "Name")]}),
             (yargy.Token.Word, {"labels": [("gram", "NOUN"), ("gram", "Patr")], "optional": True}),
             (yargy.Token.Word, {"labels": [("gram", "NOUN"), ("gram", "Surn")]}),
-            ("$", {}))
+            (yargy.Token.Term, {}))
         )
         self.assertEqual([[w[1] for w in n] for n in results], [['иван', 'иванович', 'иванов'], ['анна', 'смирнова']])
 
@@ -107,7 +107,7 @@ class FactParserTestCase(unittest.TestCase):
             (yargy.Token.Word, {"labels": [("gram", "NOUN"), ("gram", "Name")]}),
             (yargy.Token.Word, {"labels": [("gram", "NOUN"), ("gram", "Patr")]}),
             (yargy.Token.Word, {"labels": [("gram", "NOUN"), ("gram", "Surn")]}),
-            ("$", {})),
+            (yargy.Token.Term, {})),
             output
         )
         self.assertEqual([[w[1] for w in n] for n in results], [['иван', 'иванович', 'иванов']])
@@ -128,7 +128,7 @@ class CombinatorTestCase(unittest.TestCase):
                     ('gram', 'Surn'),
                 ],
             }),
-            ('$', {}),
+            (yargy.Token.Term, {}),
         )
 
         Firstname = (
@@ -137,7 +137,7 @@ class CombinatorTestCase(unittest.TestCase):
                     ('gram', 'Name'),
                 ],
             }),
-            ('$', {}),
+            (yargy.Token.Term, {}),
         )
 
     class City(enum.Enum):
@@ -148,14 +148,13 @@ class CombinatorTestCase(unittest.TestCase):
                     ('gram', 'Name'),
                 ],
             }),
-            ('$', {}),
+            (yargy.Token.Term, {}),
         )
 
     def test_resolve_matches(self):
         text = 'владимир путин приехал в владимир'
         combinator = yargy.Combinator([self.Person, self.City])
         matches = list(combinator.extract(text))
-        print(combinator.resolve_matches(matches))
         self.assertEqual(len(matches), 5)
         matches = combinator.resolve_matches(matches)
         self.assertEqual([match[1] for match in matches], ['Default', 'Fullname'])
