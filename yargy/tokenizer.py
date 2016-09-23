@@ -1,5 +1,6 @@
 # coding: utf-8
 import re
+import enum
 import functools
 
 from pymorphy2 import MorphAnalyzer
@@ -25,6 +26,15 @@ complete_token_regex = r'|'.join((
 
 token_regex = re.compile(complete_token_regex, re.UNICODE | re.IGNORECASE)
 
+class Token(enum.Enum):
+
+    Word = 0
+    Number = 1
+    Range = 2
+    Punct = 3
+    Quote = 4
+    Term = 5
+
 class Tokenizer(object):
 
     def __init__(self, cache_size=0, morph_analyzer=None):
@@ -46,23 +56,23 @@ class Tokenizer(object):
             value = match.group(0)
             position = match.span()
             if group == "russian":
-                token = ("word", value, position, self.cache(value))
+                token = (Token.Word, value, position, self.cache(value))
             elif group == "latin":
-                token = ("word", value, position, [{"grammemes": set(['LATN']), "normal_form": value}])
+                token = (Token.Word, value, position, [{"grammemes": set(['LATN']), "normal_form": value}])
             elif group == "quote":
-                token = ("quote", value, position, None)
+                token = (Token.Quote, value, position, None)
             elif group == "float":
-                token = ("float", float(value.replace(",", ".")), position, None)
+                token = (Token.Number, float(value.replace(",", ".")), position, None)
             elif group == "int":
-                token = ("int", int(value), position, None)
+                token = (Token.Number, int(value), position, None)
             elif group == "int_range":
                 values = map(int, value.split("-"))
-                token = ("range", range(*values), position, None)
+                token = (Token.Range, range(*values), position, None)
             elif group == "float_range":
                 values = map(float, value.split("-"))
-                token = ("range", range(*values), position, None)
+                token = (Token.Range, range(*values), position, None)
             elif group == "punct":
-                token = ("punct", value, position, None)
+                token = (Token.Punct, value, position, None)
             else:
                 raise NotImplementedError
             yield token
