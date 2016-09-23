@@ -1,5 +1,5 @@
 from collections import deque
-from yargy.tokenizer import Tokenizer
+from yargy.tokenizer import Token, Tokenizer
 from yargy.labels import LABELS_LOOKUP_MAP
 
 
@@ -33,7 +33,7 @@ class FactParser(object):
             rule_labels = rule_options.get("labels", [])
             rule_repeat = rule_options.get("repeat", False)
             rule_optional = rule_options.get("optional", False)
-            if rule_type == "$":
+            if rule_type == Token.Term:
                 if stack:
                     yield stack.flatten()
                 stack = Stack()
