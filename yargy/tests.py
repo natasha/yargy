@@ -32,6 +32,12 @@ class TokenizerTestCase(unittest.TestCase):
         tokens = list(self.tokenizer.transform(text))
         self.assertEqual(len(tokens), 5)
 
+    def test_space_separated_integers(self):
+        text = 'Цена: 2 600 000'
+        tokens = list(self.tokenizer.transform(text))
+        self.assertEqual(len(tokens), 3)
+        self.assertEqual(tokens[-1][1], 2600000)
+
     def test_match_quotes(self):
         text = '"\'«»'
         tokens = list(self.tokenizer.transform(text))
