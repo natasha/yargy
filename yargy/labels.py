@@ -41,6 +41,9 @@ def lte_label(token, value, stack):
 def is_instance_label(token, value, stack):
     return isinstance(token[1], value)
 
+def custom_label(token, function, stack):
+    return function(token, stack)
+
 def gram_label(token, value, stack):
     for form in token[3]:
         if value in form["grammemes"]:
@@ -148,4 +151,5 @@ LABELS_LOOKUP_MAP = {
     "gte": gte_label,
     "lte": lte_label,
     "is-instance": is_instance_label,
+    "custom": custom_label,
 }
