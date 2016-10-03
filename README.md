@@ -59,6 +59,7 @@ Will print:
 | `number-match` | Checks that words have same number grammemes | `('number-match', -1)` - will match `были` for `дрова` and not `перенесли` for `ипполит` |
 | `case-match` | Checks that words have same case grammemes | `('case-match', -1)` - will match `красивому Ипполиту` and not `красивая Анну` |
 | `gnc-match` | Combination of `gender-match`, `number-match` and `case-match` | `('gnc-match', -1)` |
+| `custom` | Calls given function | `('custom', lambda: token, value, stack: 'VERB' in token['grammemes'])` will match tokens that have `VERB` in grammemes set. |  
 
 Next labels can be used in comparing of raw token values.  
 In tokenization process, `yargy` converts numbers in given text to python `int`/`float`, so when text=`1 ипполит` output of tokenizer'll be roughly equal to `[('int', ...), ('word', ...), ...]`  
