@@ -1,3 +1,5 @@
+from itertools import product
+
 from yargy.tokenizer import Token
 
 
@@ -29,19 +31,23 @@ class BasePipeline(object):
     def create_new_token(self, stack):
         raise NotImplementedError
 
-class SimpleMatchPipeline(BasePipeline):
+class DictionaryMatchPipeline(BasePipeline):
 
     def join_stack(self, tokens):
-        words = []
-        for token in tokens:
-            (_, word, *_) = token
-            words.append(str(word).lower())
-        return words
+        words = [set() for _ in tokens]
+        for (index, token) in enumerate(tokens):
+            (_, value, _, forms) = token
+            for form in (forms or []):
+                normal_form = form['normal_form']
+                words[index] |= {normal_form,}
+            else:
+                words[index] |= {str(value).lower(),}
+        return product(*words)
 
     def matches_prefix(self, stack, token):
         words = self.join_stack([*stack, token])
-        if words:
-            string = ' '.join(words)
+        for form in words:
+            string = ' '.join(form)
             for word in self.dictionary:
                 if word.startswith(string):
                     return True
@@ -49,10 +55,11 @@ class SimpleMatchPipeline(BasePipeline):
 
     def matches_complete_word(self, stack):
         words = self.join_stack(stack)
-        if words:
-            string = ' '.join(words)
-            return string in self.dictionary
-        return False
+        for form in words:
+            string = ' '.join(form)
+            if string in self.dictionary:
+                return True, string
+        return False, None
 
     def get_match(self):
         stack = []
@@ -64,17 +71,16 @@ class SimpleMatchPipeline(BasePipeline):
             else:
                 self.tokens.appendleft(token)
                 break
-        completed = self.matches_complete_word(stack)
+        completed, match = self.matches_complete_word(stack)
         if not completed:
             for token in reversed(stack):
                 self.tokens.appendleft(token)
         else:
-            stack = self.create_new_token(stack)
+            stack = self.create_new_token(stack, match)
         return completed, stack
 
-    def create_new_token(self, stack):
-        string = ' '.join(self.join_stack(stack))
+    def create_new_token(self, stack, match):
         ((_, _, (start_position, _), *_), *_, (_, _, (_, end_position), *_)) = stack
-        return (Token.Word, string, (start_position, end_position), {
-            'grammemes': self.dictionary.get(string),
+        return (Token.Word, match, (start_position, end_position), {
+            'grammemes': self.dictionary.get(match),
         })

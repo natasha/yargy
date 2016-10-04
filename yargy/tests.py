@@ -5,7 +5,7 @@ import collections
 
 
 from yargy.tokenizer import Token, Tokenizer
-from yargy.pipeline import SimpleMatchPipeline
+from yargy.pipeline import DictionaryMatchPipeline
 
 
 class TokenizerTestCase(unittest.TestCase):
@@ -200,24 +200,48 @@ class CombinatorTestCase(unittest.TestCase):
         matches = combinator.resolve_matches(matches)
         self.assertEqual([match[1] for match in matches], ['Default', 'Fullname'])
 
-class SimpleMatchPipelineTestCase(unittest.TestCase):
+class DictionaryMatchPipelineTestCase(unittest.TestCase):
 
     def test_match(self):
         text = 'иван приехал в нижний новгород'
         tokenizer = Tokenizer()
         tokens = collections.deque(tokenizer.transform(text))
-        pipeline = SimpleMatchPipeline(tokens, dictionary={
+        pipeline = DictionaryMatchPipeline(tokens, dictionary={
             'нижний новгород': ['Geox', 'City'],
         })
+        matches = []
         while tokens:
             match, token = pipeline.get_match()
             if not match:
                 token = tokens.popleft()
                 continue
             else:
-                self.assertEqual(token, (
-                    Token.Word,
-                    'нижний новгород',
-                    (15, 30),
-                    {'grammemes': ['Geox', 'City']}
-                ))
+                matches.append(token)
+        self.assertEqual(matches, [(
+            Token.Word,
+            'нижний новгород',
+            (15, 30),
+            {'grammemes': ['Geox', 'City']}
+        )])
+
+    def test_match_in_different_form(self):
+        text = 'в нижнем новгороде прошел ещё один день'
+        tokenizer = Tokenizer()
+        tokens = collections.deque(tokenizer.transform(text))
+        pipeline = DictionaryMatchPipeline(tokens, dictionary={
+            'нижний новгород': ['Geox', 'City'],
+        })
+        matches = []
+        while tokens:
+            match, token = pipeline.get_match()
+            if not match:
+                token = tokens.popleft()
+                continue
+            else:
+                matches.append(token)
+        self.assertEqual(matches, [(
+            Token.Word,
+            'нижний новгород',
+            (2, 18),
+            {'grammemes': ['Geox', 'City']}
+        )])
