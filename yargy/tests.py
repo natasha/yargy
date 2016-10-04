@@ -5,6 +5,7 @@ import collections
 
 
 from yargy.tokenizer import Token, Tokenizer
+from yargy.pipeline import SimpleMatchPipeline
 
 
 class TokenizerTestCase(unittest.TestCase):
@@ -198,3 +199,25 @@ class CombinatorTestCase(unittest.TestCase):
         self.assertEqual(len(matches), 5)
         matches = combinator.resolve_matches(matches)
         self.assertEqual([match[1] for match in matches], ['Default', 'Fullname'])
+
+class SimpleMatchPipelineTestCase(unittest.TestCase):
+
+    def test_match(self):
+        text = 'иван приехал в нижний новгород'
+        tokenizer = Tokenizer()
+        tokens = collections.deque(tokenizer.transform(text))
+        pipeline = SimpleMatchPipeline(tokens, dictionary={
+            'нижний новгород': ['Geox', 'City'],
+        })
+        while tokens:
+            match, token = pipeline.get_match()
+            if not match:
+                token = tokens.popleft()
+                continue
+            else:
+                self.assertEqual(token, (
+                    Token.Word,
+                    'нижний новгород',
+                    (15, 30),
+                    {'grammemes': ['Geox', 'City']}
+                ))
