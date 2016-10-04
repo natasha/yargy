@@ -206,12 +206,12 @@ class DictionaryMatchPipelineTestCase(unittest.TestCase):
         text = 'иван приехал в нижний новгород'
         tokenizer = Tokenizer()
         tokens = collections.deque(tokenizer.transform(text))
-        pipeline = DictionaryMatchPipeline(tokens, dictionary={
+        pipeline = DictionaryMatchPipeline(dictionary={
             'нижний новгород': ['Geox', 'City'],
         })
         matches = []
         while tokens:
-            match, token = pipeline.get_match()
+            match, token = pipeline.get_match(tokens)
             if not match:
                 token = tokens.popleft()
                 continue
@@ -221,19 +221,19 @@ class DictionaryMatchPipelineTestCase(unittest.TestCase):
             Token.Word,
             'нижний новгород',
             (15, 30),
-            {'grammemes': ['Geox', 'City']}
+            [{'grammemes': ['Geox', 'City'], 'normal_form': 'нижний новгород'}]
         )])
 
     def test_match_in_different_form(self):
         text = 'в нижнем новгороде прошел ещё один день'
         tokenizer = Tokenizer()
         tokens = collections.deque(tokenizer.transform(text))
-        pipeline = DictionaryMatchPipeline(tokens, dictionary={
+        pipeline = DictionaryMatchPipeline(dictionary={
             'нижний новгород': ['Geox', 'City'],
         })
         matches = []
         while tokens:
-            match, token = pipeline.get_match()
+            match, token = pipeline.get_match(tokens)
             if not match:
                 token = tokens.popleft()
                 continue
@@ -243,5 +243,5 @@ class DictionaryMatchPipelineTestCase(unittest.TestCase):
             Token.Word,
             'нижний новгород',
             (2, 18),
-            {'grammemes': ['Geox', 'City']}
+            [{'grammemes': ['Geox', 'City'], 'normal_form': 'нижний новгород'}]
         )])

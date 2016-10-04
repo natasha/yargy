@@ -12,8 +12,7 @@ class BasePipeline(object):
     that purposes.
     '''
 
-    def __init__(self, tokens, dictionary):
-        self.tokens = tokens
+    def __init__(self, dictionary):
         self.dictionary = dictionary
 
     def matches_prefix(self, stack, token):
@@ -25,7 +24,7 @@ class BasePipeline(object):
     def join_stack(self, stack):
         raise NotImplementedError
 
-    def get_match(self):
+    def get_match(self, tokens):
         raise NotImplementedError
 
     def create_new_token(self, stack):
@@ -61,26 +60,30 @@ class DictionaryMatchPipeline(BasePipeline):
                 return True, string
         return False, None
 
-    def get_match(self):
+    def get_match(self, tokens):
         stack = []
-        while self.tokens:
-            token = self.tokens.popleft()
+        while tokens:
+            token = tokens.popleft()
             match = self.matches_prefix(stack, token)
             if match:
                 stack.append(token)
             else:
-                self.tokens.appendleft(token)
+                tokens.appendleft(token)
                 break
         completed, match = self.matches_complete_word(stack)
         if not completed:
             for token in reversed(stack):
-                self.tokens.appendleft(token)
+                tokens.appendleft(token)
         else:
             stack = self.create_new_token(stack, match)
         return completed, stack
 
     def create_new_token(self, stack, match):
-        ((_, _, (start_position, _), *_), *_, (_, _, (_, end_position), *_)) = stack
-        return (Token.Word, match, (start_position, end_position), {
+        if len(stack) >= 2:
+            ((_, _, (start_position, _), *_), *_, (_, _, (_, end_position), *_)) = stack
+        else:
+            (_, _, (start_position, end_position), _) = stack[0]
+        return (Token.Word, match, (start_position, end_position), [{
             'grammemes': self.dictionary.get(match),
-        })
+            'normal_form': match,
+        }])

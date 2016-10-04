@@ -13,7 +13,8 @@ class Stack(list):
 
 class FactParser(object):
 
-    def __init__(self, tokenizer=None, cache_size=0):
+    def __init__(self, tokenizer=None, cache_size=0, pipelines=[]):
+        self.pipelines = pipelines
         self.tokenizer = tokenizer or Tokenizer(cache_size=cache_size)
 
     def parse(self, text, rules, out=None):
@@ -40,7 +41,12 @@ class FactParser(object):
                 rule_index = 0
                 continue
             else:
-                token = tokens.popleft()
+                for pipeline in self.pipelines:
+                    match, token = pipeline.get_match(tokens)
+                    if match:
+                        break
+                else:
+                    token = tokens.popleft()
                 if token[0] == rule_type:
                     if all(self.check_labels(token, rule_labels, stack.flatten())):
                         stack.append((rule_index, token))
