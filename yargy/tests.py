@@ -207,7 +207,7 @@ class DictionaryMatchPipelineTestCase(unittest.TestCase):
         tokenizer = Tokenizer()
         tokens = collections.deque(tokenizer.transform(text))
         pipeline = DictionaryMatchPipeline(dictionary={
-            'нижний новгород': ['Geox', 'City'],
+            'нижний новгород': [{'grammemes': ['Geox', 'City'], 'normal_form': 'нижний новгород'}],
         })
         matches = []
         while tokens:
@@ -229,7 +229,7 @@ class DictionaryMatchPipelineTestCase(unittest.TestCase):
         tokenizer = Tokenizer()
         tokens = collections.deque(tokenizer.transform(text))
         pipeline = DictionaryMatchPipeline(dictionary={
-            'нижний новгород': ['Geox', 'City'],
+            'нижний новгород': [{'grammemes': ['Geox', 'City'], 'normal_form': 'нижний новгород'}],
         })
         matches = []
         while tokens:
