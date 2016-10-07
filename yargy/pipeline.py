@@ -39,16 +39,15 @@ class DictionaryMatchPipeline(BasePipeline):
             for form in (forms or []):
                 normal_form = form['normal_form']
                 words[index] |= {normal_form,}
-            else:
-                words[index] |= {str(value).lower(),}
+            words[index] |= {str(value).lower(),}
         return product(*words)
 
     def matches_prefix(self, stack, token):
         words = self.join_stack([*stack, token])
         for form in words:
             string = ' '.join(form)
-            for word in self.dictionary:
-                if word.startswith(string):
+            for key in self.dictionary.keys():
+                if key.startswith(string):
                     return True
         return False
 
@@ -70,20 +69,19 @@ class DictionaryMatchPipeline(BasePipeline):
             else:
                 tokens.appendleft(token)
                 break
-        completed, match = self.matches_complete_word(stack)
-        if not completed:
-            for token in reversed(stack):
-                tokens.appendleft(token)
-        else:
-            stack = self.create_new_token(stack, match)
-        return completed, stack
+        if stack:
+            completed, match = self.matches_complete_word(stack)
+            if not completed:
+                for token in reversed(stack):
+                    tokens.appendleft(token)
+            else:
+                stack = self.create_new_token(stack, match)
+                return True, stack
+        return False, None
 
     def create_new_token(self, stack, match):
         if len(stack) >= 2:
             ((_, _, (start_position, _), *_), *_, (_, _, (_, end_position), *_)) = stack
         else:
             (_, _, (start_position, end_position), _) = stack[0]
-        return (Token.Word, match, (start_position, end_position), [{
-            'grammemes': self.dictionary.get(match),
-            'normal_form': match,
-        }])
+        return (Token.Word, match, (start_position, end_position), self.dictionary.get(match))
