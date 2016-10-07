@@ -7,7 +7,7 @@ import functools
 from yargy.utils import frange
 from pymorphy2 import MorphAnalyzer
 
-russian_token_regex = r'(?P<russian>[а-яё][а-яё\-\']*)'
+russian_token_regex = r'(?P<russian>[а-яё][а-яё\-]*)'
 latin_token_regex = r'(?P<latin>[a-z][a-z\-\']*)'
 int_separated_token_regexp = r'(?P<int_separated>[1-9]\d*(\s\d{3})+)'
 int_range_token_regexp = r'(?P<int_range>[+-]?\d+\s*?[\-\—]\s*?\d+)'
@@ -63,7 +63,7 @@ class Tokenizer(object):
             if group == 'russian':
                 token = (Token.Word, value, position, self.cache(value))
             elif group == 'latin':
-                token = (Token.Word, value, position, [{'grammemes': set(['LATN']), 'normal_form': value.lower()}])
+                token = (Token.Word, value, position, [{'grammemes': {'LATN'}, 'normal_form': value.lower()}])
             elif group == 'quote':
                 token = (Token.Quote, value, position, None)
             elif group == 'float':
