@@ -65,29 +65,31 @@ class Tokenizer(object):
             value = match.group(0)
             position = match.span()
             if group == 'russian':
-                token = (Token.Word, value, position, self.cache(value))
+                yield (Token.Word, value, position, self.cache(value))
             elif group == 'latin':
-                token = (Token.Word, value, position, [{'grammemes': {'LATN'}, 'normal_form': value.lower()}])
+                yield (Token.Word, value, position, [{'grammemes': {'LATN'}, 'normal_form': value.lower()}])
             elif group == 'quote':
-                token = (Token.Quote, value, position, None)
+                yield (Token.Quote, value, position, None)
             elif group == 'float':
-                token = (Token.Number, float(value.replace(',', '.')), position, None)
+                yield (Token.Number, float(value.replace(',', '.')), position, None)
             elif group == 'int':
-                token = (Token.Number, int(value), position, None)
+                yield (Token.Number, int(value), position, None)
             elif group == 'int_range':
                 values = map(int, value.split('-'))
-                token = (Token.Range, range(*values), position, None)
+                yield (Token.Range, range(*values), position, None)
             elif group == 'float_range':
                 values = map(float, value.split('-'))
-                token = (Token.Range, frange(*values, step=self.frange_step), position, None)
+                yield (Token.Range, frange(*values, step=self.frange_step), position, None)
             elif group == 'punct':
-                token = (Token.Punct, value, position, None)
+                yield (Token.Punct, value, position, None)
             elif group == 'int_separated':
                 value = int(re.sub('\s', '', value))
-                token = (Token.Number, value, position, None)
+                yield (Token.Number, value, position, None)
             elif group == 'time':
                 hours, minutes = map(int, value.split(':'))
-                token = (Token.Datetime, datetime.time(hours, minutes), position, None)
+                if 0 <= hours <= 23 and 0 <= minutes <= 59:
+                    yield (Token.Datetime, datetime.time(hours, minutes), position, None)
+                else:
+                    raise NotImplementedError(value)
             else:
                 raise NotImplementedError
-            yield token
