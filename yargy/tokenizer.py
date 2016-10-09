@@ -76,10 +76,10 @@ class Tokenizer(object):
             elif group == 'int':
                 yield (Token.Number, int(value), position, None)
             elif group == 'int_range':
-                values = map(int, value.split('-'))
+                values = map(int, re.split(r'[\-\—]', value))
                 yield (Token.Range, range(*values), position, None)
             elif group == 'float_range':
-                values = map(float, value.split('-'))
+                values = map(float, re.split(r'[\-\—]', value))
                 yield (Token.Range, frange(*values, step=self.frange_step), position, None)
             elif group == 'punct':
                 yield (Token.Punct, value, position, None)
