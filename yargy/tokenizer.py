@@ -40,7 +40,8 @@ class Token(enum.Enum):
     Punct = 3
     Quote = 4
     Datetime = 5
-    Term = 5
+
+    Term = 6
 
 class Tokenizer(object):
 
