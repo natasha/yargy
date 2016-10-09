@@ -1,5 +1,6 @@
 import enum
 import yargy
+import datetime
 import unittest
 import collections
 
@@ -44,6 +45,12 @@ class TokenizerTestCase(unittest.TestCase):
         tokens = list(self.tokenizer.transform(text))
         self.assertEqual(len(tokens), 4)
         self.assertEqual([t[0] for t in tokens], [Token.Quote] * 4)
+
+    def test_match_time(self):
+        text = '12:00, суббота.'
+        tokens = list(self.tokenizer.transform(text))
+        self.assertEqual(tokens[0], (Token.Datetime, datetime.time(12, 0), (0, 5), None))
+
 
 class FactParserTestCase(unittest.TestCase):
 

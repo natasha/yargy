@@ -2,6 +2,7 @@
 import re
 import enum
 import string
+import datetime
 import functools
 
 from yargy.utils import frange
@@ -9,6 +10,7 @@ from pymorphy2 import MorphAnalyzer
 
 russian_token_regex = r'(?P<russian>[а-яё][а-яё\-]*)'
 latin_token_regex = r'(?P<latin>[a-z][a-z\-\']*)'
+time_token_regex = r'(?P<time>\d{2}:\d{2})'
 int_separated_token_regexp = r'(?P<int_separated>[1-9]\d*(\s\d{3})+)'
 int_range_token_regexp = r'(?P<int_range>[+-]?\d+\s*?[\-\—]\s*?\d+)'
 int_token_regex = r'(?P<int>[+-]?\d+)'
@@ -19,6 +21,7 @@ punctuation_token_regex = string.punctuation.join(['(?P<punct>[', r']+)'])
 complete_token_regex = r'|'.join((
     float_range_token_regex,
     float_token_regex,
+    time_token_regex,
     int_separated_token_regexp,
     int_range_token_regexp,
     int_token_regex,
@@ -36,6 +39,7 @@ class Token(enum.Enum):
     Range = 2
     Punct = 3
     Quote = 4
+    Datetime = 5
     Term = 5
 
 class Tokenizer(object):
@@ -81,6 +85,9 @@ class Tokenizer(object):
             elif group == 'int_separated':
                 value = int(re.sub('\s', '', value))
                 token = (Token.Number, value, position, None)
+            elif group == 'time':
+                hours, minutes = map(int, value.split(':'))
+                token = (Token.Datetime, datetime.time(hours, minutes), position, None)
             else:
                 raise NotImplementedError
             yield token
