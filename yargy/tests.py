@@ -53,7 +53,11 @@ class TokenizerTestCase(unittest.TestCase):
 
         text = 'со счетом 80:79'
         tokens = list(self.tokenizer.transform(text))
-        self.assertEqual(tokens, [])
+        self.assertEqual(tokens[-3:], [
+            (Token.Number, 80, (10, 12), None),
+            (Token.Punct, ':', (12, 13), None),
+            (Token.Number, 79, (13, 15), None),
+        ])
 
 
 class FactParserTestCase(unittest.TestCase):
