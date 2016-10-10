@@ -51,6 +51,10 @@ class TokenizerTestCase(unittest.TestCase):
         tokens = list(self.tokenizer.transform(text))
         self.assertEqual(tokens[0], (Token.Datetime, datetime.time(12, 0), (0, 5), None))
 
+        text = 'со счетом 80:79'
+        tokens = list(self.tokenizer.transform(text))
+        self.assertEqual(tokens, [])
+
 
 class FactParserTestCase(unittest.TestCase):
 
@@ -214,7 +218,7 @@ class DictionaryMatchPipelineTestCase(unittest.TestCase):
         tokenizer = Tokenizer()
         tokens = collections.deque(tokenizer.transform(text))
         pipeline = DictionaryMatchPipeline(dictionary={
-            'нижний новгород': [{'grammemes': ['Geox', 'City'], 'normal_form': 'нижний новгород'}],
+            'нижний_новгород': [{'grammemes': ['Geox', 'City'], 'normal_form': 'нижний новгород'}],
         })
         matches = []
         while tokens:
@@ -226,7 +230,7 @@ class DictionaryMatchPipelineTestCase(unittest.TestCase):
                 matches.append(token)
         self.assertEqual(matches, [(
             Token.Word,
-            'нижний новгород',
+            'нижний_новгород',
             (15, 30),
             [{'grammemes': ['Geox', 'City'], 'normal_form': 'нижний новгород'}]
         )])
@@ -236,7 +240,7 @@ class DictionaryMatchPipelineTestCase(unittest.TestCase):
         tokenizer = Tokenizer()
         tokens = collections.deque(tokenizer.transform(text))
         pipeline = DictionaryMatchPipeline(dictionary={
-            'нижний новгород': [{'grammemes': ['Geox', 'City'], 'normal_form': 'нижний новгород'}],
+            'нижний_новгород': [{'grammemes': ['Geox', 'City'], 'normal_form': 'нижний новгород'}],
         })
         matches = []
         while tokens:
@@ -248,7 +252,7 @@ class DictionaryMatchPipelineTestCase(unittest.TestCase):
                 matches.append(token)
         self.assertEqual(matches, [(
             Token.Word,
-            'нижний новгород',
+            'нижний_новгород',
             (2, 18),
             [{'grammemes': ['Geox', 'City'], 'normal_form': 'нижний новгород'}]
         )])

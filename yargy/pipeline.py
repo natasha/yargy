@@ -32,6 +32,8 @@ class BasePipeline(object):
 
 class DictionaryMatchPipeline(BasePipeline):
 
+    JOIN_SEPARATOR = '_'
+
     def join_stack(self, tokens):
         words = [set() for _ in tokens]
         for (index, token) in enumerate(tokens):
@@ -45,7 +47,7 @@ class DictionaryMatchPipeline(BasePipeline):
     def matches_prefix(self, stack, token):
         words = self.join_stack([*stack, token])
         for form in words:
-            string = ' '.join(form)
+            string = self.JOIN_SEPARATOR.join(form)
             for key in self.dictionary.keys():
                 if key.startswith(string):
                     return True
@@ -54,7 +56,7 @@ class DictionaryMatchPipeline(BasePipeline):
     def matches_complete_word(self, stack):
         words = self.join_stack(stack)
         for form in words:
-            string = ' '.join(form)
+            string = self.JOIN_SEPARATOR.join(form)
             if string in self.dictionary:
                 return True, string
         return False, None
