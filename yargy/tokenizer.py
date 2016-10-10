@@ -91,6 +91,12 @@ class Tokenizer(object):
                 if 0 <= hours <= 23 and 0 <= minutes <= 59:
                     yield (Token.Datetime, datetime.time(hours, minutes), position, None)
                 else:
-                    raise NotImplementedError(value)
+                    index = value.index(':')
+                    start = (position[0], position[0] + index)
+                    middle = (position[0] + index, position[0] + index + 1)
+                    finish = (position[1] - index, position[1])
+                    yield (Token.Number, hours, start, None)
+                    yield (Token.Punct, ':', middle, None)
+                    yield (Token.Number, minutes, finish, None)
             else:
                 raise NotImplementedError
