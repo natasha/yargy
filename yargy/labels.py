@@ -6,46 +6,46 @@ def get_token_features(candidate, case, grammemes):
     return ((g in t["grammemes"] for g in grammemes) for t in (case, candidate))
 
 def is_lower_label(token, _, stack):
-    return token[1].islower()
+    return token.value.islower()
 
 def is_upper_label(token, _, stack):
-    return token[1].isupper()
+    return token.value.isupper()
 
 def is_title_label(token, _, stack):
-    return token[1].istitle()
+    return token.value.istitle()
 
 def is_capitalized_label(token, _, stack):
     """
     http://bugs.python.org/issue7008
     """
-    return token[1][0].isupper() and token[1][-1].islower()
+    return token.value[0].isupper() and token.value[-1].islower()
 
 def eq_label(token, value, stack):
-    return token[1] == value
+    return token.value == value
 
 def in_label(token, value, stack):
-    return token[1] in value
+    return token.value in value
 
 def gt_label(token, value, stack):
-    return token[1] > value
+    return token.value > value
 
 def lt_label(token, value, stack):
-    return token[1] < value
+    return token.value < value
 
 def gte_label(token, value, stack):
-    return token[1] >= value
+    return token.value >= value
 
 def lte_label(token, value, stack):
-    return token[1] <= value
+    return token.value <= value
 
 def is_instance_label(token, value, stack):
-    return isinstance(token[1], value)
+    return isinstance(token.value, value)
 
 def custom_label(token, function, stack):
     return function(token, stack)
 
 def gram_label(token, value, stack):
-    for form in token[3]:
+    for form in token.forms:
         if value in form["grammemes"]:
             return True
     return False
@@ -63,8 +63,8 @@ def gram_not_in_label(token, values, stack):
     return all(gram_not_label(token, value, stack) for value in values)
 
 def gender_match_label(token, index, stack, genders=GENDERS):
-    for candidate_form in token[3]:
-        for case_form in stack[index][3]:
+    for candidate_form in token.forms:
+        for case_form in stack[index].forms:
             results = get_token_features(candidate_form, case_form, genders)
 
             *case_token_genders, case_token_msf, case_token_gndr = next(results)
@@ -88,8 +88,8 @@ def gender_match_label(token, index, stack, genders=GENDERS):
     return False
 
 def number_match_label(token, index, stack, numbers=NUMBERS):
-    for candidate_form in token[3]:
-        for case_form in stack[index][3]:
+    for candidate_form in token.forms:
+        for case_form in stack[index].forms:
             results = get_token_features(candidate_form, case_form, numbers)
             *case_form_features, case_form_only_plur = next(results)
             *candidate_form_features, candidate_form_only_plur = next(results)
@@ -105,8 +105,8 @@ def number_match_label(token, index, stack, numbers=NUMBERS):
     return False
 
 def case_match_label(token, index, stack, cases=CASES):
-    for candidate_form in token[3]:
-        for case_form in stack[index][3]:
+    for candidate_form in token.forms:
+        for case_form in stack[index].forms:
             results = get_token_features(candidate_form, case_form, cases)
             *case_form_features, is_case_fixed = next(results)
             *candidate_form_features, is_candidate_fixed = next(results)

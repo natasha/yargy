@@ -4,6 +4,7 @@ import enum
 import string
 import datetime
 import functools
+import collections
 
 from yargy.utils import frange
 from pymorphy2 import MorphAnalyzer
@@ -43,6 +44,8 @@ class Token(enum.Enum):
 
     Term = 6
 
+TokenClass = collections.namedtuple('Token', ['type', 'value', 'position', 'forms'])
+
 class Tokenizer(object):
 
     def __init__(self, pattern=token_regex, morph_analyzer=None, cache_size=0, frange_step=0.1):
@@ -66,37 +69,37 @@ class Tokenizer(object):
             value = match.group(0)
             position = match.span()
             if group == 'russian':
-                yield (Token.Word, value, position, self.cache(value))
+                yield TokenClass(Token.Word, value, position, self.cache(value))
             elif group == 'latin':
-                yield (Token.Word, value, position, [{'grammemes': {'LATN'}, 'normal_form': value.lower()}])
+                yield TokenClass(Token.Word, value, position, [{'grammemes': {'LATN'}, 'normal_form': value.lower()}])
             elif group == 'quote':
-                yield (Token.Quote, value, position, None)
+                yield TokenClass(Token.Quote, value, position, None)
             elif group == 'float':
-                yield (Token.Number, float(value.replace(',', '.')), position, None)
+                yield TokenClass(Token.Number, float(value.replace(',', '.')), position, None)
             elif group == 'int':
-                yield (Token.Number, int(value), position, None)
+                yield TokenClass(Token.Number, int(value), position, None)
             elif group == 'int_range':
                 values = map(int, re.split(r'[\-\—]', value))
-                yield (Token.Range, range(*values), position, None)
+                yield TokenClass(Token.Range, range(*values), position, None)
             elif group == 'float_range':
                 values = map(float, re.split(r'[\-\—]', value))
-                yield (Token.Range, frange(*values, step=self.frange_step), position, None)
+                yield TokenClass(Token.Range, frange(*values, step=self.frange_step), position, None)
             elif group == 'punct':
-                yield (Token.Punct, value, position, None)
+                yield TokenClass(Token.Punct, value, position, None)
             elif group == 'int_separated':
                 value = int(re.sub('\s', '', value))
-                yield (Token.Number, value, position, None)
+                yield TokenClass(Token.Number, value, position, None)
             elif group == 'time':
                 hours, minutes = map(int, value.split(':'))
                 if 0 <= hours <= 23 and 0 <= minutes <= 59:
-                    yield (Token.Datetime, datetime.time(hours, minutes), position, None)
+                    yield TokenClass(Token.Datetime, datetime.time(hours, minutes), position, None)
                 else:
                     index = value.index(':')
                     start = (position[0], position[0] + index)
                     middle = (position[0] + index, position[0] + index + 1)
                     finish = (position[1] - index, position[1])
-                    yield (Token.Number, hours, start, None)
-                    yield (Token.Punct, ':', middle, None)
-                    yield (Token.Number, minutes, finish, None)
+                    yield TokenClass(Token.Number, hours, start, None)
+                    yield TokenClass(Token.Punct, ':', middle, None)
+                    yield TokenClass(Token.Number, minutes, finish, None)
             else:
                 raise NotImplementedError
