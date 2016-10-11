@@ -5,7 +5,7 @@ from yargy import Token, FactParser
 
 text = open("leo-tolstoy-war-and-peace.txt").read()
 
-rules = ((Token.Word, {"labels": [
+grammar = ((Token.Word, {"labels": [
             ("gram", "Name"),
         ]}), 
          (Token.Word, {"labels": [
@@ -13,12 +13,12 @@ rules = ((Token.Word, {"labels": [
             ("gender-match", 0), # labels index is rule-based, 
                                  # so this VERB will be
                                  # compared with word
-                                 # that matches rules[0]
+                                 # that matches grammar[0]
         ]}), 
          (Token.Term, {})
 )
 
-parser = FactParser(rules)
+parser = FactParser(grammar)
 
 for line in text.splitlines():
     for result in parser.parse(line):
@@ -75,3 +75,22 @@ Also `yargy` tries to parse:
 | `gte` | Same as `>=` in Python | `('gte', 10)` |
 | `lte` | Same as `<=` in Python | `('lte', 1990)` |
 | `in` | Same as `in` in Python | `('in', range(0, 10))` will match number in range between 0 and 10 |
+
+# Options
+
+Its possible to define `optional` and `repeatable` rules.  
+For example, next grammar will math both `нижний (ADJF) новгород (NOUN/Geox)` and `москва (NOUN/Geox)`:
+
+```python
+
+grammar = (
+    (Token.Word, {"labels": [
+        ("gram", "ADJF"),
+    ], "optional": True}),
+    (Token.Word, {"labels": [
+        ("gram": "Geox"),
+    ]}),
+    (Token.Term, {}),
+)
+
+```
