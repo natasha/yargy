@@ -29,6 +29,7 @@ class FactParser(object):
         """
         stack = Stack()
         rule_index = 0
+        rule_was_optional = False
         while tokens:
             rule_type, rule_options = rules[rule_index]
             rule_labels = rule_options.get("labels", [])
@@ -39,6 +40,7 @@ class FactParser(object):
                     yield stack.flatten()
                 stack = Stack()
                 rule_index = 0
+                rule_was_optional = False
                 continue
             else:
                 for pipeline in self.pipelines:
@@ -56,9 +58,12 @@ class FactParser(object):
                 if (rule_repeat and stack.have_matches_by_rule_index(rule_index)) or rule_optional:
                     tokens.appendleft(token)
                     rule_index += 1
+                    if rule_optional:
+                        rule_was_optional = True
                 else:
                     if rule_index > 0:
-                        tokens.appendleft(token)
+                        if not rule_was_optional:
+                            tokens.appendleft(token)
                     if (stack or token) and not (out is None):
                         if not rule_index > 0:
                             out.append(token)
@@ -66,6 +71,7 @@ class FactParser(object):
                             out.append(token)
                     stack = Stack()
                     rule_index = 0
+                    rule_was_optional = False
         else:
             if stack and rule_index == len(rules) - 1:
                 yield stack.flatten()
