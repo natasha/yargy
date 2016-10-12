@@ -79,6 +79,8 @@ class Tokenizer(object):
             elif group == 'int':
                 yield TokenClass(Token.Number, int(value), position, None)
             elif group == 'int_range':
+                if value[0] == '-':
+                    value = value[1:]
                 values = map(int, re.split(r'[\-\—]', value))
                 yield TokenClass(Token.Range, range(*values), position, None)
             elif group == 'float_range':
