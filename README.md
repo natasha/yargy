@@ -95,6 +95,12 @@ grammar = (
 
 ```
 
+| Option | Regex equivalent |
+| ------ | ---------------- |
+| `optional` | `?` |  
+| `repeat` | `+` |  
+| `optional` and `repeatable` | `*` |  
+
 # Pipelines
 
 Pipelines is a way to preprocess stream of tokens before passing it to parser. For example, pipeline can merge multiple nearby tokens into one and set your grammemes to it, like `['нижний', 'новгород'] ~> ['нижний_новгород/Geox:City']`  
