@@ -126,6 +126,9 @@ def gnc_match_label(token, index, stack):
 def dictionary_label(token, values, stack):
     return any((form["normal_form"] in values) for form in token[3])
 
+def dictionary_not_label(token, values, stack):
+    return not dictionary_label(token, values, stack)
+
 LABELS_LOOKUP_MAP = {
     "gram": gram_label,
     "gram-any": gram_any_label,
@@ -133,6 +136,7 @@ LABELS_LOOKUP_MAP = {
     "gram-not": gram_not_label,
     "gram-not-in": gram_not_in_label,
     "dictionary": dictionary_label,
+    "dictionary-not": dictionary_not_label,
 
     "gender-match": gender_match_label,
     "number-match": number_match_label,
