@@ -1,9 +1,9 @@
-GENDERS = ("masc", "femn", "neut", "Ms-f", "GNdr")
-NUMBERS = ("sing", "plur", "Pltm")
-CASES = ("nomn", "gent", "datv", "accs", "ablt", "loct", "voct", "gen2", "acc2", "loc2", "Fixd")
+GENDERS = ('masc', 'femn', 'neut', 'Ms-f', 'GNdr')
+NUMBERS = ('sing', 'plur', 'Pltm')
+CASES = ('nomn', 'gent', 'datv', 'accs', 'ablt', 'loct', 'voct', 'gen2', 'acc2', 'loc2', 'Fixd')
 
 def get_token_features(candidate, case, grammemes):
-    return ((g in t["grammemes"] for g in grammemes) for t in (case, candidate))
+    return ((g in t['grammemes'] for g in grammemes) for t in (case, candidate))
 
 def is_lower_label(token, _, stack):
     return token.value.islower()
@@ -15,13 +15,16 @@ def is_title_label(token, _, stack):
     return token.value.istitle()
 
 def is_capitalized_label(token, _, stack):
-    """
+    '''
     http://bugs.python.org/issue7008
-    """
+    '''
     return token.value[0].isupper() and token.value[-1].islower()
 
 def eq_label(token, value, stack):
     return token.value == value
+
+def not_eq_label(token, value, stack):
+    return token.value != value
 
 def in_label(token, value, stack):
     return token.value in value
@@ -46,7 +49,7 @@ def custom_label(token, function, stack):
 
 def gram_label(token, value, stack):
     for form in token.forms:
-        if value in form["grammemes"]:
+        if value in form['grammemes']:
             return True
     return False
 
@@ -76,7 +79,7 @@ def gender_match_label(token, index, stack, genders=GENDERS):
                         return True
                 elif case_token_gndr or candidate_token_gndr:
                     return True
-                elif "plur" in case_form["grammemes"] and "plur" in candidate_form["grammemes"]:
+                elif 'plur' in case_form['grammemes'] and 'plur' in candidate_form['grammemes']:
                     return True
                 else:
                     if (case_token_genders[0] and candidate_token_genders[0]) or \
@@ -124,32 +127,33 @@ def gnc_match_label(token, index, stack):
     ])
 
 def dictionary_label(token, values, stack):
-    return any((form["normal_form"] in values) for form in token[3])
+    return any((form['normal_form'] in values) for form in token.forms)
 
 LABELS_LOOKUP_MAP = {
-    "gram": gram_label,
-    "gram-any": gram_any_label,
-    "gram-in": gram_in_label,
-    "gram-not": gram_not_label,
-    "gram-not-in": gram_not_in_label,
-    "dictionary": dictionary_label,
+    'gram': gram_label,
+    'gram-any': gram_any_label,
+    'gram-in': gram_in_label,
+    'gram-not': gram_not_label,
+    'gram-not-in': gram_not_in_label,
+    'dictionary': dictionary_label,
 
-    "gender-match": gender_match_label,
-    "number-match": number_match_label,
-    "case-match": case_match_label,
-    "gnc-match": gnc_match_label,
+    'gender-match': gender_match_label,
+    'number-match': number_match_label,
+    'case-match': case_match_label,
+    'gnc-match': gnc_match_label,
 
-    "is-lower": is_lower_label,
-    "is-upper": is_upper_label,
-    "is-title": is_title_label,
-    "is-capitalized": is_capitalized_label,
+    'is-lower': is_lower_label,
+    'is-upper': is_upper_label,
+    'is-title': is_title_label,
+    'is-capitalized': is_capitalized_label,
 
-    "eq": eq_label,
-    "in": in_label,
-    "gt": gt_label,
-    "lt": lt_label,
-    "gte": gte_label,
-    "lte": lte_label,
-    "is-instance": is_instance_label,
-    "custom": custom_label,
+    'eq': eq_label,
+    'not-eq': not_eq_label,
+    'in': in_label,
+    'gt': gt_label,
+    'lt': lt_label,
+    'gte': gte_label,
+    'lte': lte_label,
+    'is-instance': is_instance_label,
+    'custom': custom_label,
 }

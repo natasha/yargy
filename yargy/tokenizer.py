@@ -34,17 +34,7 @@ complete_token_regex = r'|'.join((
 
 token_regex = re.compile(complete_token_regex, re.UNICODE | re.IGNORECASE)
 
-class Token(enum.Enum):
-    Word = 0
-    Number = 1
-    Range = 2
-    Punct = 3
-    Quote = 4
-    Datetime = 5
-
-    Term = 6
-
-TokenClass = collections.namedtuple('Token', ['type', 'value', 'position', 'forms'])
+Token = collections.namedtuple('Token', ['value', 'position', 'forms'])
 
 class Tokenizer(object):
 
@@ -69,39 +59,52 @@ class Tokenizer(object):
             value = match.group(0)
             position = match.span()
             if group == 'russian':
-                yield TokenClass(Token.Word, value, position, self.cache(value))
+                yield Token(value, position, self.cache(value))
             elif group == 'latin':
-                yield TokenClass(Token.Word, value, position, [{'grammemes': {'LATN'}, 'normal_form': value.lower()}])
+                yield Token(value, position, [
+                    {
+                        'grammemes': {'LATN'},
+                        'normal_form': value.lower(),
+                    }
+                ])
             elif group == 'quote':
-                yield TokenClass(Token.Quote, value, position, None)
+                yield Token(value, position, [
+                    {
+                        'grammemes': {'QUOTE', },
+                        'normal_form': value
+                    }
+                ])
             elif group == 'float':
-                yield TokenClass(Token.Number, float(value.replace(',', '.')), position, None)
+                yield Token(float(value.replace(',', '.')), position, [
+                    {'grammemes': {'NUMBER', 'FLOAT'}, 'normal_form': value}
+                ])
             elif group == 'int':
-                yield TokenClass(Token.Number, int(value), position, None)
+                yield Token(int(value), position, [
+                    {'grammemes': {'NUMBER', 'INT'}, 'normal_form': value}
+                ])
             elif group == 'int_range':
                 if value[0] == '-':
                     value = value[1:]
                 values = map(int, re.split(r'[\-\—]', value))
-                yield TokenClass(Token.Range, range(*values), position, None)
+                yield Token(range(*values), position, [
+                    {'grammemes': {'RANGE', 'INT-RANGE'}, 'normal_form': value}
+                ])
             elif group == 'float_range':
                 values = map(float, re.split(r'[\-\—]', value))
-                yield TokenClass(Token.Range, frange(*values, step=self.frange_step), position, None)
+                yield Token(frange(*values, step=self.frange_step), position, [
+                    {'grammemes': {'RANGE', 'FLOAT-RANGE'}, 'normal_form': value}
+                ])
             elif group == 'punct':
-                yield TokenClass(Token.Punct, value, position, None)
+                yield Token(value, position, [
+                    {
+                        'grammemes': {'PUNCT', },
+                        'normal_form': value
+                    }
+                ])
             elif group == 'int_separated':
                 value = int(re.sub('\s', '', value))
-                yield TokenClass(Token.Number, value, position, None)
-            elif group == 'time':
-                hours, minutes = map(int, value.split(':'))
-                if 0 <= hours <= 23 and 0 <= minutes <= 59:
-                    yield TokenClass(Token.Datetime, datetime.time(hours, minutes), position, None)
-                else:
-                    index = value.index(':')
-                    start = (position[0], position[0] + index)
-                    middle = (position[0] + index, position[0] + index + 1)
-                    finish = (position[1] - index, position[1])
-                    yield TokenClass(Token.Number, hours, start, None)
-                    yield TokenClass(Token.Punct, ':', middle, None)
-                    yield TokenClass(Token.Number, minutes, finish, None)
+                yield Token(value, position, [
+                    {'grammemes': {'NUMBER', 'INT-SEPARATED'}, 'normal_form': value}
+                ])
             else:
                 raise NotImplementedError

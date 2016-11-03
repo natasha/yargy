@@ -1,50 +1,5 @@
 # yargy [![Build Status](https://travis-ci.org/bureaucratic-labs/yargy.svg?branch=master)](https://travis-ci.org/bureaucratic-labs/yargy)
 
-```python
-from yargy import Token, FactParser
-
-text = open("leo-tolstoy-war-and-peace.txt").read()
-
-grammar = ((Token.Word, {"labels": [
-            ("gram", "Name"),
-        ]}), 
-         (Token.Word, {"labels": [
-            ("gram", "VERB"),
-            ("gender-match", 0), # labels index is rule-based, 
-                                 # so this VERB will be
-                                 # compared with word
-                                 # that matches grammar[0]
-        ]}), 
-         (Token.Term, {})
-)
-
-parser = FactParser(grammar)
-
-for line in text.splitlines():
-    for result in parser.parse(line):
-        print(result)
-
-"""
-Will print:
-[
-    ('word', 'Василий', (292, 299), ...), 
-    ('word', 'говорил', (300, 307), ...),
-],
-[
-    ('word', 'Пьер', (771, 775), ...),
-    ('word', 'был', (776, 779), ...),
-],
-[
-    ('word', 'Элен', (40, 44), ...),
-    ('word', 'сказала', (49, 56), ...),
-],
-[
-    ('word', 'Ипполит', (6, 13), ...),
-    ('word', 'перенес', (14, 21), ...),
-],
-"""
-```
-
 # Labels
 
 | Name | Description | Usage |
@@ -62,14 +17,11 @@ Will print:
 | `custom` | Calls given function | `('custom', lambda: token, value, stack: 'VERB' in token['grammemes'])` will match tokens that have `VERB` in grammemes set. |  
 
 Next labels can be used in comparing of raw token values.  
-In tokenization process, `yargy` converts numbers in given text to python `int`/`float`, so when text=`1 ипполит` output of tokenizer'll be roughly equal to `[('int', ...), ('word', ...), ...]`  
-Also `yargy` tries to parse:
-* dates & datetime, result converted to `datetime.datetime` object  
-* int & float ranges, result represented as `range`  
 
 | Name | Description | Usage |
 | ---- | ----------- | ----- |
 | `eq` | Same as `==` in Python | `('eq', 1)` will match `1` and not `sample` |
+| `not-eq` | Same as `!=` in Python | `('not-eq', 0)` will match everything except `0` |
 | `gt` | Same as `>` in Python | `('gt', 0)` |
 | `lt` | Same as `<` in Python | `('lt', 1990)` |
 | `gte` | Same as `>=` in Python | `('gte', 10)` |
@@ -79,26 +31,11 @@ Also `yargy` tries to parse:
 # Options
 
 Its possible to define `optional` and `repeatable` rules.  
-For example, next grammar will math both `нижний (ADJF) новгород (NOUN/Geox)` and `москва (NOUN/Geox)`:
-
-```python
-
-grammar = (
-    (Token.Word, {"labels": [
-        ("gram", "ADJF"),
-    ], "optional": True}),
-    (Token.Word, {"labels": [
-        ("gram": "Geox"),
-    ]}),
-    (Token.Term, {}),
-)
-
-```
 
 | Option | Regex equivalent |
 | ------ | ---------------- |
 | `optional` | `?` |  
-| `repeat` | `+` |  
+| `repeatable` | `+` |  
 | `optional` and `repeatable` | `*` |  
 
 # Pipelines
