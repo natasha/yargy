@@ -21,6 +21,6 @@ setup(
     packages=find_packages(),
     install_requires=[
         'pymorphy2',
-        'functools32',
+        'backports.functools-lru-cache',
     ],
 )
