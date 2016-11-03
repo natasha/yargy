@@ -71,6 +71,7 @@ class Grammar(object):
         repeatable = rule.get('repeatable', False)
         optional = rule.get('optional', False)
         terminal = rule.get('terminal', False)
+        skip = rule.get('skip', False)
 
         if not all(self.match(token, rule)) and not terminal:
             if optional or repeatable:
@@ -85,8 +86,10 @@ class Grammar(object):
         else:
             # token matches current rule
             if not terminal:
-                # append token to stack if it's not a terminal rule
-                self.stack.append((self.index, token))
+                # append token to stack if it's not a terminal rule and current rule
+                # doesn't have 'skip' option
+                if not skip:
+                    self.stack.append((self.index, token))
                 if not repeatable:
                     if len(self.rules) > (self.index + 1):
                         self.index += 1

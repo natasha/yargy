@@ -142,6 +142,30 @@ class FactParserTestCase(unittest.TestCase):
         results = parser.extract(text)
         self.assertEqual([[w.value for w in n] for (_, n) in results], [['иван', 'иванович', 'иванов'], ['анна', 'смирнова']])
 
+    def test_skip_rules(self):
+        text = 'улица академика павлова, дом 7'
+        parser = yargy.Parser([
+            Grammar('street', [
+                {'labels': [
+                    ('dictionary', {'улица', }),
+                ]},
+                {'labels': [
+                    ('gram-any', {'accs', }),
+                ], 'repeatable': True},
+                {'labels': [
+                    ('gram', 'PUNCT'),
+                ], 'skip': True},
+                {'labels': [
+                    ('dictionary', {'дом', }),
+                ], 'skip': True},
+                {'labels': [
+                    ('gram', 'NUMBER'),
+                ]},
+            ]),
+        ])
+        results = parser.extract(text)
+        self.assertEqual(sum([[w.value for w in n] for (_, n) in results], []), ['улица', 'академика', 'павлова', 7])
+
 # class DictionaryMatchPipelineTestCase(unittest.TestCase):
 
 #     def test_match(self):
