@@ -60,7 +60,7 @@ class FactParserTestCase(unittest.TestCase):
             ])
         ])
         results = parser.extract(text)
-        self.assertEqual(sum([[w.value for w in n] for n in results], []), ['газета', '«', 'Коммерсантъ', '»'])
+        self.assertEqual(sum([[w.value for w in n] for (_, n) in results], []), ['газета', '«', 'Коммерсантъ', '»'])
 
     def test_repeat_rules(self):
         text = '... ООО «Коммерсантъ КАРТОТЕКА» уполномочено ...'
@@ -72,7 +72,7 @@ class FactParserTestCase(unittest.TestCase):
             ])
         ])
         results = parser.extract(text)
-        self.assertEqual(sum([[w.value for w in n] for n in results], []), ['«', 'Коммерсантъ', 'КАРТОТЕКА', '»'])
+        self.assertEqual(sum([[w.value for w in n] for (_, n) in results], []), ['«', 'Коммерсантъ', 'КАРТОТЕКА', '»'])
 
     def test_gram_label(self):
         text = 'маленький принц красиво пел'
@@ -83,7 +83,7 @@ class FactParserTestCase(unittest.TestCase):
             ])
         ])
         results = parser.extract(text)
-        self.assertEqual(sum([[w.value for w in n] for n in results], []), ['красиво', 'пел'])
+        self.assertEqual(sum([[w.value for w in n] for (_, n) in results], []), ['красиво', 'пел'])
 
     def test_gram_not_label(self):
         text = 'Иван выпил чаю. И ушел домой.'
@@ -94,7 +94,7 @@ class FactParserTestCase(unittest.TestCase):
             ])
         ])
         results = parser.extract(text)
-        self.assertEqual(sum([[w.value for w in n] for n in results], []), ['Иван', 'выпил'])
+        self.assertEqual(sum([[w.value for w in n] for (_, n) in results], []), ['Иван', 'выпил'])
 
     def test_gender_match_label(self):
         text = 'Иван выпил чаю. Вика был красивый.'
@@ -104,15 +104,15 @@ class FactParserTestCase(unittest.TestCase):
         ])
         parser = yargy.Parser([grammar])
         results = parser.extract(text)
-        self.assertEqual(sum([[w.value for w in n] for n in results], []), ['Иван', 'выпил'])
+        self.assertEqual(sum([[w.value for w in n] for (_, n) in results], []), ['Иван', 'выпил'])
 
         text = 'Дрова были сырыми, но мальчики распилили их.'
         results = parser.extract(text)
-        self.assertEqual([[w.value for w in n] for n in results], [['Дрова', 'были'], ['мальчики', 'распилили']])
+        self.assertEqual([[w.value for w in n] for (_, n) in results], [['Дрова', 'были'], ['мальчики', 'распилили']])
 
         text = 'Саша была красивой, а её брат Саша был сильным'
         results = parser.extract(text)
-        self.assertEqual([[w.value for w in n] for n in results], [['Саша', 'была'], ['Саша', 'был']])
+        self.assertEqual([[w.value for w in n] for (_, n) in results], [['Саша', 'была'], ['Саша', 'был']])
 
     def test_number_match_label(self):
         text = 'Дрова был, саша пилил.'
@@ -122,7 +122,7 @@ class FactParserTestCase(unittest.TestCase):
         ])
         parser = yargy.Parser([grammar])
         results = parser.extract(text)
-        self.assertEqual(sum([[w.value for w in n] for n in results], []), ['саша', 'пилил'])
+        self.assertEqual(sum([[w.value for w in n] for (_, n) in results], []), ['саша', 'пилил'])
 
     def test_optional_rules(self):
         text = 'великий новгород, москва.'
@@ -131,7 +131,7 @@ class FactParserTestCase(unittest.TestCase):
             {'labels': [('gram', 'NOUN'), ('gram', 'Geox')]},
         ])])
         results = parser.extract(text)
-        self.assertEqual([[w.value for w in n] for n in results], [['великий', 'новгород'], ['москва']])
+        self.assertEqual([[w.value for w in n] for (_, n) in results], [['великий', 'новгород'], ['москва']])
         
         text = 'иван иванович иванов, анна смирнова'
         parser = yargy.Parser([Grammar('test', [
@@ -140,7 +140,7 @@ class FactParserTestCase(unittest.TestCase):
             {'labels': [('gram', 'NOUN'), ('gram', 'Surn')]},
         ])])
         results = parser.extract(text)
-        self.assertEqual([[w.value for w in n] for n in results], [['иван', 'иванович', 'иванов'], ['анна', 'смирнова']])
+        self.assertEqual([[w.value for w in n] for (_, n) in results], [['иван', 'иванович', 'иванов'], ['анна', 'смирнова']])
 
 # class DictionaryMatchPipelineTestCase(unittest.TestCase):
 

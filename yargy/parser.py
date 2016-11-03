@@ -96,6 +96,7 @@ class Grammar(object):
                 self.reset()
                 self.reduce(token)
                 return match
+
     def reset(self):
         self.stack = Stack()
         self.index = 0
@@ -123,11 +124,11 @@ class Parser(object):
             for grammar in self.grammars:
                 match = grammar.reduce(token)
                 if match:
-                    yield match
+                    yield (grammar, match)
         # when we reach end of stream
         # stacks can contain matches,
         # so last iteration over grammars is needed
         for grammar in self.grammars:
             match = grammar.reduce(self.end_of_stream_token)
             if match:
-                yield match
+                yield (grammar, match)
