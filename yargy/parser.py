@@ -1,3 +1,7 @@
+# coding: utf-8
+from __future__ import unicode_literals
+
+
 from yargy.tokenizer import Token, Tokenizer
 from yargy.labels import LABELS_LOOKUP_MAP
 

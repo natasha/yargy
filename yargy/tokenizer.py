@@ -1,9 +1,13 @@
 # coding: utf-8
+from __future__ import unicode_literals
+
+try:
+    from functools import lru_cache
+except ImportError:
+    from functools32 import lru_cache
+
 import re
-import enum
 import string
-import datetime
-import functools
 import collections
 
 from yargy.utils import frange
@@ -41,7 +45,7 @@ class Tokenizer(object):
     def __init__(self, pattern=token_regex, morph_analyzer=None, cache_size=0, frange_step=0.1):
         self.pattern = pattern
         self.morph = morph_analyzer or MorphAnalyzer()
-        self.cache = functools.lru_cache(maxsize=cache_size)(self.get_word_forms)
+        self.cache = lru_cache(maxsize=cache_size)(self.get_word_forms)
         self.frange_step = frange_step
 
     def get_word_forms(self, word):

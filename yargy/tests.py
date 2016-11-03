@@ -1,3 +1,6 @@
+# coding: utf-8
+from __future__ import unicode_literals
+
 import enum
 import yargy
 import datetime
@@ -7,7 +10,6 @@ import collections
 
 from yargy.parser import Grammar
 from yargy.tokenizer import Token, Tokenizer
-from yargy.pipeline import DictionaryMatchPipeline
 
 
 class TokenizerTestCase(unittest.TestCase):
@@ -25,7 +27,7 @@ class TokenizerTestCase(unittest.TestCase):
 
     def test_match_float_range(self):
         text = '1.5 - 2.0%'
-        value, *_ = next(self.tokenizer.transform(text))
+        value = next(self.tokenizer.transform(text))[0]
         self.assertEqual(list(value), [1.5, 1.6, 1.7, 1.8, 1.9, 2.0])
 
     def test_match_simple_numbers(self):
