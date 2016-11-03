@@ -138,3 +138,24 @@ class Parser(object):
             match = grammar.reduce(self.end_of_stream_token)
             if match:
                 yield (grammar, match)
+
+class Combinator(object):
+
+    '''
+    Combinator merges multiple grammars (in multiple enums) into one parser
+    '''
+
+    def __init__(self, classes, *args, **kwargs):
+        self.classes = {}
+        self.grammars = []
+        for _class in classes:
+            _class_name = _class.__name__
+            for rule in _class.__members__.values():
+                name = "{0}__{1}".format(_class_name, rule.name)
+                self.classes[name] = rule
+                self.grammars.append(Grammar(name, rule.value))
+        self.parser = Parser(self.grammars, *args, **kwargs)
+
+    def extract(self, text):
+        for (rule, match) in self.parser.extract(text):
+            yield self.classes[rule.name], match
