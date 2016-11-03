@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='yargy',
-    version='0.3.0',
+    version='0.4.0',
     description='Tiny rule-based facts extraction package',
     url='https://github.com/bureaucratic-labs/yargy',
     author='Dmitry Veselov',
