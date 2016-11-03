@@ -107,6 +107,12 @@ class Grammar(object):
         for (name, value) in labels:
             yield LABELS_LOOKUP_MAP[name](token, value, stack)
 
+    def __repr__(self):
+        return 'Grammar(name=\'{name}\', stack={stack})'.format(
+            name=self.name,
+            stack=self.stack,
+        )
+
 class Parser(object):
 
     '''
