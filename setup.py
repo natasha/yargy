@@ -20,6 +20,7 @@ setup(
     keywords='natural language processing, russian morphology, tomita',
     packages=find_packages(),
     install_requires=[
-        'pymorphy2'
+        'pymorphy2',
+        'functools32',
     ],
 )
