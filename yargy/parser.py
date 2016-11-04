@@ -44,7 +44,7 @@ class Grammar(object):
         self.rules.append({'terminal': True})
         self.reset()
 
-    def reduce(self, token):
+    def reduce(self, token, recheck=False):
         '''
         Parser <- [grammar_1, grammar_2]
                    |
@@ -74,15 +74,12 @@ class Grammar(object):
         skip = rule.get('skip', False)
 
         if not all(self.match(token, rule)) and not terminal:
-            if optional or repeatable:
-                if optional or self.stack.have_matches_by_rule_index(self.index):
-                    self.index += 1
-                    self.reduce(token) # recheck current token on next rule
+            if optional or (repeatable and self.stack.have_matches_by_rule_index(self.index)):
+                self.index += 1
             else:
-                stack_have_matches = len(self.stack)
                 self.reset()
-                if stack_have_matches:
-                    self.reduce(token)
+            if not recheck:
+                self.reduce(token, recheck=True) # recheck current token on next rule
         else:
             # token matches current rule
             if not terminal:
