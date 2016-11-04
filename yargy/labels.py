@@ -52,6 +52,9 @@ def not_eq_label(token, value, stack):
 def in_label(token, value, stack):
     return token.value in value
 
+def not_in_label(token, value, stack):
+    return not token.value in value
+
 def gt_label(token, value, stack):
     return token.value > value
 
@@ -212,6 +215,7 @@ LABELS_LOOKUP_MAP = {
     'eq': eq_label,
     'not-eq': not_eq_label,
     'in': in_label,
+    'not-in': not_in_label,
     'gt': gt_label,
     'lt': lt_label,
     'gte': gte_label,
