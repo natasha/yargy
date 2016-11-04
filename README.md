@@ -10,7 +10,8 @@
 | `gram-not` | Reversed version of `gram` | `('gram-not', 'NOUN')` |
 | `gram-not-in` | Reversed version of `gram-in` | `('gram-not-in', ['ADJS', 'ADJF'])` |
 | `dictionary` | Checks that normal form of word exists in given dictionary | `('dictionary', ['говорить'])` - will match `говорил`, `говорила`, `говорили`.
-| `gender-match` | Checks that words have same gender grammemes | `('gender-match', -1)` - will check candidate word with word at `-1` index in stack (actually, previous word) for gender equality. E.g. when previous_word=`Пьер` it will match `был` and not `была` |
+| `dictionary-not` | Reversed version of `dictionary` | `('dictionary-not', ['котик'])` - will match everything except `котик` in all forms (`котика`, `котики`, etc.) | 
+| `gender-match` | Checks that words have same gender grammemes | `('gender-match', -1)` - will check candidate word with word at `-1` index in stack (actually, previous word) for gender | equality. E.g. when previous_word=`Пьер` it will match `был` and not `была` |
 | `number-match` | Checks that words have same number grammemes | `('number-match', -1)` - will match `были` for `дрова` and not `перенесли` for `ипполит` |
 | `case-match` | Checks that words have same case grammemes | `('case-match', -1)` - will match `красивому Ипполиту` and not `красивая Анну` |
 | `gnc-match` | Combination of `gender-match`, `number-match` and `case-match` | `('gnc-match', -1)` |
@@ -27,6 +28,8 @@ Next labels can be used in comparing of raw token values.
 | `gte` | Same as `>=` in Python | `('gte', 10)` |
 | `lte` | Same as `<=` in Python | `('lte', 1990)` |
 | `in` | Same as `in` in Python | `('in', range(0, 10))` will match number in range between 0 and 10 |
+| `not-in` | Same as `not XXX in YYY` in Python | `('not-in', [1, 2, 3])` will match everything except `1`, `2` and `3`. | 
+| `is-instance` | Same as `isinstance(value, types)` in Python | `('is-instance', (int, float))` will match int & float numbers and not strings | 
 
 # Options
 
