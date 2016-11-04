@@ -2,6 +2,11 @@
 from __future__ import unicode_literals
 from functools import wraps
 
+try:
+    string_type = basestring
+except NameError:
+    string_type = str
+
 
 GENDERS = ('masc', 'femn', 'neut', 'Ms-f', 'GNdr')
 NUMBERS = ('sing', 'plur', 'Pltm')
@@ -13,7 +18,7 @@ def get_token_features(candidate, case, grammemes):
 def string_required(func):
     @wraps(func)
     def wrapper(token, value, stack):
-        if not isinstance(token.value, str):
+        if not isinstance(token.value, string_type):
             return False
         else:
             return func(token, value, stack)
