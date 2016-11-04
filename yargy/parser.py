@@ -77,7 +77,7 @@ class Grammar(object):
             if optional or repeatable:
                 if optional or self.stack.have_matches_by_rule_index(self.index):
                     self.index += 1
-                self.reduce(token) # recheck current token on next rule
+                    self.reduce(token) # recheck current token on next rule
             else:
                 stack_have_matches = len(self.stack)
                 self.reset()
@@ -105,10 +105,14 @@ class Grammar(object):
         self.index = 0
 
     def match(self, token, rule):
-        labels = rule.get('labels', [])
-        stack = self.stack.flatten()
-        for (name, value) in labels:
-            yield LABELS_LOOKUP_MAP[name](token, value, stack)
+        if not token.value:
+            # received terminal token
+            yield True
+        else:
+            labels = rule.get('labels', [])
+            stack = self.stack.flatten()
+            for (name, value) in labels:
+                yield LABELS_LOOKUP_MAP[name](token, value, stack)
 
     def __repr__(self):
         return 'Grammar(name=\'{name}\', stack={stack})'.format(

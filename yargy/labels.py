@@ -1,5 +1,6 @@
 # coding: utf-8
 from __future__ import unicode_literals
+from functools import wraps
 
 
 GENDERS = ('masc', 'femn', 'neut', 'Ms-f', 'GNdr')
@@ -9,15 +10,28 @@ CASES = ('nomn', 'gent', 'datv', 'accs', 'ablt', 'loct', 'voct', 'gen2', 'acc2',
 def get_token_features(candidate, case, grammemes):
     return ([g in t['grammemes'] for g in grammemes] for t in (case, candidate))
 
+def string_required(func):
+    @wraps(func)
+    def wrapper(token, value, stack):
+        if not isinstance(token.value, str):
+            return False
+        else:
+            return func(token, value, stack)
+    return wrapper
+
+@string_required
 def is_lower_label(token, _, stack):
     return token.value.islower()
 
+@string_required
 def is_upper_label(token, _, stack):
     return token.value.isupper()
 
+@string_required
 def is_title_label(token, _, stack):
     return token.value.istitle()
 
+@string_required
 def is_capitalized_label(token, _, stack):
     '''
     http://bugs.python.org/issue7008
@@ -145,7 +159,7 @@ def case_match_label(token, index, stack, cases=CASES):
             )
 
             candidate_form_results = next(results)
-            candidate_form_features, is_case_fixed = (
+            candidate_form_features, is_candidate_fixed = (
                 candidate_form_results[:-1],
                 candidate_form_results[-1],
             )
@@ -163,9 +177,11 @@ def gnc_match_label(token, index, stack):
         case_match_label(token, index, stack),
     ])
 
+@string_required
 def dictionary_label(token, values, stack):
     return any((form['normal_form'] in values) for form in token.forms)
 
+@string_required
 def dictionary_not_label(token, values, stack):
     return not dictionary_label(token, values, stack)
 
