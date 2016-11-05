@@ -1,25 +1,81 @@
 # yargy [![Build Status](https://travis-ci.org/bureaucratic-labs/yargy.svg?branch=master)](https://travis-ci.org/bureaucratic-labs/yargy)
 
+# Usage
+
+```python
+from yargy import Grammar, Parser
+
+
+# This grammar matches two words
+# First must have a 'Name' grammeme (see opencorpora grammemes table)
+# Second must be a lastname.
+person_grammar = Grammar('Lastname_and_Firstname', [
+    {
+        'labels': [
+            ('gram', 'Name'),
+        ],
+    },
+    {
+        'labels': [
+            ('gram', 'Surn'),
+        ],
+    },
+])
+
+# Parser object accepts list with grammars
+# And some optional arguments like 'cache_size'
+parser = Parser(
+    [
+        person_grammar,
+    ],
+    # Set up morphology parser cache - this will speedup extraction process
+    # You can always tune cache size, depending on available memory resources
+    # 50k is enough cache, for example, for first book of War and Peace by Leo Tolstoy
+    # Which contains (roughly) 35k of word forms.
+    cache_size=50000,
+) 
+
+text = 'Лев Толстой написал роман «Война и Мир»'
+
+for (grammar, match) in parser.extract(text):
+    # 'grammar' variable will contain your grammar objects
+    # so in post-processing stage you can write constructions
+    # like isinstance(parsed_grammar, (my, grammars, types))
+
+    # 'match' variable will contain tokens, matched by grammar rules
+    # each token have 'value' - actual value of token in text
+    # 'position' - position of token in text (in (start, end) format)
+    # and 'forms' attribute - which holds results of morphological analysis of token
+
+    print(grammar, match)
+
+'''
+And in output you will see something like this:
+Grammar(name='Lastname_and_Firstname', stack=[]) [Token(value='Лев', position=(0, 3), forms=[...]), Token(value='Толстой', position=(4, 11), forms=[...])]
+'''
+
+```
+
 # Grammar syntax
 
 ```python
 
 grammar = [
-	# matches zero or more words by given labels
-	{
-		'labels': [
-			('gram', 'NOUN'),
-		],
-		'repeatable': True,
-		'optional': True,
-	},
-	# matches only one word and didn't include it in result
-	{
-		'labels': [
-			...
-		],
-		'skip': True,
-	},
+    # matches zero or more words by given labels
+    {
+        'labels': [
+            ('gram', 'NOUN'),
+        ],
+        'repeatable': True,
+        'optional': True,
+    },
+    # matches only one word and didn't include it in result
+    {
+        'labels': [
+            ...
+        ],
+        'skip': True,
+    },
 ]
 
 ```
