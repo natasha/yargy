@@ -44,7 +44,7 @@ This labels use normal form of words to perform matching
 | `gnc-match` | Combination of `gender-match`, `number-match` and `case-match` | `('gnc-match', -1)` |
 | `custom` | Calls given function | `('custom', lambda: token, value, stack: 'VERB' in token['grammemes'])` will match tokens that have `VERB` in grammemes set. |  
 
-Next labels use raw token value (e.g. when word='сказали', it'll use 'сказали' as matching value, not normal form of that word - 'сказать') in matching.  
+Next labels use raw token value (e.g. when word=`сказали`, it'll use `сказали` as matching value, not normal form of that word - `сказать`).  
 
 | Name | Description | Usage |
 | ---- | ----------- | ----- |
@@ -55,7 +55,7 @@ Next labels use raw token value (e.g. when word='сказали', it'll use 'с�
 | `gte` | Same as `>=` in Python | `('gte', 10)` |
 | `lte` | Same as `<=` in Python | `('lte', 1990)` |
 | `in` | Same as `in` in Python | `('in', range(0, 10))` will match number in range between 0 and 10 |
-| `not-in` | Same as `not XXX in YYY` in Python | `('not-in', [1, 2, 3])` will match everything except `1`, `2` and `3`. | 
+| `not-in` | Same as `not XXX in YYY` in Python | `('not-in', [1, 2, 3])` will match everything except `1`, `2` and `3` | 
 | `is-instance` | Same as `isinstance(value, types)` in Python | `('is-instance', (int, float))` will match int & float numbers but not strings | 
 
 # Options
@@ -74,3 +74,26 @@ Also, you can use `skip` option if you want to match tokens, but didn't want to 
 # Pipelines
 
 Pipelines is a way to preprocess stream of tokens before passing it to parser. For example, pipeline can merge multiple nearby tokens into one and set your grammemes to it, like `['нижний', 'новгород'] ~> ['нижний_новгород/Geox:City']`  
+So pipeline doing same work as Gazeeter does in Tomita-parser, where result tokens call'd as `multiword`
+
+# License
+
+Source code of `yargy` is distributed under MIT license (allows modification and commercial usage)
+
+# Version history
+
+## 0.4 (dev)
+* Replaced shift-reduce parser with GLR parser, because it provides much more performance on multiple grammars (linear time with GLR vs. exponental time with shift-reduce parser).
+* Pipelines support
+* Added support for Python 2.7 & PyPy
+
+## 0.3
+* Implemented `gnc-match`, `in` labels
+
+## 0.2
+* Implemented `gender-match`, `number-match`, `case-match` labels
+* Replace `is-title` label with `is-capitalized` label, due to http://bugs.python.org/issue7008
+* Tokenizer now understands integer and float ranges (actually, two numbers separated by dash)
+
+## 0.1
+* Initial release
