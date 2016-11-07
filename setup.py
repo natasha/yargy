@@ -1,4 +1,17 @@
+from sys import version_info
 from setuptools import setup, find_packages
+
+BASE_REQUIREMENTS = [
+    'pymorphy2'
+]
+
+BACKPORT_REQUIREMENTS = [
+    'enum34',
+    'backports.functools-lru-cache',
+]
+
+if version_info.major == 2 or (version_info.major == 3 and version_info.minor < 4):
+    BASE_REQUIREMENTS.append(BACKPORT_REQUIREMENTS)
 
 setup(
     name='yargy',
@@ -19,9 +32,5 @@ setup(
     ],
     keywords='natural language processing, russian morphology, tomita',
     packages=find_packages(),
-    install_requires=[
-        'pymorphy2',
-        'enum34',
-        'backports.functools-lru-cache',
-    ],
+    install_requires=BASE_REQUIREMENTS,
 )
