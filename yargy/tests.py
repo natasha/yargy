@@ -9,6 +9,7 @@ import collections
 
 from yargy.parser import Grammar
 from yargy.tokenizer import Token, Tokenizer
+from yargy.pipeline import DictionaryPipeline
 
 
 class TokenizerTestCase(unittest.TestCase):
@@ -166,48 +167,52 @@ class FactParserTestCase(unittest.TestCase):
         results = parser.extract(text)
         self.assertEqual(sum([[w.value for w in n] for (_, n) in results], []), ['улица', 'академика', 'павлова', 7])
 
-# class DictionaryMatchPipelineTestCase(unittest.TestCase):
+class DictionaryPipelineTestCase(unittest.TestCase):
 
-#     def test_match(self):
-#         text = 'иван приехал в нижний новгород'
-#         tokenizer = Tokenizer()
-#         tokens = collections.deque(tokenizer.transform(text))
-#         pipeline = DictionaryMatchPipeline(dictionary={
-#             'нижний_новгород': [{'grammemes': ['Geox', 'City'], 'normal_form': 'нижний новгород'}],
-#         })
-#         matches = []
-#         while tokens:
-#             match, token = pipeline.get_match(tokens)
-#             if not match:
-#                 token = tokens.popleft()
-#                 continue
-#             else:
-#                 matches.append(token)
-#         self.assertEqual(matches, [(
-#             Token.Word,
-#             'нижний_новгород',
-#             (15, 30),
-#             [{'grammemes': ['Geox', 'City'], 'normal_form': 'нижний новгород'}]
-#         )])
+    def test_match(self):
+        text = 'иван приехал в нижний новгород'
+        tokenizer = Tokenizer()
+        tokens = tokenizer.transform(text)
+        pipeline = DictionaryPipeline(dictionary={
+            'нижний_новгород': [{'grammemes': ['Geox/City'], 'normal_form': 'нижний новгород'}],
+        })
+        stream = pipeline(tokens)
+        matches = []
+        while True:
+            try:
+                token, match = next(stream)
+            except StopIteration:
+                break
+            if not match:
+                continue
+            else:
+                matches.append(token)
+        self.assertEqual(matches, [(
+            'нижний_новгород',
+            (15, 30),
+            [{'grammemes': ['Geox/City'], 'normal_form': 'нижний новгород'}]
+        )])
 
-#     def test_match_in_different_form(self):
-#         text = 'в нижнем новгороде прошел ещё один день'
-#         tokenizer = Tokenizer()
-#         tokens = collections.deque(tokenizer.transform(text))
-#         pipeline = DictionaryMatchPipeline(dictionary={
-#             'нижний_новгород': [{'grammemes': ['Geox', 'City'], 'normal_form': 'нижний новгород'}],
-#         })
-#         matches = []
-#         while tokens:
-#             match, token = pipeline.get_match(tokens)
-#             if not match:
-#                 token = tokens.popleft()
-#                 continue
-#             else:
-#                 matches.append(token)
-#         self.assertEqual(matches, [(
-#             Token.Word,
-#             'нижний_новгород',
-#             (2, 18),
-#             [{'grammemes': ['Geox', 'City'], 'normal_form': 'нижний новгород'}]
-#         )])
+    def test_match_in_different_form(self):
+        text = 'в нижнем новгороде прошел ещё один день'
+        tokenizer = Tokenizer()
+        tokens = tokenizer.transform(text)
+        pipeline = DictionaryPipeline(dictionary={
+            'нижний_новгород': [{'grammemes': ['Geox/City'], 'normal_form': 'нижний новгород'}],
+        })
+        stream = pipeline(tokens)
+        matches = []
+        while True:
+            try:
+                token, match = next(pipeline)
+            except StopIteration:
+                break
+            if not match:
+                continue
+            else:
+                matches.append(token)
+        self.assertEqual(matches, [(
+            'нижнем_новгороде',
+            (2, 18),
+            [{'grammemes': ['Geox/City'], 'normal_form': 'нижний новгород'}]
+        )])
