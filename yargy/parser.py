@@ -106,14 +106,10 @@ class Grammar(object):
         self.index = 0
 
     def match(self, token, rule):
-        if not token.value:
-            # received terminal token
-            yield True
-        else:
-            labels = rule.get('labels', [])
-            stack = self.stack.flatten()
-            for (name, value) in labels:
-                yield LABELS_LOOKUP_MAP[name](token, value, stack)
+        labels = rule.get('labels', [])
+        stack = self.stack.flatten()
+        for (name, value) in labels:
+            yield LABELS_LOOKUP_MAP[name](token, value, stack)
 
     def __repr__(self):
         return 'Grammar(name=\'{name}\', stack={stack})'.format(
@@ -126,8 +122,6 @@ class Parser(object):
     '''
     Yet another GLR-parser.
     '''
-
-    end_of_stream_token = Token(None, (-1, -1), [])
 
     def __init__(self, grammars, tokenizer=None, pipelines=None, cache_size=0):
         self.grammars = grammars
