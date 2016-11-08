@@ -180,10 +180,10 @@ class DictionaryPipelineTestCase(unittest.TestCase):
         matches = []
         while True:
             try:
-                token, match = next(stream)
+                token = next(stream)
             except StopIteration:
                 break
-            if not match:
+            if token.value != 'нижний_новгород':
                 continue
             else:
                 matches.append(token)
@@ -204,13 +204,33 @@ class DictionaryPipelineTestCase(unittest.TestCase):
         matches = []
         while True:
             try:
-                token, match = next(pipeline)
+                token = next(pipeline)
             except StopIteration:
                 break
-            if not match:
+            if token.value != 'нижнем_новгороде':
                 continue
             else:
                 matches.append(token)
+        self.assertEqual(matches, [(
+            'нижнем_новгороде',
+            (2, 18),
+            [{'grammemes': ['Geox/City'], 'normal_form': 'нижний новгород'}]
+        )])
+
+    def test_match_with_parser(self):
+        text = 'в нижнем новгороде прошел ещё один день'
+        pipeline = DictionaryPipeline(dictionary={
+            'нижний_новгород': [{'grammemes': ['Geox/City'], 'normal_form': 'нижний новгород'}],
+        })
+        parser = yargy.Parser([
+            Grammar('city', [
+                {'labels': [
+                    ('gram', 'Geox/City'),
+                ]},
+            ]),
+        ], pipelines=[pipeline])
+        results = parser.extract(text)
+        _, matches = next(results)
         self.assertEqual(matches, [(
             'нижнем_новгороде',
             (2, 18),

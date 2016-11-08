@@ -25,6 +25,9 @@ class Pipeline(object):
         self.stream = stream
         return self
 
+    def __iter__(self):
+        return self
+
     def next(self):
         # Python 2
         return self.__next__()
@@ -102,22 +105,22 @@ class DictionaryPipeline(Pipeline):
                 if stack:
                     match, key = self.matches_complete_word(stack)
                     if match:
-                        yield self.create_new_token(stack, key), True
+                        yield self.create_new_token(stack, key)
                     else:
                         for prev_token in stack:
-                            yield prev_token, False
-                        yield token, False
+                            yield prev_token
+                        yield token
                     stack = []
                 else:
-                    yield token, False
+                    yield token
         if stack:
             match, key = self.matches_complete_word(stack)
             if match:
-                yield self.create_new_token(stack, key), True
+                yield self.create_new_token(stack, key)
             else:
                 for prev_token in stack:
-                    yield prev_token, False
-                yield token, False
+                    yield prev_token
+                yield token
             stack = []
 
     def __next__(self):

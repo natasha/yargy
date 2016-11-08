@@ -125,12 +125,16 @@ class Parser(object):
 
     end_of_stream_token = Token(None, (-1, -1), [])
 
-    def __init__(self, grammars, tokenizer=None, cache_size=0):
+    def __init__(self, grammars, tokenizer=None, pipelines=None, cache_size=0):
         self.grammars = grammars
         self.tokenizer = tokenizer or Tokenizer(cache_size=cache_size)
+        self.pipelines = pipelines or []
 
     def extract(self, text):
-        for token in self.tokenizer.transform(text):
+        stream = self.tokenizer.transform(text)
+        for pipeline in self.pipelines:
+            stream = pipeline(stream)
+        for token in stream:
             for grammar in self.grammars:
                 match = grammar.reduce(token)
                 if match:
