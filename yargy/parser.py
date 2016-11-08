@@ -32,7 +32,7 @@ class Grammar(object):
     '''
     Grammar contains stack and list of rules.
     When GLR-parser iterates over tokens it calls
-    `reduce` method on each grammar which check 
+    `shift` & `reduce` methods on each grammar which checks
     current grammar stack & provided token on current rule
     when stack contents matches all rules - grammar returns stack,
     which contains actual text match
@@ -44,22 +44,22 @@ class Grammar(object):
         self.rules.append({'terminal': True})
         self.reset()
 
-    def reduce(self, token, recheck=False):
+    def shift(self, token, recheck=False):
         '''
         Parser <- [grammar_1, grammar_2]
                    |
                    V
-                reduce(token_1)
+                shift(token_1)
         Grammar_1 -> []
         Grammar_2 -> [token_1]
                    |
                    V
-                reduce(token_2)
+                shift(token_2)
         Grammar_1 -> []
         Grammar_2 -> [token_1, token_2]
                    |
                    V
-                reduce(token_3)
+                reduce()
         Grammar_1 -> []
         Grammar_2 -> [] <-> returns stack [token_1, token_2]
 
@@ -79,7 +79,7 @@ class Grammar(object):
             else:
                 self.reset()
             if not recheck:
-                self.reduce(token, recheck=True) # recheck current token on next rule
+                self.shift(token, recheck=True) # recheck current token on next rule
         else:
             # token matches current rule
             if not terminal:
@@ -88,14 +88,18 @@ class Grammar(object):
                 if not skip:
                     self.stack.append((self.index, token))
                 if not repeatable:
-                    if len(self.rules) > (self.index + 1):
+                    if len(self.rules) >= (self.index + 1):
                         self.index += 1
-            else:
-                # grammar reaches terminal rule -> stack contains total match
-                match = self.stack.flatten()
-                self.reset()
-                self.reduce(token)
-                return match
+
+    def reduce(self):
+        '''
+        Reduce method returns grammar stack if
+        current grammar index equals to last (terminal) rule
+        '''
+        if self.rules[self.index] == self.rules[-1]:
+            match = self.stack.flatten()
+            self.reset()
+            return match
 
     def reset(self):
         self.stack = Stack()
@@ -136,16 +140,10 @@ class Parser(object):
             stream = pipeline(stream)
         for token in stream:
             for grammar in self.grammars:
-                match = grammar.reduce(token)
+                grammar.shift(token)
+                match = grammar.reduce()
                 if match:
                     yield (grammar, match)
-        # when we reach end of stream
-        # stacks can contain matches,
-        # so last iteration over grammars is needed
-        for grammar in self.grammars:
-            match = grammar.reduce(self.end_of_stream_token)
-            if match:
-                yield (grammar, match)
 
 class Combinator(object):
 
