@@ -91,15 +91,31 @@ class Grammar(object):
                     if len(self.rules) >= (self.index + 1):
                         self.index += 1
 
-    def reduce(self):
+    def reduce(self, end_of_stream=False):
         '''
         Reduce method returns grammar stack if
         current grammar index equals to last (terminal) rule
         '''
-        if self.rules[self.index] == self.rules[-1]:
+        current_rule = self.rules[self.index]
+        terminal_rule = self.rules[-1]
+
+        if current_rule == terminal_rule:
             match = self.stack.flatten()
             self.reset()
             return match
+
+        if end_of_stream:
+            is_repeatable_and_have_matches = (
+                current_rule.get('repeatable', False)
+                and
+                self.stack.have_matches_by_rule_index(self.index)
+            )
+            is_optional = current_rule.get('optional', False)
+            if is_repeatable_and_have_matches or is_optional:
+                match = self.stack.flatten()
+                self.reset()
+                return match
+
 
     def reset(self):
         self.stack = Stack()
@@ -138,6 +154,10 @@ class Parser(object):
                 match = grammar.reduce()
                 if match:
                     yield (grammar, match)
+        for grammar in self.grammars:
+            match = grammar.reduce(end_of_stream=True)
+            if match:
+                yield (grammar, match)
 
 class Combinator(object):
 
