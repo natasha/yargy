@@ -130,7 +130,7 @@ Also, you can use `skip` option if you want to match tokens, but didn't want to 
 # Pipelines
 
 Pipelines is a way to preprocess stream of tokens before passing it to parser. For example, pipeline can merge multiple nearby tokens into one and set your grammemes to it, like `['нижний', 'новгород'] ~> ['нижний_новгород/Geox:City']`  
-So pipeline doing same work as Gazeeter does in Tomita-parser, where result tokens call'd as `multiword`
+So pipeline doing same work as Gazetteer does in Tomita-parser, where result tokens call'd as `multiword`
 
 # License
 
