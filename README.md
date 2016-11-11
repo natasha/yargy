@@ -1,5 +1,13 @@
 # yargy [![Build Status](https://travis-ci.org/bureaucratic-labs/yargy.svg?branch=master)](https://travis-ci.org/bureaucratic-labs/yargy)
 
+# Install
+
+`Yargy` supports both Python 2.7+ / 3.3+ versions including PyPy.
+
+```bash
+$ pip install yargy
+```
+
 # Usage
 
 ```python
