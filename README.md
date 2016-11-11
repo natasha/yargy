@@ -146,7 +146,10 @@ Source code of `yargy` is distributed under MIT license (allows modification and
 
 # Version history
 
-## 0.4 (dev)
+## 0.5 (dev)
+* Recursive grammars support
+
+## 0.4
 * Replaced shift-reduce parser with GLR parser, because it provides much more performance on multiple grammars (linear time with GLR vs. exponental time with shift-reduce parser).
 * Pipelines support
 * Added support for Python 2.7 & PyPy
