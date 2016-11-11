@@ -41,7 +41,7 @@ class DictionaryPipeline(Pipeline):
 
     '''
     Simple dictionary-based pipeline that merges multiple tokens
-    into one (like gazeeter in Tomita-parser does)
+    into one (like gazetteer in Tomita-parser does)
     For example, it can merge ['нижний', 'новгород'] into one multitoken
     ['нижний_новгород'] and add specific morphology info to it, like 
     user-defined grammeme 'Geox/City' 
