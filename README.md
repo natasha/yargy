@@ -1,5 +1,7 @@
 # yargy [![Build Status](https://travis-ci.org/bureaucratic-labs/yargy.svg?branch=master)](https://travis-ci.org/bureaucratic-labs/yargy)
 
+`Yargy` is a GLR-parser, that uses russian morphology for facts extraction process, and written in pure python
+
 # Install
 
 `Yargy` supports both Python 2.7+ / 3.3+ versions including PyPy.
@@ -137,8 +139,17 @@ Also, you can use `skip` option if you want to match tokens, but didn't want to 
 
 # Pipelines
 
-Pipelines is a way to preprocess stream of tokens before passing it to parser. For example, pipeline can merge multiple nearby tokens into one and set your grammemes to it, like `['нижний', 'новгород'] ~> ['нижний_новгород/Geox:City']`  
-So pipeline doing same work as Gazetteer does in Tomita-parser, where result tokens call'd as `multiword`
+Pipelines is a way to preprocess stream of tokens before passing it to parser. 
+Actually pipeline can do same work as Gazetteer does in Tomita-parser, where result tokens call'd as `multiword`.
+
+For example, we can merge geo-related tokens into one `multiword`, like this:
+```
+[Text] -> 'в нижнем новгороде...' -> [Tokenizer]
+[Tokenizer] -> ['в', 'нижнем', 'новгороде'] -> [Pipeline(s)]
+[Pipeline(s)] -> ['в', 'нижнем_новгороде'] -> [Parser] 
+```
+
+Multiple pipelines can be chained into one, if you need it.
 
 # License
 
