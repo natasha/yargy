@@ -15,7 +15,6 @@ from pymorphy2 import MorphAnalyzer
 
 russian_token_regex = r'(?P<russian>[а-яё][а-яё\-]*)'
 latin_token_regex = r'(?P<latin>[a-z][a-z\-\']*)'
-time_token_regex = r'(?P<time>\d{2}:\d{2})'
 int_separated_token_regexp = r'(?P<int_separated>[1-9]\d*(\s\d{3})+)'
 int_range_token_regexp = r'(?P<int_range>[+-]?\d+\s*?[\-\—]\s*?\d+)'
 int_token_regex = r'(?P<int>[+-]?\d+)'
@@ -26,7 +25,6 @@ punctuation_token_regex = string.punctuation.join(['(?P<punct>[', r']+)'])
 complete_token_regex = r'|'.join((
     float_range_token_regex,
     float_token_regex,
-    time_token_regex,
     int_separated_token_regexp,
     int_range_token_regexp,
     int_token_regex,
