@@ -1,6 +1,7 @@
 # coding: utf-8
 from __future__ import unicode_literals
 
+import enum
 import yargy
 import datetime
 import unittest
@@ -236,3 +237,73 @@ class DictionaryPipelineTestCase(unittest.TestCase):
             (2, 18),
             [{'grammemes': ['Geox/City'], 'normal_form': 'нижний новгород'}]
         )])
+
+class CombinatorTestCase(unittest.TestCase):
+
+    class Person(enum.Enum):
+
+        Fullname = [
+            {
+                'labels': [
+                    ('gram', 'Name'),
+                ],
+            },
+            {
+                'labels': [
+                    ('gram', 'Surn'),
+                ],
+            },
+        ]
+
+        Firstname = [
+            {
+                'labels': [
+                    ('gram', 'Name'),
+                ],
+            },
+        ]
+
+    class City(enum.Enum):
+
+        Default = [
+            {
+                'labels': [
+                    ('gram', 'Name'),
+                ],
+            },
+        ]
+
+    class Money(enum.Enum):
+
+        Simple = [
+            {
+                'labels': [
+                    ('gram', 'NUMBER'),
+                ],
+            },
+            {
+                'labels': [
+                    ('dictionary', {
+                        'рубль',
+                        'евро',
+                        'доллар',
+                    }),
+                ],
+            },
+        ]
+
+    def test_extract(self):
+        text = '600 рублей или 10 долларов'
+        combinator = yargy.Combinator([self.Money])
+        matches = list(combinator.extract(text))
+        for match in matches:
+            self.assertEqual(match[0], self.Money.Simple)
+            self.assertEqual(type(match[1][0].value), int)
+
+    def test_resolve_matches(self):
+        text = 'владимир путин приехал в владимир'
+        combinator = yargy.Combinator([self.Person, self.City])
+        matches = list(combinator.extract(text))
+        self.assertEqual(len(matches), 5)
+        matches = combinator.resolve_matches(matches)
+        self.assertEqual([match[0] for match in matches], [self.City.Default, self.Person.Fullname])

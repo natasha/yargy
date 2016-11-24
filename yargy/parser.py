@@ -182,3 +182,19 @@ class Combinator(object):
     def extract(self, text):
         for (rule, match) in self.parser.extract(text):
             yield self.classes[rule.name], match
+
+    def resolve_matches(self, matches):
+        matches = sorted(matches, key=lambda m: len(m[1]), reverse=True)
+        index = {}
+        for match in matches:
+            tokens = match[-1]
+            head, tail = tokens[0], tokens[-1]
+            x, y = head.position[0], tail.position[1]
+            length = 0 + (y - x)
+            for (m_x, m_y, m_len) in index.keys():
+                if (x >= m_x and y <= m_y):
+                    if (m_len > length):
+                        break
+            else:
+                index[(x, y, length)] = match
+        return index.values()
