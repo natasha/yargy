@@ -306,4 +306,6 @@ class CombinatorTestCase(unittest.TestCase):
         matches = list(combinator.extract(text))
         self.assertEqual(len(matches), 5)
         matches = combinator.resolve_matches(matches)
-        self.assertEqual([match[0] for match in matches], [self.City.Default, self.Person.Fullname])
+        matched_rules = [match[0] for match in matches]
+        self.assertIn(self.Person.Fullname, matched_rules)
+        self.assertIn(self.City.Default, matched_rules)
