@@ -6,6 +6,11 @@ try:
 except ImportError:
     from backports.functools_lru_cache import lru_cache
 
+try:
+    range = xrange
+except NameError:
+    range = range
+
 import re
 import string
 import collections
