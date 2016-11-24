@@ -15,7 +15,7 @@ if version_info.major == 2 or (version_info.major == 3 and version_info.minor < 
 
 setup(
     name='yargy',
-    version='0.4.1',
+    version='0.4.2',
     description='Tiny rule-based facts extraction package',
     url='https://github.com/bureaucratic-labs/yargy',
     author='Dmitry Veselov',
