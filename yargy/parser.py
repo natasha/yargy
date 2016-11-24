@@ -40,8 +40,11 @@ class Grammar(object):
 
     def __init__(self, name, rules):
         self.name = name
-        self.rules = rules
-        self.rules.append({'terminal': True})
+        self.rules = rules + [
+            {
+                'terminal': True,
+            },
+        ]
         self.reset()
 
     def shift(self, token, recheck=False):
