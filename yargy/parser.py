@@ -96,6 +96,9 @@ class Grammar(object):
         Reduce method returns grammar stack if
         current grammar index equals to last (terminal) rule
         '''
+        if not self.stack:
+            return None
+
         current_rule = self.rules[self.index]
         terminal_rule = self.rules[-1]
 
