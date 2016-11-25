@@ -78,11 +78,13 @@ class Grammar(object):
 
         if not all(self.match(token, rule)) and not terminal:
             if optional or (repeatable and self.stack.have_matches_by_rule_index(self.index)):
+                another_recheck = False
                 self.index += 1
             else:
+                another_recheck = True
                 self.reset()
             if not recheck:
-                self.shift(token, recheck=True) # recheck current token on next rule
+                self.shift(token, recheck=another_recheck) # recheck current token on next rule
         else:
             # token matches current rule
             if not terminal:
