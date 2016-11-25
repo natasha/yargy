@@ -160,6 +160,19 @@ Source code of `yargy` is distributed under MIT license (allows modification and
 ## 0.5 (dev)
 * Recursive grammars support
 
+## 0.4.3
+
+* [fix] Fixed requirements in setup.py
+
+## 0.4.2
+
+* [fix] Tokenizer now correctly understands range values on Python2.x and PyPy platforms
+* [fix] Create new grammars with terminal rule instead of appending it to original one
+
+## 0.4.1
+
+* Reimplemented `resolve_matches` method in `Combinator` 
+
 ## 0.4
 * Replaced shift-reduce parser with GLR parser, because it provides much more performance on multiple grammars (linear time with GLR vs. exponental time with shift-reduce parser).
 * Pipelines support
