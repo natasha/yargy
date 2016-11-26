@@ -78,13 +78,11 @@ class Grammar(object):
 
         if not all(self.match(token, rule)) and not terminal:
             if optional or (repeatable and self.stack.have_matches_by_rule_index(self.index)):
-                another_recheck = False
                 self.index += 1
             else:
-                another_recheck = True
                 self.reset()
             if not recheck:
-                self.shift(token, recheck=another_recheck) # recheck current token on next rule
+                self.shift(token, recheck=True) # recheck current token on next rule
         else:
             # token matches current rule
             if not terminal:
@@ -119,7 +117,8 @@ class Grammar(object):
                 self.stack.have_matches_by_rule_index(self.index)
             )
             is_optional = current_rule.get('optional', False)
-            if is_repeatable_and_have_matches or is_optional:
+            next_rule_is_terminal = (self.rules[self.index + 1] == terminal_rule)
+            if (is_repeatable_and_have_matches or is_optional) and next_rule_is_terminal:
                 match = self.stack.flatten()
                 self.reset()
                 return match
