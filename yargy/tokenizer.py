@@ -97,7 +97,7 @@ class Tokenizer(object):
                     {'grammemes': {'RANGE', 'INT-RANGE'}, 'normal_form': value}
                 ])
             elif group == 'float_range':
-                values = map(float, re.split(r'[\-\—]', value))
+                values = map(float, (x.replace(',', '.') for x in re.split(r'[\-\—]', value)))
                 yield Token(frange(*values, step=self.frange_step), position, [
                     {'grammemes': {'RANGE', 'FLOAT-RANGE'}, 'normal_form': value}
                 ])

@@ -48,6 +48,15 @@ class TokenizerTestCase(unittest.TestCase):
         self.assertEqual(len(tokens), 4)
         self.assertEqual([t.value for t in tokens], ['"', "'", '«', '»'])
 
+    def test_match_float_range_with_commas(self):
+        text = "1,5-2,5 года"
+        tokens = list(self.tokenizer.transform(text))
+        self.assertEqual(len(tokens), 2)
+        self.assertEqual([t.forms[0] for t in tokens], [
+            {'grammemes': {'RANGE', 'FLOAT-RANGE'}, 'normal_form': '1,5-2,5'},
+            {'grammemes': {'inan', 'masc', 'sing', 'NOUN', 'gent'}, 'normal_form': 'год'},
+        ])
+
 
 class FactParserTestCase(unittest.TestCase):
 
@@ -134,7 +143,7 @@ class FactParserTestCase(unittest.TestCase):
         ])])
         results = parser.extract(text)
         self.assertEqual([[w.value for w in n] for (_, n) in results], [['великий', 'новгород'], ['москва']])
-        
+
         text = 'иван иванович иванов, анна смирнова'
         parser = yargy.Parser([Grammar('test', [
             {'labels': [('gram', 'NOUN'), ('gram', 'Name')]},
