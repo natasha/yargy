@@ -9,7 +9,7 @@ except NameError:
 
 
 GENDERS = ('masc', 'femn', 'neut', 'Ms-f', 'GNdr')
-NUMBERS = ('sing', 'plur', 'Pltm')
+NUMBERS = ('sing', 'plur', 'Sgtm', 'Pltm')
 CASES = ('nomn', 'gent', 'datv', 'accs', 'ablt', 'loct', 'voct', 'gen2', 'acc2', 'loc2', 'Fixd')
 
 def get_token_features(candidate, case, grammemes):
@@ -25,23 +25,23 @@ def string_required(func):
     return wrapper
 
 @string_required
-def is_lower_label(token, _, stack):
-    return token.value.islower()
+def is_lower_label(token, value, stack):
+    return token.value.islower() == value
 
 @string_required
-def is_upper_label(token, _, stack):
-    return token.value.isupper()
+def is_upper_label(token, value, stack):
+    return token.value.isupper() == value
 
 @string_required
-def is_title_label(token, _, stack):
-    return token.value.istitle()
+def is_title_label(token, value, stack):
+    return token.value.istitle() == value
 
 @string_required
-def is_capitalized_label(token, _, stack):
+def is_capitalized_label(token, value, stack):
     '''
     http://bugs.python.org/issue7008
     '''
-    return token.value[0].isupper() and token.value[-1].islower()
+    return token.value[0].isupper() == value
 
 def eq_label(token, value, stack):
     return token.value == value
@@ -91,99 +91,121 @@ def gram_not_label(token, value, stack):
 def gram_not_in_label(token, values, stack):
     return all(gram_not_label(token, value, stack) for value in values)
 
-def gender_match_label(token, index, stack, genders=GENDERS):
+def gender_match_check(candidate, case, genders=GENDERS):
+    results = get_token_features(candidate, case, genders)
+
+    case_token_results = next(results)
+    case_token_msf, case_token_gndr = (
+        case_token_results[-2],
+        case_token_results[-1],
+    )
+    case_token_genders = case_token_results[:-2]
+
+    candidate_token_results = next(results)
+    candidate_token_msf, candidate_token_gndr = (
+        candidate_token_results[-2],
+        candidate_token_results[-1],
+    )
+    candidate_token_genders = candidate_token_results[:-2]
+
+    if not candidate_token_genders == case_token_genders:
+        if case_token_msf or candidate_token_msf:
+            if any(case_token_genders[:2]) or any(candidate_token_genders[:2]):
+                return True
+        elif case_token_gndr or candidate_token_gndr:
+            return True
+        elif 'plur' in case['grammemes'] and 'plur' in candidate['grammemes']:
+            return True
+        else:
+            if (case_token_genders[0] and candidate_token_genders[0]) or \
+               (case_token_genders[1] and candidate_token_genders[1]) or \
+               (case_token_genders[2] and candidate_token_genders[2]):
+                return True
+    else:
+        return True
+
+def gender_match_label(token, index, stack):
     for candidate_form in token.forms:
         for case_form in stack[index].forms:
-            results = get_token_features(candidate_form, case_form, genders)
-
-            case_token_results = next(results)
-            case_token_msf, case_token_gndr = (
-                case_token_results[-2],
-                case_token_results[-1],
-            )
-            case_token_genders = case_token_results[:-2]
-
-            candidate_token_results = next(results)
-            candidate_token_msf, candidate_token_gndr = (
-                candidate_token_results[-2],
-                candidate_token_results[-1],
-            )
-            candidate_token_genders = candidate_token_results[:-2]
-
-            if not candidate_token_genders == case_token_genders:
-                if case_token_msf or candidate_token_msf:
-                    if any(case_token_genders[:2]) or any(candidate_token_genders[:2]):
-                        return True
-                elif case_token_gndr or candidate_token_gndr:
-                    return True
-                elif 'plur' in case_form['grammemes'] and 'plur' in candidate_form['grammemes']:
-                    return True
-                else:
-                    if (case_token_genders[0] and candidate_token_genders[0]) or \
-                       (case_token_genders[1] and candidate_token_genders[1]) or \
-                       (case_token_genders[2] and candidate_token_genders[2]):
-                       return True
-            else:
+            match = gender_match_check(candidate_form, case_form)
+            if match:
                 return True
     return False
 
-def number_match_label(token, index, stack, numbers=NUMBERS):
+def number_match_check(candidate, case, numbers=NUMBERS):
+    results = get_token_features(candidate, case, numbers)
+
+    case_form_results = next(results)
+    case_form_features, case_form_only_sing, case_form_only_plur = (
+        case_form_results[:-2],
+        case_form_results[-2],
+        case_form_results[-1],
+    )
+
+    candidate_form_results = next(results)
+    candidate_form_features, candidate_form_only_sing, candidate_form_only_plur = (
+        candidate_form_results[:-2],
+        candidate_form_results[-2],
+        candidate_form_results[-1],
+    )
+
+    if case_form_features == candidate_form_features:
+        return True
+    elif case_form_only_sing or case_form_only_plur:
+        if case_form_only_sing:
+            if candidate_form_features[0]:
+                return True
+        elif case_form_only_plur:
+            if candidate_form_features[1]:
+                return True
+
+def number_match_label(token, index, stack):
     for candidate_form in token.forms:
         for case_form in stack[index].forms:
-            results = get_token_features(candidate_form, case_form, numbers)
-
-            case_form_results = next(results)
-            case_form_features, case_form_only_plur = (
-                case_form_results[:-1],
-                case_form_results[-1],
-            )
-
-            candidate_form_results = next(results)
-            candidate_form_features, candidate_form_only_plur = (
-                candidate_form_results[:-1],
-                candidate_form_results[-1],
-            )
-
-            if case_form_features == candidate_form_features:
+            match = number_match_check(candidate_form, case_form)
+            if match:
                 return True
-            elif case_form_only_plur or candidate_form_only_plur:
-                if case_form_only_plur:
-                    if candidate_form_features[1]:
-                        return True
-                else:
-                    if case_form_features[1]:
-                        return True
     return False
+
+def case_match_check(candidate, case, cases=CASES):
+    results = get_token_features(candidate, case, cases)
+
+    case_form_results = next(results)
+    case_form_features, is_case_fixed = (
+        case_form_results[:-1],
+        case_form_results[-1],
+    )
+
+    candidate_form_results = next(results)
+    candidate_form_features, is_candidate_fixed = (
+        candidate_form_results[:-1],
+        candidate_form_results[-1],
+    )
+
+    if case_form_features == candidate_form_features:
+        return True
+    elif is_case_fixed or is_candidate_fixed:
+        return True
 
 def case_match_label(token, index, stack, cases=CASES):
     for candidate_form in token.forms:
         for case_form in stack[index].forms:
-            results = get_token_features(candidate_form, case_form, cases)
-
-            case_form_results = next(results)
-            case_form_features, is_case_fixed = (
-                case_form_results[:-1],
-                case_form_results[-1],
-            )
-
-            candidate_form_results = next(results)
-            candidate_form_features, is_candidate_fixed = (
-                candidate_form_results[:-1],
-                candidate_form_results[-1],
-            )
-
-            if case_form_features == candidate_form_features:
-                return True
-            elif is_case_fixed or is_candidate_fixed:
+            match = case_match_check(candidate_form, case_form)
+            if match:
                 return True
     return False
 
 def gnc_match_label(token, index, stack):
-    return all([
-        gender_match_label(token, index, stack),
-        number_match_label(token, index, stack),
-        case_match_label(token, index, stack),
-    ])
+    for candidate_form in token.forms:
+        for case_form in stack[index].forms:
+            match = all([
+                gender_match_check(candidate_form, case_form),
+                number_match_check(candidate_form, case_form),
+                case_match_check(candidate_form, case_form),
+            ])
+            if match:
+                return True
+    return False
 
 @string_required
 def dictionary_label(token, values, stack):
