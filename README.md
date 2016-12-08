@@ -19,7 +19,7 @@ from yargy import Grammar, Parser
 # This grammar matches two words
 # First must have a 'Name' grammeme (see opencorpora grammemes table)
 # Second must be a lastname.
-person_grammar = Grammar('Lastname_and_Firstname', [
+person_grammar = Grammar('Firstname_and_Lastname', [
     {
         'labels': [
             ('gram', 'Name'),
@@ -28,6 +28,7 @@ person_grammar = Grammar('Lastname_and_Firstname', [
     {
         'labels': [
             ('gram', 'Surn'),
+            ('gnc-match', -1), # must have same gender, number and case grammemes as previous word 
         ],
     },
 ])
@@ -50,7 +51,7 @@ text = 'Лев Толстой написал роман «Война и Мир»
 for (grammar, match) in parser.extract(text):
     # 'grammar' variable will contain your grammar objects
     # so in post-processing stage you can write constructions
-    # like isinstance(parsed_grammar, (my, grammars, types))
+    # like isinstance(parsed_grammar_type, (my, grammars, types))
 
     # 'match' variable will contain tokens, matched by grammar rules
     # each token have 'value' - actual value of token in text
@@ -61,7 +62,7 @@ for (grammar, match) in parser.extract(text):
 
 '''
 And in output you will see something like this:
-Grammar(name='Lastname_and_Firstname', stack=[]) [Token(value='Лев', position=(0, 3), forms=[...]), Token(value='Толстой', position=(4, 11), forms=[...])]
+Grammar(name='Firstname_and_Lastname', stack=[]) [Token(value='Лев', position=(0, 3), forms=[...]), Token(value='Толстой', position=(4, 11), forms=[...])]
 '''
 
 ```
