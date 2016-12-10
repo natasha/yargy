@@ -114,4 +114,4 @@ class Tokenizer(object):
                     {'grammemes': {'NUMBER', 'INT-SEPARATED'}, 'normal_form': value}
                 ])
             else:
-                raise NotImplementedError
+                raise NotImplementedError(group)
