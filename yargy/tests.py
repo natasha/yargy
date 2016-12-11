@@ -47,6 +47,12 @@ class TokenizerTestCase(unittest.TestCase):
         tokens = list(self.tokenizer.transform(text))
         self.assertEqual(len(tokens), 4)
         self.assertEqual([t.value for t in tokens], ['"', "'", '«', '»'])
+        self.assertEqual([t.forms[0]['grammemes'] for t in tokens], [
+            {'QUOTE'},
+            {'QUOTE'},
+            {'QUOTE', 'L-QUOTE'},
+            {'QUOTE', 'R-QUOTE'},
+        ])
 
     def test_match_float_range_with_commas(self):
         text = "1,5-2,5 года"

@@ -75,9 +75,14 @@ class Tokenizer(object):
                     }
                 ])
             elif group == 'quote':
+                grammemes = {'QUOTE', }
+                if value in {'«', }:
+                    grammemes |= {'L-QUOTE'}
+                elif value in {'»', }:
+                    grammemes |= {'R-QUOTE'}
                 yield Token(value, position, [
                     {
-                        'grammemes': {'QUOTE', },
+                        'grammemes': grammemes,
                         'normal_form': value
                     }
                 ])
