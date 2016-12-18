@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 
 
 from yargy.tokenizer import Token, Tokenizer
-from yargy.labels import LABELS_LOOKUP_MAP
 
 
 class Stack(list):
@@ -129,10 +128,9 @@ class Grammar(object):
         self.index = 0
 
     def match(self, token, rule):
-        labels = rule.get('labels', [])
         stack = self.stack.flatten()
-        for (name, value) in labels:
-            yield LABELS_LOOKUP_MAP[name](token, value, stack)
+        for label in rule.get('labels', []):
+            yield label(token, stack)
 
     def __repr__(self):
         return 'Grammar(name=\'{name}\', stack={stack})'.format(

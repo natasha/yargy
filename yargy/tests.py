@@ -9,6 +9,16 @@ import collections
 
 
 from yargy.parser import Grammar
+from yargy.labels import (
+    gram,
+    gram_not,
+    gram_any,
+    dictionary,
+    eq,
+    not_eq,
+    gender_match,
+    number_match,
+)
 from yargy.tokenizer import Token, Tokenizer
 from yargy.pipeline import DictionaryPipeline
 
@@ -70,10 +80,10 @@ class FactParserTestCase(unittest.TestCase):
         text = 'газета «Коммерсантъ» сообщила ...'
         parser = yargy.Parser([
             Grammar('test', [
-                {'labels': [('dictionary', {'газета', })]},
-                {'labels': [('eq', '«')]},
-                {'labels': [('not-eq', '»')]},
-                {'labels': [('eq', '»')]},
+                {'labels': [dictionary({'газета', })]},
+                {'labels': [eq('«')]},
+                {'labels': [not_eq('»')]},
+                {'labels': [eq('»')]},
             ])
         ])
         results = parser.extract(text)
@@ -83,9 +93,9 @@ class FactParserTestCase(unittest.TestCase):
         text = '... ООО «Коммерсантъ КАРТОТЕКА» уполномочено ...'
         parser = yargy.Parser([
             Grammar('test', [
-                {'labels': [('eq', '«')]},
-                {'repeatable': True, 'labels': [('gram', 'NOUN')]},
-                {'labels': [('eq', '»')]},
+                {'labels': [eq('«')]},
+                {'repeatable': True, 'labels': [gram('NOUN')]},
+                {'labels': [eq('»')]},
             ])
         ])
         results = parser.extract(text)
@@ -95,8 +105,8 @@ class FactParserTestCase(unittest.TestCase):
         text = 'маленький принц красиво пел'
         parser = yargy.Parser([
             Grammar('test', [
-                {'labels': [('gram', 'ADJS')]},
-                {'labels': [('gram', 'VERB')]},
+                {'labels': [gram('ADJS')]},
+                {'labels': [gram('VERB')]},
             ])
         ])
         results = parser.extract(text)
@@ -106,8 +116,8 @@ class FactParserTestCase(unittest.TestCase):
         text = 'Иван выпил чаю. И ушел домой.'
         parser = yargy.Parser([
             Grammar('test', [
-                {'labels': [('gram', 'Name'), ('gram-not', 'Abbr')]},
-                {'labels': [('gram', 'VERB')]},
+                {'labels': [gram('Name'), gram_not('Abbr')]},
+                {'labels': [gram('VERB')]},
             ])
         ])
         results = parser.extract(text)
@@ -116,8 +126,8 @@ class FactParserTestCase(unittest.TestCase):
     def test_gender_match_label(self):
         text = 'Иван выпил чаю. Вика был красивый.'
         grammar = Grammar('test', [
-            {'labels': [('gram', 'NOUN')]},
-            {'labels': [('gram', 'VERB'), ('gender-match', 0)]},
+            {'labels': [gram('NOUN')]},
+            {'labels': [gram('VERB'), gender_match(0)]},
         ])
         parser = yargy.Parser([grammar])
         results = parser.extract(text)
@@ -134,8 +144,8 @@ class FactParserTestCase(unittest.TestCase):
     def test_number_match_label(self):
         text = 'Дрова был, саша пилил.'
         grammar = Grammar('test', [
-            {'labels': [('gram', 'NOUN')]},
-            {'labels': [('gram', 'VERB'), ('number-match', 0)]},
+            {'labels': [gram('NOUN')]},
+            {'labels': [gram('VERB'), number_match(0)]},
         ])
         parser = yargy.Parser([grammar])
         results = parser.extract(text)
@@ -144,17 +154,17 @@ class FactParserTestCase(unittest.TestCase):
     def test_optional_rules(self):
         text = 'великий новгород, москва.'
         parser = yargy.Parser([Grammar('test', [
-            {'labels': [('gram', 'ADJF')], 'optional': True},
-            {'labels': [('gram', 'NOUN'), ('gram', 'Geox')]},
+            {'labels': [gram('ADJF')], 'optional': True},
+            {'labels': [gram('NOUN'), gram('Geox')]},
         ])])
         results = parser.extract(text)
         self.assertEqual([[w.value for w in n] for (_, n) in results], [['великий', 'новгород'], ['москва']])
 
         text = 'иван иванович иванов, анна смирнова'
         parser = yargy.Parser([Grammar('test', [
-            {'labels': [('gram', 'NOUN'), ('gram', 'Name')]},
-            {'labels': [('gram', 'NOUN'), ('gram', 'Patr')], 'optional': True},
-            {'labels': [('gram', 'NOUN'), ('gram', 'Surn')]},
+            {'labels': [gram('NOUN'), gram('Name')]},
+            {'labels': [gram('NOUN'), gram('Patr')], 'optional': True},
+            {'labels': [gram('NOUN'), gram('Surn')]},
         ])])
         results = parser.extract(text)
         self.assertEqual([[w.value for w in n] for (_, n) in results], [['иван', 'иванович', 'иванов'], ['анна', 'смирнова']])
@@ -164,19 +174,19 @@ class FactParserTestCase(unittest.TestCase):
         parser = yargy.Parser([
             Grammar('street', [
                 {'labels': [
-                    ('dictionary', {'улица', }),
+                    dictionary({'улица', }),
                 ]},
                 {'labels': [
-                    ('gram-any', {'accs', }),
+                    gram_any({'accs', }),
                 ], 'repeatable': True},
                 {'labels': [
-                    ('gram', 'PUNCT'),
+                    gram('PUNCT'),
                 ], 'skip': True},
                 {'labels': [
-                    ('dictionary', {'дом', }),
+                    dictionary({'дом', }),
                 ], 'skip': True},
                 {'labels': [
-                    ('gram', 'NUMBER'),
+                    gram('NUMBER'),
                 ]},
             ]),
         ])
@@ -241,7 +251,7 @@ class DictionaryPipelineTestCase(unittest.TestCase):
         parser = yargy.Parser([
             Grammar('city', [
                 {'labels': [
-                    ('gram', 'Geox/City'),
+                    gram('Geox/City'),
                 ]},
             ]),
         ], pipelines=[pipeline])
@@ -260,12 +270,12 @@ class CombinatorTestCase(unittest.TestCase):
         Fullname = [
             {
                 'labels': [
-                    ('gram', 'Name'),
+                    gram('Name'),
                 ],
             },
             {
                 'labels': [
-                    ('gram', 'Surn'),
+                    gram('Surn'),
                 ],
             },
         ]
@@ -273,7 +283,7 @@ class CombinatorTestCase(unittest.TestCase):
         Firstname = [
             {
                 'labels': [
-                    ('gram', 'Name'),
+                    gram('Name'),
                 ],
             },
         ]
@@ -283,7 +293,7 @@ class CombinatorTestCase(unittest.TestCase):
         Default = [
             {
                 'labels': [
-                    ('gram', 'Name'),
+                    gram('Name'),
                 ],
             },
         ]
@@ -293,12 +303,12 @@ class CombinatorTestCase(unittest.TestCase):
         Simple = [
             {
                 'labels': [
-                    ('gram', 'NUMBER'),
+                    gram('NUMBER'),
                 ],
             },
             {
                 'labels': [
-                    ('dictionary', {
+                    dictionary({
                         'рубль',
                         'евро',
                         'доллар',

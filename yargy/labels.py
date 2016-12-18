@@ -1,6 +1,6 @@
 # coding: utf-8
 from __future__ import unicode_literals
-from functools import wraps
+from functools import wraps, partial
 
 try:
     string_type = basestring
@@ -17,79 +17,104 @@ def get_token_features(candidate, case, grammemes):
 
 def string_required(func):
     @wraps(func)
-    def wrapper(token, value, stack):
+    def wrapper(value, token, stack):
         if not isinstance(token.value, string_type):
             return False
         else:
-            return func(token, value, stack)
+            return func(value, token, stack)
     return wrapper
 
+def label(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        return partial(func, *args, **kwargs)
+    return wrapper
+
+@label
 @string_required
-def is_lower_label(token, value, stack):
+def is_lower(value, token, stack):
     return token.value.islower() == value
 
+@label
 @string_required
-def is_upper_label(token, value, stack):
+def is_upper(value, token, stack):
     return token.value.isupper() == value
 
+@label
 @string_required
-def is_title_label(token, value, stack):
+def is_title(value, token, stack):
     return token.value.istitle() == value
 
+@label
 @string_required
-def is_capitalized_label(token, value, stack):
+def is_capitalized(value, token, stack):
     '''
     http://bugs.python.org/issue7008
     '''
     return token.value[0].isupper() == value
 
-def eq_label(token, value, stack):
+@label
+def eq(value, token, stack):
     return token.value == value
 
-def not_eq_label(token, value, stack):
+@label
+def not_eq(value, token, stack):
     return token.value != value
 
-def in_label(token, value, stack):
+@label
+def in_(value, token, stack):
     return token.value in value
 
-def not_in_label(token, value, stack):
+@label
+def not_in(value, token, stack):
     return not token.value in value
 
-def gt_label(token, value, stack):
+@label
+def gt(value, token, stack):
     return token.value > value
 
-def lt_label(token, value, stack):
+@label
+def lt(value, token, stack):
     return token.value < value
 
-def gte_label(token, value, stack):
+@label
+def gte(value, token, stack):
     return token.value >= value
 
-def lte_label(token, value, stack):
+@label
+def lte(value, token, stack):
     return token.value <= value
 
-def is_instance_label(token, value, stack):
+@label
+def is_instance(value, token, stack):
     return isinstance(token.value, value)
 
-def custom_label(token, function, stack):
+@label
+def custom(function, token, stack):
     return function(token, stack)
 
-def gram_label(token, value, stack):
+@label
+def gram(value, token, stack):
     for form in token.forms:
         if value in form['grammemes']:
             return True
     return False
 
-def gram_any_label(token, values, stack):
-    return any(gram_label(token, value, stack) for value in values)
+@label
+def gram_any(values, token, stack):
+    return any(gram(value)(token, stack) for value in values)
 
-def gram_in_label(token, values, stack):
-    return all(gram_label(token, value, stack) for value in values)
+@label
+def gram_in(values, token, stack):
+    return all(gram(value)(token, stack) for value in values)
 
-def gram_not_label(token, value, stack):
-    return not gram_label(token, value, stack)
+@label
+def gram_not(value, token, stack):
+    return not gram(value)(token, stack)
 
-def gram_not_in_label(token, values, stack):
-    return all(gram_not_label(token, value, stack) for value in values)
+@label
+def gram_not_in(values, token, stack):
+    return all(gram_not(value)(token, stack) for value in values)
 
 def gender_match_check(candidate, case, genders=GENDERS):
     results = get_token_features(candidate, case, genders)
@@ -124,7 +149,8 @@ def gender_match_check(candidate, case, genders=GENDERS):
     else:
         return True
 
-def gender_match_label(token, index, stack):
+@label
+def gender_match(index, token, stack):
     for candidate_form in token.forms:
         for case_form in stack[index].forms:
             match = gender_match_check(candidate_form, case_form)
@@ -159,13 +185,15 @@ def number_match_check(candidate, case, numbers=NUMBERS):
             if candidate_form_features[1]:
                 return True
 
-def number_match_label(token, index, stack):
+@label
+def number_match(index, token, stack):
     for candidate_form in token.forms:
         for case_form in stack[index].forms:
             match = number_match_check(candidate_form, case_form)
             if match:
                 return True
     return False
+
 
 def case_match_check(candidate, case, cases=CASES):
     results = get_token_features(candidate, case, cases)
@@ -187,7 +215,8 @@ def case_match_check(candidate, case, cases=CASES):
     elif is_case_fixed or is_candidate_fixed:
         return True
 
-def case_match_label(token, index, stack, cases=CASES):
+@label
+def case_match(index, token, stack, cases=CASES):
     for candidate_form in token.forms:
         for case_form in stack[index].forms:
             match = case_match_check(candidate_form, case_form)
@@ -195,7 +224,8 @@ def case_match_label(token, index, stack, cases=CASES):
                 return True
     return False
 
-def gnc_match_label(token, index, stack):
+@label
+def gnc_match(index, token, stack):
     for candidate_form in token.forms:
         for case_form in stack[index].forms:
             match = all([
@@ -207,41 +237,12 @@ def gnc_match_label(token, index, stack):
                 return True
     return False
 
+@label
 @string_required
-def dictionary_label(token, values, stack):
+def dictionary(values, token, stack):
     return any((form['normal_form'] in values) for form in token.forms)
 
+@label
 @string_required
-def dictionary_not_label(token, values, stack):
-    return not dictionary_label(token, values, stack)
-
-LABELS_LOOKUP_MAP = {
-    'gram': gram_label,
-    'gram-any': gram_any_label,
-    'gram-in': gram_in_label,
-    'gram-not': gram_not_label,
-    'gram-not-in': gram_not_in_label,
-    'dictionary': dictionary_label,
-    'dictionary-not': dictionary_not_label,
-
-    'gender-match': gender_match_label,
-    'number-match': number_match_label,
-    'case-match': case_match_label,
-    'gnc-match': gnc_match_label,
-
-    'is-lower': is_lower_label,
-    'is-upper': is_upper_label,
-    'is-title': is_title_label,
-    'is-capitalized': is_capitalized_label,
-
-    'eq': eq_label,
-    'not-eq': not_eq_label,
-    'in': in_label,
-    'not-in': not_in_label,
-    'gt': gt_label,
-    'lt': lt_label,
-    'gte': gte_label,
-    'lte': lte_label,
-    'is-instance': is_instance_label,
-    'custom': custom_label,
-}
+def dictionary_not(values, token, stack):
+    return not dictionary(values)(token, stack)
