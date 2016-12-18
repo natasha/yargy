@@ -14,6 +14,10 @@ $ pip install yargy
 
 ```python
 from yargy import Grammar, Parser
+from yargy.labels import (
+    gram,
+    gnc_match,
+)
 
 
 # This grammar matches two words
@@ -22,13 +26,13 @@ from yargy import Grammar, Parser
 person_grammar = Grammar('Firstname_and_Lastname', [
     {
         'labels': [
-            ('gram', 'Name'),
+            gram('Name'),
         ],
     },
     {
         'labels': [
-            ('gram', 'Surn'),
-            ('gnc-match', -1), # must have same gender, number and case grammemes as previous word 
+            gram('Surn'),
+            gnc_match(-1), # must have same gender, number and case grammemes as previous word
         ],
     },
 ])
@@ -44,7 +48,7 @@ parser = Parser(
     # 50k is enough cache, for example, for first book of War and Peace by Leo Tolstoy
     # Which contains (roughly) 35k of word forms.
     cache_size=50000,
-) 
+)
 
 text = 'Лев Толстой написал роман «Война и Мир»'
 
@@ -70,12 +74,14 @@ Grammar(name='Firstname_and_Lastname', stack=[]) [Token(value='Лев', position
 # Grammar syntax
 
 ```python
+from yargy.labels import gram
+
 
 grammar = [
     # matches zero or more words by given labels
     {
         'labels': [
-            ('gram', 'NOUN'),
+            gram('NOUN'),
         ],
         'repeatable': True,
         'optional': True,
@@ -99,55 +105,55 @@ This labels use normal form of words to perform matching
 | Name | Description | Usage |
 | ---- | ----------- | ----- |
 | `gram` | Checks that word contains given grammeme | `('gram', 'NOUN')` |
-| `gram-any` | Checks that word contains any of given grammemes | `('gram-any', ['NOUN', 'VERB'])` |
-| `gram-in` | Checks that word contains all of given grammemes | `('gram-in', ['NOUN', 'Name'])` |
-| `gram-not` | Reversed version of `gram` | `('gram-not', 'NOUN')` |
-| `gram-not-in` | Reversed version of `gram-in` | `('gram-not-in', ['ADJS', 'ADJF'])` |
+| `gram_any` | Checks that word contains any of given grammemes | `('gram-any', ['NOUN', 'VERB'])` |
+| `gram_in` | Checks that word contains all of given grammemes | `('gram-in', ['NOUN', 'Name'])` |
+| `gram_not` | Reversed version of `gram` | `('gram-not', 'NOUN')` |
+| `gram_not_in` | Reversed version of `gram-in` | `('gram-not-in', ['ADJS', 'ADJF'])` |
 | `dictionary` | Checks that normal form of word exists in given dictionary | `('dictionary', ['говорить'])` - will match `говорил`, `говорила`, `говорили`.
-| `dictionary-not` | Reversed version of `dictionary` | `('dictionary-not', ['котик'])` - will match everything except `котик` in all forms (`котика`, `котики`, etc.) | 
-| `gender-match` | Checks that words have same gender grammemes | `('gender-match', -1)` - will check candidate word with word at `-1` index in stack (actually, previous word) for gender | equality. E.g. when previous_word=`Пьер` it will match `был` and not `была` |
-| `number-match` | Checks that words have same number grammemes | `('number-match', -1)` - will match `были` for `дрова` and not `перенесли` for `ипполит` |
-| `case-match` | Checks that words have same case grammemes | `('case-match', -1)` - will match `красивому Ипполиту` and not `красивая Анну` |
-| `gnc-match` | Combination of `gender-match`, `number-match` and `case-match` | `('gnc-match', -1)` |
-| `custom` | Calls given function | `('custom', lambda: token, value, stack: 'VERB' in token['grammemes'])` will match tokens that have `VERB` in grammemes set. |  
+| `dictionary_not` | Reversed version of `dictionary` | `('dictionary-not', ['котик'])` - will match everything except `котик` in all forms (`котика`, `котики`, etc.) |
+| `gender_match` | Checks that words have same gender grammemes | `('gender-match', -1)` - will check candidate word with word at `-1` index in stack (actually, previous word) for gender | equality. E.g. when previous_word=`Пьер` it will match `был` and not `была` |
+| `number_match` | Checks that words have same number grammemes | `('number-match', -1)` - will match `были` for `дрова` and not `перенесли` for `ипполит` |
+| `case_match` | Checks that words have same case grammemes | `('case-match', -1)` - will match `красивому Ипполиту` and not `красивая Анну` |
+| `gnc_match` | Combination of `gender-match`, `number-match` and `case-match` | `('gnc-match', -1)` |
+| `custom` | Calls given function | `('custom', lambda: value, token, stack: 'VERB' in token['grammemes'])` will match tokens that have `VERB` in grammemes set. |
 
-Next labels use raw token value (e.g. when word=`сказали`, it'll use `сказали` as matching value, not normal form of that word - `сказать`).  
+Next labels use raw token value (e.g. when word=`сказали`, it'll use `сказали` as matching value, not normal form of that word - `сказать`).
 
 | Name | Description | Usage |
 | ---- | ----------- | ----- |
 | `eq` | Same as `==` in Python | `('eq', 1)` will match `1` and not `sample` |
-| `not-eq` | Same as `!=` in Python | `('not-eq', 0)` will match everything except `0` |
+| `not_eq` | Same as `!=` in Python | `('not-eq', 0)` will match everything except `0` |
 | `gt` | Same as `>` in Python | `('gt', 0)` |
 | `lt` | Same as `<` in Python | `('lt', 1990)` |
 | `gte` | Same as `>=` in Python | `('gte', 10)` |
 | `lte` | Same as `<=` in Python | `('lte', 1990)` |
-| `in` | Same as `in` in Python | `('in', range(0, 10))` will match number in range between 0 and 10 |
-| `not-in` | Same as `not XXX in YYY` in Python | `('not-in', [1, 2, 3])` will match everything except `1`, `2` and `3` | 
-| `is-instance` | Same as `isinstance(value, types)` in Python | `('is-instance', (int, float))` will match int & float numbers but not strings | 
+| `in_` | Same as `in` in Python | `('in', range(0, 10))` will match number in range between 0 and 10 |
+| `not_in` | Same as `not XXX in YYY` in Python | `('not-in', [1, 2, 3])` will match everything except `1`, `2` and `3` |
+| `is_instance` | Same as `isinstance(value, types)` in Python | `('is-instance', (int, float))` will match int & float numbers but not strings |
 
 # Options
 
-Its possible to define `optional` and `repeatable` rules.  
+Its possible to define `optional` and `repeatable` rules.
 Options defined at rule dictionary as key with boolean value (true or false):
 
 | Option | Regex equivalent |
 | ------ | ---------------- |
-| `optional` | `?` |  
-| `repeatable` | `+` |  
-| `optional` and `repeatable` | `*` |  
+| `optional` | `?` |
+| `repeatable` | `+` |
+| `optional` and `repeatable` | `*` |
 
 Also, you can use `skip` option if you want to match tokens, but didn't want to include it in result.
 
 # Pipelines
 
-Pipelines is a way to preprocess stream of tokens before passing it to parser. 
+Pipelines is a way to preprocess stream of tokens before passing it to parser.
 Actually pipeline can do same work as Gazetteer does in Tomita-parser, where result tokens call'd as `multiword`.
 
 For example, we can merge geo-related tokens into one `multiword`, like this:
 ```
 [Text] -> 'в нижнем новгороде...' -> [Tokenizer]
 [Tokenizer] -> ['в', 'нижнем', 'новгороде'] -> [Pipeline(s)]
-[Pipeline(s)] -> ['в', 'нижнем_новгороде'] -> [Parser] 
+[Pipeline(s)] -> ['в', 'нижнем_новгороде'] -> [Parser]
 ```
 
 Multiple pipelines can be chained into one, if you need it.
@@ -172,7 +178,7 @@ Source code of `yargy` is distributed under MIT license (allows modification and
 
 ## 0.4.1
 
-* Reimplemented `resolve_matches` method in `Combinator` 
+* Reimplemented `resolve_matches` method in `Combinator`
 
 ## 0.4
 * Replaced shift-reduce parser with GLR parser, because it provides much more performance on multiple grammars (linear time with GLR vs. exponental time with shift-reduce parser).
