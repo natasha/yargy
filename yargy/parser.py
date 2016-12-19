@@ -64,9 +64,6 @@ class Grammar(object):
                 reduce()
         Grammar_1 -> []
         Grammar_2 -> [] <-> returns stack [token_1, token_2]
-
-        :return: list with matched tokens or None if (at current step) stack doesn't contains matches
-        :rtype: list or None
         '''
         rule = self.rules[self.index]
 

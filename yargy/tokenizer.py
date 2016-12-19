@@ -65,58 +65,118 @@ class Tokenizer(object):
             group = match.lastgroup
             value = match.group(0)
             position = match.span()
-            if group == 'russian':
-                yield Token(value, position, self.cache(value))
-            elif group == 'latin':
-                yield Token(value, position, [
-                    {
-                        'grammemes': {'LATN'},
-                        'normal_form': value.lower(),
-                    }
-                ])
-            elif group == 'quote':
-                grammemes = {'QUOTE', }
-                if value in {'«', }:
-                    grammemes |= {'L-QUOTE'}
-                elif value in {'»', }:
-                    grammemes |= {'R-QUOTE'}
-                yield Token(value, position, [
-                    {
-                        'grammemes': grammemes,
-                        'normal_form': value
-                    }
-                ])
-            elif group == 'float':
-                yield Token(float(value.replace(',', '.')), position, [
-                    {'grammemes': {'NUMBER', 'FLOAT'}, 'normal_form': value}
-                ])
-            elif group == 'int':
-                yield Token(int(value), position, [
-                    {'grammemes': {'NUMBER', 'INT'}, 'normal_form': value}
-                ])
-            elif group == 'int_range':
-                if value[0] == '-':
-                    value = value[1:]
-                values = map(int, re.split(r'[\-\—]', value))
-                yield Token(range(*values), position, [
-                    {'grammemes': {'RANGE', 'INT-RANGE'}, 'normal_form': value}
-                ])
-            elif group == 'float_range':
-                values = map(float, (x.replace(',', '.') for x in re.split(r'[\-\—]', value)))
-                yield Token(frange(*values, step=self.frange_step), position, [
-                    {'grammemes': {'RANGE', 'FLOAT-RANGE'}, 'normal_form': value}
-                ])
-            elif group == 'punct':
-                yield Token(value, position, [
-                    {
-                        'grammemes': {'PUNCT', },
-                        'normal_form': value
-                    }
-                ])
-            elif group == 'int_separated':
-                value = int(re.sub('\s', '', value))
-                yield Token(value, position, [
-                    {'grammemes': {'NUMBER', 'INT-SEPARATED'}, 'normal_form': value}
-                ])
+            transform_method = getattr(self, 'transform_{}'.format(group), None)
+            if transform_method:
+                yield transform_method(value, position)
             else:
-                raise NotImplementedError(group)
+                raise NotImplementedError('Unknown token type: {}'.format(group))
+
+    def transform_russian(self, value, position):
+        '''
+        Transforms russian word into token
+        :returns: Token with word morphology info
+        :rtype: Token instance
+        '''
+        return Token(value, position, self.cache(value))
+
+    def transform_latin(self, value, position):
+        '''
+        Transforms latin word into token, note that no morph info is added to token
+        :returns: Token with 'LATN' grammeme
+        :rtype: Token instance
+        '''
+        return Token(value, position, [
+            {
+                'grammemes': {'LATN'},
+                'normal_form': value.lower(),
+            }
+        ])
+
+    def transform_quote(self, value, position):
+        '''
+        Transforms different types of quotes to tokens, sets different grammemes
+        to its, based on type of quote (e.g. '«' - gets L-QUOTE grammeme)
+        :returns: Token with 'QUOTE' grammeme and (optional) L/R-QUOTE grammeme
+        '''
+        grammemes = {'QUOTE', }
+        if value in {'«', }:
+            grammemes |= {'L-QUOTE'}
+        elif value in {'»', }:
+            grammemes |= {'R-QUOTE'}
+        return Token(value, position, [
+            {
+                'grammemes': grammemes,
+                'normal_form': value
+            }
+        ])
+
+    def transform_int(self, value, position):
+        '''
+        Transforms integer to token
+        :returns: Token with 'NUMBER' and 'INT' grammemes
+        :rtype: Token instance
+        '''
+        return Token(int(value), position, [
+            {'grammemes': {'NUMBER', 'INT'}, 'normal_form': value}
+        ])
+
+    def transform_int_range(self, value, position):
+        '''
+        Transforms integer range (two numbers separated by dash or minus) to token with 'RANGE' grammeme
+        :returns: Token with 'RANGE' and 'INT-RANGE' grammemes
+        :rtype: Token instance
+        '''
+        if value[0] == '-':
+            value = value[1:]
+        values = map(int, re.split(r'[\-\—]', value))
+        return Token(range(*values), position, [
+            {'grammemes': {'RANGE', 'INT-RANGE'}, 'normal_form': value}
+        ])
+
+    def transform_int_separated(self, value, position):
+        '''
+        Transforms integer separated by spaces (like 1 000 000) to token with 'INT' grammeme
+        :returns: Token with 'NUMBER' and 'INT' gramemes
+        :rtype: Token instance
+        '''
+        value = int(re.sub('\s', '', value))
+        return Token(value, position, [
+            {'grammemes': {'NUMBER', 'INT', 'INT-SEPARATED'}, 'normal_form': value}
+        ])
+
+    def transform_float(self, value, position):
+        '''
+        Transforms float (with '.' or ',' as delimiter) to token with 'FLOAT' grammeme
+        :returns: Token with 'NUMBER' and 'FLOAT' grammeme
+        :rtype: Token instance
+        '''
+        value = float(value.replace(',', '.'))
+        return Token(value, position, [
+            {'grammemes': {'NUMBER', 'FLOAT'}, 'normal_form': value}
+        ])
+
+    def transform_float_range(self, value, position):
+        '''
+        Transforms floats separated by dash or minus to token with special type - float range
+        Because python built-in `range` type doesnt supports float ranges we use custom type
+        for that purposes, which can be found at `yargy.utils.frange` function
+        :returns: Token with 'RANGE' and 'FLOAT-RANGE' gremmemes
+        :rtype: Token instance
+        '''
+        values = map(float, (x.replace(',', '.') for x in re.split(r'[\-\—]', value)))
+        return Token(frange(*values, step=self.frange_step), position, [
+            {'grammemes': {'RANGE', 'FLOAT-RANGE'}, 'normal_form': value}
+        ])
+
+    def transform_punct(self, value, position):
+        '''
+        Transforms punctuation characters to token with 'PUNCT' grammeme
+        :returns: Token with 'PUNCT' grammeme
+        :rtype: Token instance
+        '''
+        return Token(value, position, [
+            {
+                'grammemes': {'PUNCT', },
+                'normal_form': value
+            }
+        ])
