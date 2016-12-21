@@ -98,7 +98,8 @@ def gram(value, token, stack):
     for form in token.forms:
         if value in form['grammemes']:
             return True
-    return False
+    else:
+        return False
 
 @label
 def gram_any(values, token, stack):
@@ -225,7 +226,7 @@ def case_match(index, token, stack, cases=CASES):
     return False
 
 @label
-def gnc_match(index, token, stack):
+def gnc_match(index, token, stack, solve_disambiguation=False):
     for candidate_form in token.forms:
         for case_form in stack[index].forms:
             match = all([
@@ -234,6 +235,9 @@ def gnc_match(index, token, stack):
                 case_match_check(candidate_form, case_form),
             ])
             if match:
+                if solve_disambiguation:
+                    token.forms = [candidate_form]
+                    stack[index].forms = [case_form]
                 return True
     return False
 

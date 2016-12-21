@@ -1,6 +1,6 @@
 # coding: utf-8
 from __future__ import unicode_literals
-
+from copy import copy
 
 from yargy.tokenizer import Token, Tokenizer
 
@@ -37,13 +37,14 @@ class Grammar(object):
     which contains actual text match
     '''
 
-    def __init__(self, name, rules):
+    def __init__(self, name, rules, changes_token_structure=False):
         self.name = name
         self.rules = rules + [
             {
                 'terminal': True,
             },
         ]
+        self.changes_token_structure = changes_token_structure
         self.reset()
 
     def shift(self, token, recheck=False):
@@ -71,6 +72,11 @@ class Grammar(object):
         optional = rule.get('optional', False)
         terminal = rule.get('terminal', False)
         skip = rule.get('skip', False)
+
+        if self.changes_token_structure:
+            # need to clone tokens, because labels modifies
+            # its forms or other attributes
+            token = copy(token)
 
         if not all(self.match(token, rule)) and not terminal:
             if optional or (repeatable and self.stack.have_matches_by_rule_index(self.index)):

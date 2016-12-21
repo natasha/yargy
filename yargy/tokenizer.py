@@ -15,8 +15,8 @@ import re
 import string
 import collections
 
-from yargy.utils import frange
 from pymorphy2 import MorphAnalyzer
+from yargy.utils import frange
 
 russian_token_regex = r'(?P<russian>[а-яё][а-яё\-]*)'
 latin_token_regex = r'(?P<latin>[a-z][a-z\-\']*)'
@@ -41,7 +41,31 @@ complete_token_regex = r'|'.join((
 
 token_regex = re.compile(complete_token_regex, re.UNICODE | re.IGNORECASE)
 
-Token = collections.namedtuple('Token', ['value', 'position', 'forms'])
+class Token(object):
+
+    __slots__ = (
+        'value',
+        'position',
+        'forms',
+    )
+
+    def __init__(self, value, position, forms):
+        self.value = value
+        self.position = position
+        self.forms = forms
+
+    def __eq__(self, other):
+        if not isinstance(other, Token):
+            return False
+        else:
+            return (
+                (self.value == other.value) &
+                (self.position == other.position) &
+                (self.forms == other.forms)
+            )
+
+    def __repr__(self):
+        return '{0.__class__.__name__}({0.value!r}, {0.position!r}, {0.forms!r})'.format(self)
 
 class Tokenizer(object):
 

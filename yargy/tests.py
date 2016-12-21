@@ -18,6 +18,7 @@ from yargy.labels import (
     not_eq,
     gender_match,
     number_match,
+    gnc_match,
 )
 from yargy.tokenizer import Token, Tokenizer
 from yargy.pipeline import DictionaryPipeline
@@ -38,7 +39,7 @@ class TokenizerTestCase(unittest.TestCase):
 
     def test_match_float_range(self):
         text = '1.5 - 2.0%'
-        value = next(self.tokenizer.transform(text))[0]
+        value = next(self.tokenizer.transform(text)).value
         self.assertEqual(list(value), [1.5, 1.6, 1.7, 1.8, 1.9, 2.0])
 
     def test_match_simple_numbers(self):
@@ -193,6 +194,52 @@ class FactParserTestCase(unittest.TestCase):
         results = parser.extract(text)
         self.assertEqual(sum([[w.value for w in n] for (_, n) in results], []), ['улица', 'академика', 'павлова', 7])
 
+    def test_solve_disambiguation(self):
+        text = 'саше иванову, саша иванова, сашу иванову, сашу иванова'
+        grammar = Grammar('Firstname_and_Lastname', [
+                {
+                    'labels': [
+                        gram('Name'),
+                    ],
+                },
+                {
+                    'labels': [
+                        gram('Surn'),
+                        gnc_match(-1, solve_disambiguation=True),
+                    ],
+                },
+            ], changes_token_structure=True)
+        parser = yargy.Parser([
+            grammar,
+        ])
+        results = parser.extract(text)
+        self.assertEqual(list(results), [
+            (grammar,
+                [
+                    Token('саше', (0, 4), [{'grammemes': {'femn', 'anim', 'sing', 'Ms-f', 'Name', 'NOUN', 'datv'}, 'normal_form': 'саша'}]),
+                    Token('иванову', (5, 12), [{'grammemes': {'anim', 'Surn', 'Sgtm', 'sing', 'NOUN', 'datv', 'masc'}, 'normal_form': 'иванов'}])
+                ]
+            ),
+            (grammar,
+                [
+                    Token('саша', (14, 18), [{'grammemes': {'femn', 'anim', 'nomn', 'sing', 'Ms-f', 'NOUN', 'Name'}, 'normal_form': 'саша'}]),
+                    Token('иванова', (19, 26), [{'grammemes': {'femn', 'anim', 'nomn', 'Surn', 'Sgtm', 'sing', 'NOUN'}, 'normal_form': 'иванов'}])
+                ]
+            ),
+            (grammar,
+                [
+                    Token('сашу', (28, 32), [{'grammemes': {'accs', 'femn', 'anim', 'sing', 'Ms-f', 'NOUN', 'Name'}, 'normal_form': 'саша'}]),
+                    Token('иванову', (33, 40), [{'grammemes': {'accs', 'femn', 'anim', 'Surn', 'Sgtm', 'sing', 'NOUN'}, 'normal_form': 'иванов'}])
+                ]
+            ),
+            (grammar,
+                [
+                    Token('сашу', (42, 46), [{'grammemes': {'accs', 'femn', 'anim', 'sing', 'Ms-f', 'NOUN', 'Name'}, 'normal_form': 'саша'}]),
+                    Token('иванова', (47, 54), [{'grammemes': {'accs', 'anim', 'Surn', 'Sgtm', 'sing', 'NOUN', 'masc'}, 'normal_form': 'иванов'}])
+                ]
+            )
+        ])
+
 class DictionaryPipelineTestCase(unittest.TestCase):
 
     def test_match(self):
@@ -213,7 +260,7 @@ class DictionaryPipelineTestCase(unittest.TestCase):
                 continue
             else:
                 matches.append(token)
-        self.assertEqual(matches, [(
+        self.assertEqual(matches, [Token(
             'нижний_новгород',
             (15, 30),
             [{'grammemes': ['Geox/City'], 'normal_form': 'нижний новгород'}]
@@ -237,7 +284,7 @@ class DictionaryPipelineTestCase(unittest.TestCase):
                 continue
             else:
                 matches.append(token)
-        self.assertEqual(matches, [(
+        self.assertEqual(matches, [Token(
             'нижнем_новгороде',
             (2, 18),
             [{'grammemes': ['Geox/City'], 'normal_form': 'нижний новгород'}]
@@ -257,7 +304,7 @@ class DictionaryPipelineTestCase(unittest.TestCase):
         ], pipelines=[pipeline])
         results = parser.extract(text)
         _, matches = next(results)
-        self.assertEqual(matches, [(
+        self.assertEqual(matches, [Token(
             'нижнем_новгороде',
             (2, 18),
             [{'grammemes': ['Geox/City'], 'normal_form': 'нижний новгород'}]
