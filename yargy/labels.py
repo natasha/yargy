@@ -226,8 +226,14 @@ def case_match(index, token, stack, cases=CASES):
     return False
 
 @label
-def gnc_match(index, token, stack, solve_disambiguation=False):
+def gnc_match(index, token, stack, solve_disambiguation=False, match_all_disambiguation_forms=True):
+    if solve_disambiguation:
+        case_forms = []
+        candidate_forms = []
     for candidate_form in token.forms:
+        if not match_all_disambiguation_forms:
+            if (case_forms and candidate_forms):
+                break
         for case_form in stack[index].forms:
             match = all([
                 gender_match_check(candidate_form, case_form),
@@ -236,9 +242,18 @@ def gnc_match(index, token, stack, solve_disambiguation=False):
             ])
             if match:
                 if solve_disambiguation:
-                    token.forms = [candidate_form]
-                    stack[index].forms = [case_form]
-                return True
+                    if not case_form in case_forms:
+                        case_forms.append(case_form)
+                    if not candidate_form in candidate_forms:
+                        candidate_forms.append(candidate_form)
+                    if not match_all_disambiguation_forms:
+                        break
+                else:
+                    return True
+    if solve_disambiguation and (case_forms and candidate_forms):
+        token.forms = candidate_forms
+        stack[index].forms = case_forms
+        return True
     return False
 
 @label

@@ -205,7 +205,7 @@ class FactParserTestCase(unittest.TestCase):
                 {
                     'labels': [
                         gram('Surn'),
-                        gnc_match(-1, solve_disambiguation=True),
+                        gnc_match(-1, solve_disambiguation=True, match_all_disambiguation_forms=False),
                     ],
                 },
             ], changes_token_structure=True)
