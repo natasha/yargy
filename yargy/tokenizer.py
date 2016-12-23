@@ -16,6 +16,8 @@ import string
 import collections
 
 from pymorphy2 import MorphAnalyzer
+from pymorphy2.shapes import is_roman_number
+
 from yargy.utils import frange
 
 russian_token_regex = r'(?P<russian>[а-яё][а-яё\-]*)'
@@ -109,10 +111,20 @@ class Tokenizer(object):
         :returns: Token with 'LATN' grammeme
         :rtype: Token instance
         '''
+        grammemes = {
+            'LATN',
+        }
+        normal_form = value.lower()
+        is_number = is_roman_number(value)
+        if is_number:
+            grammemes = {
+                'ROMN',
+            }
+            normal_form = value
         return Token(value, position, [
             {
-                'grammemes': {'LATN'},
-                'normal_form': value.lower(),
+                'grammemes': grammemes,
+                'normal_form': normal_form,
             }
         ])
 

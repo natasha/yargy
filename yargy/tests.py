@@ -74,6 +74,16 @@ class TokenizerTestCase(unittest.TestCase):
             {'grammemes': {'inan', 'masc', 'sing', 'NOUN', 'gent'}, 'normal_form': 'год'},
         ])
 
+    def test_match_roman_number(self):
+        text = 'XX век Fox'
+        tokens = list(self.tokenizer.transform(text))
+        self.assertEqual(len(tokens), 3)
+        self.assertEqual([t.forms[0] for t in tokens], [
+            {'grammemes': {'ROMN'}, 'normal_form': 'XX'},
+            {'grammemes': {'ADVB'}, 'normal_form': 'век'},
+            {'grammemes': {'LATN'}, 'normal_form': 'fox'},
+        ])
+
 
 class FactParserTestCase(unittest.TestCase):
 
