@@ -10,7 +10,7 @@ REQUIREMENTS = [
 
 setup(
     name='yargy',
-    version='0.5.0',
+    version='0.5.1',
     description='Tiny rule-based facts extraction package',
     url='https://github.com/bureaucratic-labs/yargy',
     author='Dmitry Veselov',
