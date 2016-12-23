@@ -164,8 +164,20 @@ Source code of `yargy` is distributed under MIT license (allows modification and
 
 # Version history
 
-## 0.5 (dev)
+## 0.6 (dev)
 * Recursive grammars support
+
+## 0.5.0
+* Partial morphology disambiguation solving support (`gnc_match` label now accepts optional boolean argument `solve_disambiguation`, which when is True, reduces number of token forms in result match)
+* Rewrited labels, now they're function-based
+* Rewrited tokenizer's `transform` function for better extending
+* Tokenizer now adds different types of grammemes for different types of quotes (e.g. `L-QUOTE` for `` quote)
+* Implemented DAWG-based pipeline, which shows better performance over dictionary-based pipeline
+
+## 0.4.4 - 0.4.6
+* [fix] Fixed error at parsing float range with comma as delimiter
+* [fix] Tokenizer under Python 2 & PyPy now transforms ranges to xrange instead of range
+* [fix] Additional checks for terminal rule at `reduce` grammars method
 
 ## 0.4.3
 
