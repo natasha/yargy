@@ -79,11 +79,12 @@ class Grammar(object):
             token = copy(token)
 
         if not all(self.match(token, rule)) and not terminal:
+            last_index = self.index
             if optional or (repeatable and self.stack.have_matches_by_rule_index(self.index)):
                 self.index += 1
             else:
                 self.reset()
-            if not recheck:
+            if not recheck and (self.index != last_index):
                 self.shift(token, recheck=True) # recheck current token on next rule
         else:
             # token matches current rule
