@@ -60,13 +60,15 @@ class TokenizerTestCase(unittest.TestCase):
         self.assertEqual(tokens[-1].value, 2600000)
 
     def test_match_quotes(self):
-        text = '"\'«»'
+        text = '"\'«»„“'
         tokens = list(self.tokenizer.transform(text))
-        self.assertEqual(len(tokens), 4)
-        self.assertEqual([t.value for t in tokens], ['"', "'", '«', '»'])
+        self.assertEqual(len(tokens), 6)
+        self.assertEqual([t.value for t in tokens], ['"', "'", '«', '»', '„', '“'])
         self.assertEqual([t.forms[0]['grammemes'] for t in tokens], [
             {'QUOTE'},
             {'QUOTE'},
+            {'QUOTE', 'L-QUOTE'},
+            {'QUOTE', 'R-QUOTE'},
             {'QUOTE', 'L-QUOTE'},
             {'QUOTE', 'R-QUOTE'},
         ])

@@ -27,7 +27,7 @@ int_range_token_regex = r'(?P<int_range>[+-]?\d+\s*?[\-\—]\s*?\d+)'
 int_token_regex = r'(?P<int>[+-]?\d+)'
 float_range_token_regex = r'(?P<float_range>[+-]?[\d]+[\.\,][\d]+\s*?[\-\—]\s*?[\d]+[\.\,][\d]+)'
 float_token_regex = r'(?P<float>[+-]?[\d]+[\.\,][\d]+)'
-quote_token_regex = r'(?P<quote>[\"\'\«\»])'
+quote_token_regex = r'(?P<quote>[\"\'\«\»\„\“])'
 punctuation_token_regex = string.punctuation.join(['(?P<punct>[', r']+)'])
 complete_token_regex = r'|'.join((
     float_range_token_regex,
@@ -108,7 +108,7 @@ class Tokenizer(object):
     def transform_latin(self, value, position):
         '''
         Transforms latin word into token, note that no morph info is added to token
-        :returns: Token with 'LATN' grammeme
+        :returns: Token with 'LATN' or 'ROMN' grammeme
         :rtype: Token instance
         '''
         grammemes = {
@@ -135,9 +135,9 @@ class Tokenizer(object):
         :returns: Token with 'QUOTE' grammeme and (optional) L/R-QUOTE grammeme
         '''
         grammemes = {'QUOTE', }
-        if value in {'«', }:
+        if value in {'«', '„'}:
             grammemes |= {'L-QUOTE'}
-        elif value in {'»', }:
+        elif value in {'»', '“'}:
             grammemes |= {'R-QUOTE'}
         return Token(value, position, [
             {
