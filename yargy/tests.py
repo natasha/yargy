@@ -10,6 +10,8 @@ import collections
 
 from yargy.parser import Grammar
 from yargy.labels import (
+    and_,
+    or_,
     gram,
     gram_not,
     gram_any,
@@ -111,6 +113,26 @@ class FactParserTestCase(unittest.TestCase):
         ])
         results = parser.extract(text)
         self.assertEqual(sum([[w.value for w in n] for (_, n) in results], []), ['«', 'Коммерсантъ', 'КАРТОТЕКА', '»'])
+
+    def test_and_or_label(self):
+        text = 'кузявые бутявки и ...'
+        parser = yargy.Parser([
+            Grammar('test', [
+                {
+                    'labels': [
+                        and_((
+                            or_((
+                                gram('ADJF'),
+                                gram('NOUN'),
+                            )),
+                            gram_not('Abbr'),
+                        )),
+                    ],
+                },
+            ]),
+        ])
+        results = parser.extract(text)
+        self.assertEqual(sum([[w.value for w in n] for (_, n) in results], []), ['кузявые', 'бутявки'])
 
     def test_gram_label(self):
         text = 'маленький принц красиво пел'

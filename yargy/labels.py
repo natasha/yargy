@@ -31,6 +31,18 @@ def label(func):
     return wrapper
 
 @label
+def and_(labels, token, stack):
+    return all(
+        label(token, stack) for label in labels
+    )
+
+@label
+def or_(labels, token, stack):
+    return any(
+        label(token, stack) for label in labels
+    )
+
+@label
 @string_required
 def is_lower(value, token, stack):
     return token.value.islower() == value
