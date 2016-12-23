@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 import enum
 import yargy
+import os.path
 import datetime
 import unittest
 import collections
@@ -23,7 +24,10 @@ from yargy.labels import (
     gnc_match,
 )
 from yargy.tokenizer import Token, Tokenizer
-from yargy.pipeline import DictionaryPipeline
+from yargy.pipeline import (
+    DictionaryPipeline,
+    CustomGrammemesPipeline,
+)
 
 
 class TokenizerTestCase(unittest.TestCase):
@@ -341,6 +345,46 @@ class DictionaryPipelineTestCase(unittest.TestCase):
             (2, 18),
             [{'grammemes': ['Geox/City'], 'normal_form': 'нижний новгород'}]
         )])
+
+    def test_custom_grammemes_pipeline(self):
+        text = 'группой компаний или торговым домом'
+
+        class OrganisationTypePipeline(CustomGrammemesPipeline):
+
+            Grammemes = {
+                'Orgn/Type',
+            }
+
+            Dictionary = {
+                'группа_компания',
+                'торговый_дом',
+            }
+
+            Path = os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                'testdata/orgn_type.dawg',
+            )
+
+        grammar = Grammar('organisation_type', [
+            {
+                'labels': [
+                    gram('Orgn/Type'),
+                ]
+            },
+        ])
+        parser = yargy.Parser([
+            grammar,
+        ], pipelines=[
+            OrganisationTypePipeline(),
+        ])
+        results = parser.extract(text)
+        self.assertEqual(list(results), [
+        (grammar,
+            [Token('группой_компаний', (0, 16), [{'normal_form': 'группа_компания', 'grammemes': {'Orgn/Type'}}])]),
+        (grammar,
+            [Token('торговым_домом', (21, 35), [{'normal_form': 'торговый_дом', 'grammemes': {'Orgn/Type'}}])])
+        ])
+
 
 class CombinatorTestCase(unittest.TestCase):
 

@@ -4,10 +4,12 @@ from itertools import product
 
 try:
     # C-based DAWG
-    from dawg import RecordDAWG
+    from dawg import CompletionDAWG, RecordDAWG
+    c_based_dawg = True
 except ImportError:
     # Pure python DAWG version
-    from dawg_python import RecordDAWG
+    from dawg_python import CompletionDAWG, RecordDAWG
+    c_based_dawg = False
 
 try:
     # Python 2
@@ -96,12 +98,14 @@ class DictionaryPipeline(Pipeline):
             start, end = stack[0].position
         return start, end
 
-    def create_new_token(self, stack, match):
-        value = self.DICTIONARY_WORD_SEPARATOR.join(
+    def get_original_form(self, stack):
+        return self.DICTIONARY_WORD_SEPARATOR.join(
             (unicode(x.value) for x in stack)
         )
+
+    def create_new_token(self, stack, match):
         return Token(
-            value,
+            self.get_original_form(stack),
             self.get_position(stack),
             self.dictionary.get(match),
         )
@@ -142,7 +146,11 @@ class DictionaryPipeline(Pipeline):
 
 class DAWGPipeline(DictionaryPipeline):
 
-    def __init__(self, dictionary_path=None, dictionary=RecordDAWG('>I')):
+    '''
+    Special type of pipeline that uses DAWG-based dictionaries for article lookups
+    '''
+
+    def __init__(self, dictionary=RecordDAWG('>I'), dictionary_path=None):
         self.dictionary = dictionary
         if dictionary_path:
             self.dictionary.load(dictionary_path)
@@ -150,8 +158,8 @@ class DAWGPipeline(DictionaryPipeline):
     def matches_prefix(self, stack):
         words = self.merge_stack(stack)
         for form in words:
-            key = "{0}_".format(self.DICTIONARY_WORD_SEPARATOR.join(form))
-            if self.dictionary.has_keys_with_prefix(key):
+            key = '{0}_'.format(self.DICTIONARY_WORD_SEPARATOR.join(form))
+            if self.dictionary.keys(key):
                 return True
         return False
 
@@ -159,6 +167,58 @@ class DAWGPipeline(DictionaryPipeline):
         words = self.merge_stack(stack)
         for form in words:
             key = self.DICTIONARY_WORD_SEPARATOR.join(form)
-            if self.dictionary.get(key, None):
+            if key in self.dictionary:
                 return True, key
         return False, None
+
+class CustomGrammemesPipeline(DAWGPipeline):
+
+    '''
+    Pipeline that uses CompletionDAWG data structure of article lookup
+    Can either build dictionaries on-the-fly (on CPython platform \w installed C-based DAWG package)
+    and load compiled dictionary from provided path
+    When article is found, pipeline sets user-defined grammemes to token from `Grammemes` attribute
+    When `Replace` attribute equals to False, pipeline appends found article grammemes
+    to result token, instead of replacing original one (affects only articles with words count equal to 1)
+    '''
+
+    Grammemes = None
+    Dictionary = None
+    Path = None
+    Replace = False
+
+    def __init__(self, dictionary=None):
+        if not dictionary:
+            if self.Dictionary and c_based_dawg:
+                dictionary = CompletionDAWG(self.Dictionary)
+            else:
+                if self.Path:
+                    dictionary = CompletionDAWG()
+                    super(CustomGrammemesPipeline, self).__init__(
+                        dictionary=dictionary,
+                        dictionary_path=self.Path,
+                    )
+                else:
+                    raise NotImplementedError('Please, define \'Path\' attribute')
+        super(CustomGrammemesPipeline, self).__init__(
+            dictionary=dictionary,
+        )
+
+    def create_new_token(self, stack, match):
+        form = {
+            'grammemes': self.Grammemes,
+            'normal_form': match,
+        }
+        if self.Replace or len(stack) > 1:
+            forms = [
+                form,
+            ]
+        else:
+            forms = stack[0].forms + [
+                form,
+            ]
+        return Token(
+            self.get_original_form(stack),
+            self.get_position(stack),
+            forms,
+        )
