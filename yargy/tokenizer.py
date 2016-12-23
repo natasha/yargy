@@ -20,8 +20,8 @@ from yargy.utils import frange
 
 russian_token_regex = r'(?P<russian>[а-яё][а-яё\-]*)'
 latin_token_regex = r'(?P<latin>[a-z][a-z\-\']*)'
-int_separated_token_regexp = r'(?P<int_separated>[1-9]\d*(\s\d{3})+)'
-int_range_token_regexp = r'(?P<int_range>[+-]?\d+\s*?[\-\—]\s*?\d+)'
+int_separated_token_regex = r'(?P<int_separated>[1-9]\d*(\s\d{3})+)'
+int_range_token_regex = r'(?P<int_range>[+-]?\d+\s*?[\-\—]\s*?\d+)'
 int_token_regex = r'(?P<int>[+-]?\d+)'
 float_range_token_regex = r'(?P<float_range>[+-]?[\d]+[\.\,][\d]+\s*?[\-\—]\s*?[\d]+[\.\,][\d]+)'
 float_token_regex = r'(?P<float>[+-]?[\d]+[\.\,][\d]+)'
@@ -30,8 +30,8 @@ punctuation_token_regex = string.punctuation.join(['(?P<punct>[', r']+)'])
 complete_token_regex = r'|'.join((
     float_range_token_regex,
     float_token_regex,
-    int_separated_token_regexp,
-    int_range_token_regexp,
+    int_separated_token_regex,
+    int_range_token_regex,
     int_token_regex,
     russian_token_regex,
     latin_token_regex,

@@ -181,7 +181,11 @@ class Combinator(object):
             for rule in _class.__members__.values():
                 name = "{0}__{1}".format(_class_name, rule.name)
                 self.classes[name] = rule
-                self.grammars.append(Grammar(name, rule.value))
+                if not isinstance(rule.value, Grammar):
+                    grammar = Grammar(name, rule.value)
+                else:
+                    grammar = rule.value
+                self.grammars.append(grammar)
         self.parser = Parser(self.grammars, *args, **kwargs)
 
     def extract(self, text):
