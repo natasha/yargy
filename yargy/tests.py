@@ -2,14 +2,13 @@
 from __future__ import unicode_literals
 
 import enum
-import yargy
 import os.path
 import datetime
 import unittest
 import collections
 
 
-from yargy.parser import Grammar
+from yargy.parser import Grammar, Parser, Combinator
 from yargy.labels import (
     and_,
     or_,
@@ -27,6 +26,10 @@ from yargy.tokenizer import Token, Tokenizer
 from yargy.pipeline import (
     DictionaryPipeline,
     CustomGrammemesPipeline,
+)
+from yargy.utils import (
+    get_original_text,
+    get_normalized_text,
 )
 
 
@@ -93,11 +96,51 @@ class TokenizerTestCase(unittest.TestCase):
         ])
 
 
+class UtilsTestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.person_grammar = Grammar('person', [
+            {
+                'labels': [
+                    gram('Name'),
+                ],
+            },
+            {
+                'labels': [
+                    gram('Surn'),
+                    gnc_match(-1, solve_disambiguation=True),
+                ],
+            },
+        ])
+        self.parser = Parser(grammars=[
+            self.person_grammar,
+        ])
+        self.person_text = 'ивану иванову было скучно'
+
+    def test_get_original_text(self):
+        grammar, tokens = next(
+            self.parser.extract(
+                self.person_text,
+            )
+        )
+        original_text = get_original_text(self.person_text, tokens)
+        self.assertEqual(original_text, 'ивану иванову')
+
+    def test_get_normalized_text(self):
+        grammar, tokens = next(
+            self.parser.extract(
+                self.person_text,
+            )
+        )
+        original_text = get_normalized_text(tokens)
+        self.assertEqual(original_text, 'иван иванов')
+
+
 class FactParserTestCase(unittest.TestCase):
 
     def test_simple_rules(self):
         text = 'газета «Коммерсантъ» сообщила ...'
-        parser = yargy.Parser([
+        parser = Parser([
             Grammar('test', [
                 {'labels': [dictionary({'газета', })]},
                 {'labels': [eq('«')]},
@@ -110,7 +153,7 @@ class FactParserTestCase(unittest.TestCase):
 
     def test_repeat_rules(self):
         text = '... ООО «Коммерсантъ КАРТОТЕКА» уполномочено ...'
-        parser = yargy.Parser([
+        parser = Parser([
             Grammar('test', [
                 {'labels': [eq('«')]},
                 {'repeatable': True, 'labels': [gram('NOUN')]},
@@ -122,7 +165,7 @@ class FactParserTestCase(unittest.TestCase):
 
     def test_and_or_label(self):
         text = 'кузявые бутявки и ...'
-        parser = yargy.Parser([
+        parser = Parser([
             Grammar('test', [
                 {
                     'labels': [
@@ -142,7 +185,7 @@ class FactParserTestCase(unittest.TestCase):
 
     def test_gram_label(self):
         text = 'маленький принц красиво пел'
-        parser = yargy.Parser([
+        parser = Parser([
             Grammar('test', [
                 {'labels': [gram('ADJS')]},
                 {'labels': [gram('VERB')]},
@@ -153,7 +196,7 @@ class FactParserTestCase(unittest.TestCase):
 
     def test_gram_not_label(self):
         text = 'Иван выпил чаю. И ушел домой.'
-        parser = yargy.Parser([
+        parser = Parser([
             Grammar('test', [
                 {'labels': [gram('Name'), gram_not('Abbr')]},
                 {'labels': [gram('VERB')]},
@@ -168,7 +211,7 @@ class FactParserTestCase(unittest.TestCase):
             {'labels': [gram('NOUN')]},
             {'labels': [gram('VERB'), gender_match(0)]},
         ])
-        parser = yargy.Parser([grammar])
+        parser = Parser([grammar])
         results = parser.extract(text)
         self.assertEqual(sum([[w.value for w in n] for (_, n) in results], []), ['Иван', 'выпил'])
 
@@ -186,13 +229,13 @@ class FactParserTestCase(unittest.TestCase):
             {'labels': [gram('NOUN')]},
             {'labels': [gram('VERB'), number_match(0)]},
         ])
-        parser = yargy.Parser([grammar])
+        parser = Parser([grammar])
         results = parser.extract(text)
         self.assertEqual(sum([[w.value for w in n] for (_, n) in results], []), ['саша', 'пилил'])
 
     def test_optional_rules(self):
         text = 'великий новгород, москва.'
-        parser = yargy.Parser([Grammar('test', [
+        parser = Parser([Grammar('test', [
             {'labels': [gram('ADJF')], 'optional': True},
             {'labels': [gram('NOUN'), gram('Geox')]},
         ])])
@@ -200,7 +243,7 @@ class FactParserTestCase(unittest.TestCase):
         self.assertEqual([[w.value for w in n] for (_, n) in results], [['великий', 'новгород'], ['москва']])
 
         text = 'иван иванович иванов, анна смирнова'
-        parser = yargy.Parser([Grammar('test', [
+        parser = Parser([Grammar('test', [
             {'labels': [gram('NOUN'), gram('Name')]},
             {'labels': [gram('NOUN'), gram('Patr')], 'optional': True},
             {'labels': [gram('NOUN'), gram('Surn')]},
@@ -210,7 +253,7 @@ class FactParserTestCase(unittest.TestCase):
 
     def test_skip_rules(self):
         text = 'улица академика павлова, дом 7'
-        parser = yargy.Parser([
+        parser = Parser([
             Grammar('street', [
                 {'labels': [
                     dictionary({'улица', }),
@@ -247,7 +290,7 @@ class FactParserTestCase(unittest.TestCase):
                     ],
                 },
             ], changes_token_structure=True)
-        parser = yargy.Parser([
+        parser = Parser([
             grammar,
         ])
         results = parser.extract(text)
@@ -333,7 +376,7 @@ class DictionaryPipelineTestCase(unittest.TestCase):
         pipeline = DictionaryPipeline(dictionary={
             'нижний_новгород': [{'grammemes': ['Geox/City'], 'normal_form': 'нижний новгород'}],
         })
-        parser = yargy.Parser([
+        parser = Parser([
             Grammar('city', [
                 {'labels': [
                     gram('Geox/City'),
@@ -374,7 +417,7 @@ class DictionaryPipelineTestCase(unittest.TestCase):
                 ]
             },
         ])
-        parser = yargy.Parser([
+        parser = Parser([
             grammar,
         ], pipelines=[
             OrganisationTypePipeline(),
@@ -444,7 +487,7 @@ class CombinatorTestCase(unittest.TestCase):
 
     def test_extract(self):
         text = '600 рублей или 10 долларов'
-        combinator = yargy.Combinator([self.Money])
+        combinator = Combinator([self.Money])
         matches = list(combinator.extract(text))
         for match in matches:
             self.assertEqual(match[0], self.Money.Simple)
@@ -452,7 +495,7 @@ class CombinatorTestCase(unittest.TestCase):
 
     def test_resolve_matches(self):
         text = 'владимир путин приехал в владимир'
-        combinator = yargy.Combinator([self.Person, self.City])
+        combinator = Combinator([self.Person, self.City])
         matches = list(combinator.extract(text))
         self.assertEqual(len(matches), 5)
         matches = combinator.resolve_matches(matches)
