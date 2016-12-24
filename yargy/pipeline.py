@@ -199,7 +199,9 @@ class CustomGrammemesPipeline(DAWGPipeline):
                         dictionary_path=self.Path,
                     )
                 else:
-                    raise NotImplementedError('Please, define \'Path\' attribute')
+                    raise NotImplementedError(
+                        'You platform doesn\'t supports on-the-fly dictionary building. Please, define \'Path\' attribute'
+                    )
         super(CustomGrammemesPipeline, self).__init__(
             dictionary=dictionary,
         )
@@ -222,3 +224,9 @@ class CustomGrammemesPipeline(DAWGPipeline):
             self.get_position(stack),
             forms,
         )
+
+    def build(self):
+        if c_based_dawg:
+            self.dictionary.save(self.Path)
+        else:
+            raise NotImplementedError('You platform doesn\'t support building of dictionaries')
