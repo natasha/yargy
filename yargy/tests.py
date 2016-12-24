@@ -95,6 +95,32 @@ class TokenizerTestCase(unittest.TestCase):
             {'grammemes': {'LATN'}, 'normal_form': 'fox'},
         ])
 
+    def test_match_email_address(self):
+        text = 'напиши на example@example.com'
+        tokens = list(self.tokenizer.transform(text))
+        self.assertEqual(len(tokens), 3)
+        self.assertEqual([t.forms[0] for t in tokens], [
+            {'grammemes': {'perf', 'tran', 'sing', 'excl', 'impr', 'VERB'}, 'normal_form': 'написать'},
+            {'grammemes': {'PREP'}, 'normal_form': 'на'},
+            {'grammemes': {'EMAIL'}, 'normal_form': 'example@example.com'}
+        ])
+
+    def test_match_phone_number(self):
+        self.maxDiff = None
+        text = 'отдых 24 часа +7-812-999-9999 / 89818210000 / +7-(999)-999-99-99'
+        tokens = list(self.tokenizer.transform(text))
+        self.assertEqual(len(tokens), 8)
+        self.assertEqual([t.value for t in tokens], [
+            'отдых',
+            24,
+            'часа',
+            '+7-812-999-9999',
+            '/',
+            '89818210000',
+            '/',
+            '+7-(999)-999-99-99',
+        ])
+
 
 class UtilsTestCase(unittest.TestCase):
 

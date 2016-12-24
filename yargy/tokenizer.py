@@ -29,7 +29,11 @@ float_range_token_regex = r'(?P<float_range>[+-]?[\d]+[\.\,][\d]+\s*?[\-\—]\s*
 float_token_regex = r'(?P<float>[+-]?[\d]+[\.\,][\d]+)'
 quote_token_regex = r'(?P<quote>[\"\'\«\»\„\“])'
 punctuation_token_regex = string.punctuation.join(['(?P<punct>[', r']+)'])
+email_token_regex = r'(?P<email>[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)'
+phone_number_token_regex = r'(?P<phone>(\+)?([-\s_()]?\d[-\s_()]?){10,14})' # found at https://toster.ru/answer?answer_id=852265#answers_list_answer
 complete_token_regex = r'|'.join((
+    phone_number_token_regex,
+    email_token_regex,
     float_range_token_regex,
     float_token_regex,
     int_separated_token_regex,
@@ -200,8 +204,12 @@ class Tokenizer(object):
         :rtype: Token instance
         '''
         values = map(float, (x.replace(',', '.') for x in re.split(r'[\-\—]', value)))
-        return Token(frange(*values, step=self.frange_step), position, [
-            {'grammemes': {'RANGE', 'FLOAT-RANGE'}, 'normal_form': value}
+        range_value = frange(*values, step=self.frange_step)
+        return Token(range_value, position, [
+            {
+                'grammemes': {'RANGE', 'FLOAT-RANGE'},
+                'normal_form': value,
+            },
         ])
 
     def transform_punct(self, value, position):
@@ -216,3 +224,30 @@ class Tokenizer(object):
                 'normal_form': value
             }
         ])
+
+    def transform_email(self, value, position):
+        '''
+        Transforms email address to token with 'EMAIL' grammeme
+        :returns: Token with 'EMAIL' grammeme
+        :rtype: Token instance
+        '''
+        return Token(value, position, [
+            {
+                'grammemes': {'EMAIL', },
+                'normal_form': value,
+            }
+        ])
+
+    def transform_phone(self, value, position):
+        '''
+        Transforms phone number to token with 'PHONE' gremmeme
+        :returns: Token with 'PHONE' grammeme
+        :rtype: Token instance
+        '''
+        value = value.strip()
+        return Token(value, position,
+            {
+                'grammemes': {'PHONE', },
+                'normal_form': value,
+            }
+        )
