@@ -15,9 +15,9 @@ import re
 import string
 import collections
 
-from pymorphy2 import MorphAnalyzer
 from pymorphy2.shapes import is_roman_number
 
+from yargy.morph import Analyzer
 from yargy.utils import frange
 
 russian_token_regex = r'(?P<russian>[а-яё][а-яё\-]*)'
@@ -75,9 +75,9 @@ class Token(object):
 
 class Tokenizer(object):
 
-    def __init__(self, pattern=token_regex, morph_analyzer=None, cache_size=0, frange_step=0.1):
+    def __init__(self, pattern=token_regex, morph_analyzer=Analyzer, cache_size=0, frange_step=0.1):
         self.pattern = pattern
-        self.morph = morph_analyzer or MorphAnalyzer()
+        self.morph = morph_analyzer
         self.cache = lru_cache(maxsize=cache_size)(self.get_word_forms)
         self.frange_step = frange_step
 
@@ -87,6 +87,8 @@ class Tokenizer(object):
             token = {}
             token['grammemes'] = set(form.tag.grammemes)
             token['normal_form'] = form.normal_form
+            token['score'] = form.score
+            token['methods_stack'] = form.methods_stack
             forms.append(token)
         return forms
 

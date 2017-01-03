@@ -80,29 +80,29 @@ class TokenizerTestCase(unittest.TestCase):
         text = "1,5-2,5 года"
         tokens = list(self.tokenizer.transform(text))
         self.assertEqual(len(tokens), 2)
-        self.assertEqual([t.forms[0] for t in tokens], [
-            {'grammemes': {'RANGE', 'FLOAT-RANGE'}, 'normal_form': '1,5-2,5'},
-            {'grammemes': {'inan', 'masc', 'sing', 'NOUN', 'gent'}, 'normal_form': 'год'},
+        self.assertEqual([t.forms[0]['grammemes'] for t in tokens], [
+            {'RANGE', 'FLOAT-RANGE'},
+            {'inan', 'masc', 'sing', 'NOUN', 'gent'},
         ])
 
     def test_match_roman_number(self):
         text = 'XX век Fox'
         tokens = list(self.tokenizer.transform(text))
         self.assertEqual(len(tokens), 3)
-        self.assertEqual([t.forms[0] for t in tokens], [
-            {'grammemes': {'ROMN'}, 'normal_form': 'XX'},
-            {'grammemes': {'ADVB'}, 'normal_form': 'век'},
-            {'grammemes': {'LATN'}, 'normal_form': 'fox'},
+        self.assertEqual([t.forms[0]['grammemes'] for t in tokens], [
+            {'ROMN'},
+            {'ADVB'},
+            {'LATN'},
         ])
 
     def test_match_email_address(self):
         text = 'напиши на example@example.com'
         tokens = list(self.tokenizer.transform(text))
         self.assertEqual(len(tokens), 3)
-        self.assertEqual([t.forms[0] for t in tokens], [
-            {'grammemes': {'perf', 'tran', 'sing', 'excl', 'impr', 'VERB'}, 'normal_form': 'написать'},
-            {'grammemes': {'PREP'}, 'normal_form': 'на'},
-            {'grammemes': {'EMAIL'}, 'normal_form': 'example@example.com'}
+        self.assertEqual([t.forms[0]['grammemes'] for t in tokens], [
+            {'perf', 'tran', 'sing', 'excl', 'impr', 'VERB'},
+            {'PREP'},
+            {'EMAIL'},
         ])
 
     def test_match_phone_number(self):
@@ -160,6 +160,14 @@ class UtilsTestCase(unittest.TestCase):
         )
         original_text = get_normalized_text(tokens)
         self.assertEqual(original_text, 'иван иванов')
+
+        grammar, tokens = next(
+            self.parser.extract(
+                'анна смирнова сообщила ...',
+            )
+        )
+        original_text = get_normalized_text(tokens)
+        self.assertEqual(original_text, 'анна смирнова')
 
 
 class FactParserTestCase(unittest.TestCase):
@@ -320,32 +328,26 @@ class FactParserTestCase(unittest.TestCase):
             grammar,
         ])
         results = parser.extract(text)
-        self.assertEqual(list(results), [
-            (grammar,
+        self.assertEqual([[x.forms[0]['grammemes'] for x in tokens] for _, tokens in results], 
+            [
                 [
-                    Token('саше', (0, 4), [{'grammemes': {'femn', 'anim', 'sing', 'Ms-f', 'Name', 'NOUN', 'datv'}, 'normal_form': 'саша'}]),
-                    Token('иванову', (5, 12), [{'grammemes': {'anim', 'Surn', 'Sgtm', 'sing', 'NOUN', 'datv', 'masc'}, 'normal_form': 'иванов'}])
-                ]
-            ),
-            (grammar,
+                    {'datv', 'anim', 'Ms-f', 'NOUN', 'Name', 'femn', 'sing'},
+                    {'datv', 'anim', 'Surn', 'NOUN', 'masc', 'Sgtm', 'sing'},
+                ],
                 [
-                    Token('саша', (14, 18), [{'grammemes': {'femn', 'anim', 'nomn', 'sing', 'Ms-f', 'NOUN', 'Name'}, 'normal_form': 'саша'}]),
-                    Token('иванова', (19, 26), [{'grammemes': {'femn', 'anim', 'nomn', 'Surn', 'Sgtm', 'sing', 'NOUN'}, 'normal_form': 'иванов'}])
-                ]
-            ),
-            (grammar,
+                    {'nomn', 'anim', 'Ms-f', 'NOUN', 'Name', 'femn', 'sing'},
+                    {'nomn', 'anim', 'Surn', 'NOUN', 'Sgtm', 'femn', 'sing'},
+                ],
                 [
-                    Token('сашу', (28, 32), [{'grammemes': {'accs', 'femn', 'anim', 'sing', 'Ms-f', 'NOUN', 'Name'}, 'normal_form': 'саша'}]),
-                    Token('иванову', (33, 40), [{'grammemes': {'accs', 'femn', 'anim', 'Surn', 'Sgtm', 'sing', 'NOUN'}, 'normal_form': 'иванов'}])
-                ]
-            ),
-            (grammar,
+                    {'anim', 'Ms-f', 'NOUN', 'accs', 'Name', 'femn', 'sing'},
+                    {'anim', 'Surn', 'NOUN', 'accs', 'Sgtm', 'femn', 'sing'},
+                ],
                 [
-                    Token('сашу', (42, 46), [{'grammemes': {'accs', 'femn', 'anim', 'sing', 'Ms-f', 'NOUN', 'Name'}, 'normal_form': 'саша'}]),
-                    Token('иванова', (47, 54), [{'grammemes': {'accs', 'anim', 'Surn', 'Sgtm', 'sing', 'NOUN', 'masc'}, 'normal_form': 'иванов'}])
-                ]
-            )
-        ])
+                    {'anim', 'Ms-f', 'NOUN', 'accs', 'Name', 'femn', 'sing'},
+                    {'anim', 'masc', 'Surn', 'NOUN', 'accs', 'Sgtm', 'sing'},
+                ],
+            ]
+        )
 
 class DictionaryPipelineTestCase(unittest.TestCase):
 
