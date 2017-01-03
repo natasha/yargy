@@ -53,7 +53,7 @@ def get_normalized_text(tokens, morph_analyzer=Analyzer, required_grammemes={'no
                 normalized = normalized.word
             else:
                 normalized = form['normal_form']
-            words.append(normal_form)
+            words.append(normalized)
         else:
             words.append(
                 unicode(form['normal_form'])
