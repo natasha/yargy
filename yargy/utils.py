@@ -37,11 +37,6 @@ def get_normalized_text(tokens, morph_analyzer=Analyzer, required_grammemes={'no
     words = []
     for token in tokens:
         form = token.forms[0]
-        # is_inflectible = all(
-        #     map(
-
-        #     )
-        # )
         if form.get('score', None):
             # rebuild original pymorphy2 Parse object, due to https://github.com/OpenCorpora/opencorpora/issues/746#issuecomment-218672616
             tag = InflectingTag(','.join(form['grammemes']))
@@ -53,8 +48,12 @@ def get_normalized_text(tokens, morph_analyzer=Analyzer, required_grammemes={'no
                 form['methods_stack'],
             )
             word._morph = morph_analyzer
-            normal_form = word.inflect(required_grammemes) or form['normal_form']
-            words.append(normal_form.word)
+            normalized = word.inflect(required_grammemes)
+            if normalized:
+                normalized = normalized.word
+            else:
+                normalized = form['normal_form']
+            words.append(normal_form)
         else:
             words.append(
                 unicode(form['normal_form'])

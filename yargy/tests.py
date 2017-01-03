@@ -163,11 +163,11 @@ class UtilsTestCase(unittest.TestCase):
 
         grammar, tokens = next(
             self.parser.extract(
-                'анна смирнова сообщила ...',
+                'с василисой смирновой произошло невероятное ...',
             )
         )
         original_text = get_normalized_text(tokens)
-        self.assertEqual(original_text, 'анна смирнова')
+        self.assertEqual(original_text, 'василиса смирнова')
 
 
 class FactParserTestCase(unittest.TestCase):
