@@ -27,9 +27,12 @@ from yargy.pipeline import (
     DictionaryPipeline,
     CustomGrammemesPipeline,
 )
+from yargy.normalization import (
+    NormalizationType,
+    get_normalized_text,
+)
 from yargy.utils import (
     get_original_text,
-    get_normalized_text,
 )
 
 
@@ -68,8 +71,8 @@ class TokenizerTestCase(unittest.TestCase):
         self.assertEqual(len(tokens), 6)
         self.assertEqual([t.value for t in tokens], ['"', "'", '«', '»', '„', '“'])
         self.assertEqual([t.forms[0]['grammemes'] for t in tokens], [
-            {'QUOTE'},
-            {'QUOTE'},
+            {'QUOTE', 'G-QUOTE'},
+            {'QUOTE', 'G-QUOTE'},
             {'QUOTE', 'L-QUOTE'},
             {'QUOTE', 'R-QUOTE'},
             {'QUOTE', 'L-QUOTE'},
@@ -90,7 +93,7 @@ class TokenizerTestCase(unittest.TestCase):
         tokens = list(self.tokenizer.transform(text))
         self.assertEqual(len(tokens), 3)
         self.assertEqual([t.forms[0]['grammemes'] for t in tokens], [
-            {'ROMN'},
+            {'ROMN', 'NUMBER'},
             {'ADVB'},
             {'LATN'},
         ])
@@ -136,6 +139,7 @@ class UtilsTestCase(unittest.TestCase):
                     gram('Surn'),
                     gnc_match(-1, solve_disambiguation=True),
                 ],
+                'normalization': NormalizationType.Inflected,
             },
         ])
         self.parser = Parser(grammars=[
@@ -348,6 +352,32 @@ class FactParserTestCase(unittest.TestCase):
                 ],
             ]
         )
+
+    def test_normalization_in_rules(self):
+        text = 'в институте радионавигации и времени'
+        grammar = Grammar('Educational', [
+            {
+                'labels': [
+                    dictionary({
+                        'институт',
+                    }),
+                ],
+                'normalization': NormalizationType.Normalized,
+            },
+            {
+                'labels': [
+                    gram('gent'),
+                ],
+                'repeatable': True,
+                'normalization': NormalizationType.Original,
+            }
+        ])
+        parser = Parser([
+            grammar,
+        ])
+        grammar, tokens = next(parser.extract(text))
+        normalized = get_normalized_text(tokens)
+        self.assertEqual(normalized, 'институт радионавигации и времени')
 
 class DictionaryPipelineTestCase(unittest.TestCase):
 

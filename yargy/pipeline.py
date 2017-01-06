@@ -11,13 +11,7 @@ except ImportError:
     from dawg_python import CompletionDAWG, RecordDAWG
     c_based_dawg = False
 
-try:
-    # Python 2
-    unicode = unicode
-except NameError:
-    # Python 3
-    unicode = str
-
+from yargy.compat import str
 from yargy.tokenizer import Token
 
 
@@ -68,8 +62,8 @@ class DictionaryPipeline(Pipeline):
         for (index, token) in enumerate(stack):
             for form in (token.forms or []):
                 normal_form = form['normal_form']
-                words[index] |= {unicode(normal_form).lower(),}
-            words[index] |= {unicode(token.value).lower(),}
+                words[index] |= {str(normal_form).lower(),}
+            words[index] |= {str(token.value).lower(),}
         return product(*words)
 
     def matches_prefix(self, stack):
@@ -100,7 +94,7 @@ class DictionaryPipeline(Pipeline):
 
     def get_original_form(self, stack):
         return self.DICTIONARY_WORD_SEPARATOR.join(
-            (unicode(x.value) for x in stack)
+            (str(x.value) for x in stack)
         )
 
     def create_new_token(self, stack, match):

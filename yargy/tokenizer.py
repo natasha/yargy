@@ -53,12 +53,14 @@ class Token(object):
         'value',
         'position',
         'forms',
+        'normalization_type'
     )
 
-    def __init__(self, value, position, forms):
+    def __init__(self, value, position, forms, normalization_type=None):
         self.value = value
         self.position = position
         self.forms = forms
+        self.normalization_type = None
 
     def __eq__(self, other):
         if not isinstance(other, Token):
@@ -69,6 +71,14 @@ class Token(object):
                 (self.position == other.position) &
                 (self.forms == other.forms)
             )
+
+    def __copy__(self):
+        return Token(
+            self.value,
+            self.position,
+            self.forms,
+            self.normalization_type,
+        )
 
     def __repr__(self):
         return '{0.__class__.__name__}({0.value!r}, {0.position!r}, {0.forms!r})'.format(self)
@@ -99,7 +109,8 @@ class Tokenizer(object):
             position = match.span()
             transform_method = getattr(self, 'transform_{}'.format(group), None)
             if transform_method:
-                yield transform_method(value, position)
+                token = transform_method(value, position)
+                yield token
             else:
                 raise NotImplementedError('Unknown token type: {}'.format(group))
 
@@ -124,6 +135,7 @@ class Tokenizer(object):
         is_number = is_roman_number(value)
         if is_number:
             grammemes = {
+                'NUMBER',
                 'ROMN',
             }
             normal_form = value
@@ -142,9 +154,11 @@ class Tokenizer(object):
         '''
         grammemes = {'QUOTE', }
         if value in {'«', '„'}:
-            grammemes |= {'L-QUOTE'}
+            grammemes |= {'L-QUOTE'} # left quote
         elif value in {'»', '“'}:
-            grammemes |= {'R-QUOTE'}
+            grammemes |= {'R-QUOTE'} # right quote
+        else:
+            grammemes |= {'G-QUOTE'} # generic quote like <">
         return Token(value, position, [
             {
                 'grammemes': grammemes,

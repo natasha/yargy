@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from copy import copy
 
 from yargy.tokenizer import Token, Tokenizer
+from yargy.normalization import NormalizationType
 
 
 class Stack(list):
@@ -73,10 +74,9 @@ class Grammar(object):
         terminal = rule.get('terminal', False)
         skip = rule.get('skip', False)
 
-        if self.changes_token_structure:
-            # need to clone tokens, because labels modifies
-            # its forms or other attributes
-            token = copy(token)
+        # need to clone tokens, because labels can modify
+        # its forms or other attributes
+        token = copy(token)
 
         if not all(self.match(token, rule)) and not terminal:
             last_index = self.index
@@ -92,6 +92,8 @@ class Grammar(object):
                 # append token to stack if it's not a terminal rule and current rule
                 # doesn't have 'skip' option
                 if not skip:
+                    normalization_type = rule.get('normalization', NormalizationType.Normalized)
+                    token.normalization_type = normalization_type
                     self.stack.append((self.index, token))
                 if not repeatable:
                     if len(self.rules) >= (self.index + 1):
