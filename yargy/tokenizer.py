@@ -31,6 +31,7 @@ quote_token_regex = r'(?P<quote>[\"\'\«\»\„\“])'
 punctuation_token_regex = string.punctuation.join(['(?P<punct>[', r']+)'])
 email_token_regex = r'(?P<email>[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)'
 phone_number_token_regex = r'(?P<phone>(\+)?([-\s_()]?\d[-\s_()]?){10,14})' # found at https://toster.ru/answer?answer_id=852265#answers_list_answer
+end_of_line_token_regex = r'(?P<end_of_line>[\n\r]+)'
 complete_token_regex = r'|'.join((
     phone_number_token_regex,
     email_token_regex,
@@ -43,6 +44,7 @@ complete_token_regex = r'|'.join((
     latin_token_regex,
     quote_token_regex,
     punctuation_token_regex,
+    end_of_line_token_regex,
 ))
 
 token_regex = re.compile(complete_token_regex, re.UNICODE | re.IGNORECASE)
@@ -236,7 +238,7 @@ class Tokenizer(object):
         '''
         return Token(value, position, [
             {
-                'grammemes': {'PUNCT', },
+                'grammemes': {'PUNCT'},
                 'normal_form': value
             }
         ])
@@ -249,7 +251,7 @@ class Tokenizer(object):
         '''
         return Token(value, position, [
             {
-                'grammemes': {'EMAIL', },
+                'grammemes': {'EMAIL'},
                 'normal_form': value,
             }
         ])
@@ -261,9 +263,22 @@ class Tokenizer(object):
         :rtype: Token instance
         '''
         value = value.strip()
-        return Token(value, position,
+        return Token(value, position, [
             {
-                'grammemes': {'PHONE', },
+                'grammemes': {'PHONE'},
                 'normal_form': value,
             }
-        )
+        ])
+
+    def transform_end_of_line(self, value, position):
+        '''
+        Transforms end-of-line and caret returns characters to token with 'END-OF-LINE' grammeme
+        :returns: Token with 'END-OF-LINE' grammeme
+        :rtype: Token instance
+        '''
+        return Token(value, position, [
+            {
+                'grammemes': {'END-OF-LINE'},
+                'normal_form': '\n',
+            },
+        ])

@@ -96,8 +96,7 @@ class Grammar(object):
                     token.normalization_type = normalization_type
                     self.stack.append((self.index, token))
                 if not repeatable:
-                    if len(self.rules) >= (self.index + 1):
-                        self.index += 1
+                    self.index += 1
 
     def reduce(self, end_of_stream=False):
         '''
