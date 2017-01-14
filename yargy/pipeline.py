@@ -1,5 +1,6 @@
 # coding: utf-8
 from __future__ import unicode_literals
+from copy import copy
 from itertools import product
 
 try:
@@ -53,6 +54,7 @@ class DictionaryPipeline(Pipeline):
 
     def __init__(self, dictionary):
         self.dictionary = dictionary
+        self.return_stack = []
 
     def merge_stack(self, stack):
         '''
@@ -120,23 +122,26 @@ class DictionaryPipeline(Pipeline):
                 if match:
                     yield self.create_new_token(possible_stack, key)
                 else:
-                    for prev_token in stack:
-                        yield prev_token
-                    yield token
+                    yield stack + [token]
                 stack = []
         if stack:
             match, key = self.matches_complete_word(stack)
             if match:
                 yield self.create_new_token(stack, key)
             else:
-                for prev_token in stack:
-                    yield prev_token
-                yield token
+                yield stack + [token]
             stack = []
 
     def __next__(self):
-        return next(self.get_next_token())
-
+        if self.return_stack:
+            return self.return_stack.pop(0)
+        else:
+            match = next(self.get_next_token())
+            if isinstance(match, list):
+                self.return_stack = match
+                return next(self)
+            else:
+                return match
 
 class DAWGPipeline(DictionaryPipeline):
 
@@ -148,6 +153,7 @@ class DAWGPipeline(DictionaryPipeline):
         self.dictionary = dictionary
         if dictionary_path:
             self.dictionary.load(dictionary_path)
+        super(DAWGPipeline, self).__init__(dictionary)
 
     def matches_prefix(self, stack):
         words = self.merge_stack(stack)
