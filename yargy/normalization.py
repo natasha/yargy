@@ -43,6 +43,8 @@ def get_normalized_text(tokens, morph_analyzer=Analyzer, required_grammemes={'no
                 else:
                     # sometimes pymorphy2 can't figure out how word looks with applied required_grammemes
                     normalized = form['normal_form']
+                if not normalized:
+                    raise ValueError('Can\'t figure out how word must look with given grammemes: {}'.format(word))
             elif token.normalization_type == NormalizationType.Original:
                 normalized = token.value
             elif token.normalization_type == NormalizationType.Normalized:

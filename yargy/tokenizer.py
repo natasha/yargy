@@ -1,16 +1,6 @@
 # coding: utf-8
 from __future__ import unicode_literals
 
-try:
-    from functools import lru_cache
-except ImportError:
-    from backports.functools_lru_cache import lru_cache
-
-try:
-    range = xrange
-except NameError:
-    range = range
-
 import re
 import string
 import collections
@@ -18,7 +8,9 @@ import collections
 from pymorphy2.shapes import is_roman_number
 
 from yargy.morph import Analyzer
-from yargy.utils import frange
+from yargy.utils import frange, decode_roman_number
+from yargy.compat import range, lru_cache
+
 
 russian_token_regex = r'(?P<russian>[а-яё][а-яё\-]*)'
 latin_token_regex = r'(?P<latin>[a-z][a-z\-\']*)'
@@ -141,6 +133,7 @@ class Tokenizer(object):
                 'ROMN',
             }
             normal_form = value
+            value = decode_roman_number(value)
         return Token(value, position, [
             {
                 'grammemes': grammemes,

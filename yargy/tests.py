@@ -1,6 +1,7 @@
 # coding: utf-8
 from __future__ import unicode_literals
 
+import sys
 import enum
 import os.path
 import datetime
@@ -54,10 +55,12 @@ class TokenizerTestCase(unittest.TestCase):
         value = next(self.tokenizer.transform(text)).value
         self.assertEqual(list(value), [1.5, 1.6, 1.7, 1.8, 1.9, 2.0])
 
+    @unittest.skipIf(sys.version_info.major < 3, 'python 2 and pypy creates different objects for same xrange calls')
     def test_match_simple_numbers(self):
         text = '12 - 22 -3.4 3,4 1.0 1.5 - 2.5'
         tokens = list(self.tokenizer.transform(text))
         self.assertEqual(len(tokens), 5)
+        self.assertEqual([t.value for t in tokens][:4], [range(12, 22), -3.4, 3.4, 1.0])
 
     def test_space_separated_integers(self):
         text = 'Цена: 2 600 000'
@@ -68,7 +71,6 @@ class TokenizerTestCase(unittest.TestCase):
     def test_match_quotes(self):
         text = '"\'«»„“'
         tokens = list(self.tokenizer.transform(text))
-        self.assertEqual(len(tokens), 6)
         self.assertEqual([t.value for t in tokens], ['"', "'", '«', '»', '„', '“'])
         self.assertEqual([t.forms[0]['grammemes'] for t in tokens], [
             {'QUOTE', 'G-QUOTE'},
@@ -97,6 +99,7 @@ class TokenizerTestCase(unittest.TestCase):
             {'ADVB'},
             {'LATN'},
         ])
+        self.assertEqual([t.value for t in tokens], [20, 'век', 'Fox'])
 
     def test_match_email_address(self):
         text = 'напиши на example@example.com'
@@ -109,7 +112,6 @@ class TokenizerTestCase(unittest.TestCase):
         ])
 
     def test_match_phone_number(self):
-        self.maxDiff = None
         text = 'отдых 24 часа +7-812-999-9999 / 89818210000 / +7-(999)-999-99-99'
         tokens = list(self.tokenizer.transform(text))
         self.assertEqual(len(tokens), 8)
@@ -123,6 +125,13 @@ class TokenizerTestCase(unittest.TestCase):
             '/',
             '+7-(999)-999-99-99',
         ])
+
+    def test_match_unicode_digits(self):
+        text = '٧ лет'
+        tokens = list(self.tokenizer.transform(text))
+        self.assertEqual(len(tokens), 2)
+        self.assertEqual([t.value for t in tokens], [7, 'лет'])
+
 
 
 class UtilsTestCase(unittest.TestCase):
@@ -327,7 +336,7 @@ class FactParserTestCase(unittest.TestCase):
                         gnc_match(-1, solve_disambiguation=True, match_all_disambiguation_forms=False),
                     ],
                 },
-            ], changes_token_structure=True)
+        ])
         parser = Parser([
             grammar,
         ])
@@ -514,6 +523,36 @@ class CombinatorTestCase(unittest.TestCase):
             },
         ]
 
+        WithDescriptor = [
+            {
+                'labels': [
+                    dictionary({
+                        'представитель',
+                    }),
+                ]
+            },
+            {
+                'labels': [
+                    gram('accs'),
+                    gram_not('Name'),
+                ],
+                'repeatable': True,
+            },
+            {
+                'labels': [
+                    gram('Name'),
+                    gnc_match(0, solve_disambiguation=True),
+                ],
+            },
+            {
+                'labels': [
+                    gram('Surn'),
+                    gnc_match(0, solve_disambiguation=True),
+                    gnc_match(-1, solve_disambiguation=True),
+                ]
+            }
+        ]
+
     class City(enum.Enum):
 
         Default = [
@@ -543,6 +582,24 @@ class CombinatorTestCase(unittest.TestCase):
             },
         ]
 
+    class Organisation(enum.Enum):
+
+        Simple = [
+            {
+                'labels': [
+                    dictionary({
+                        'администрация',
+                    }),
+                ],
+            },
+            {
+                'labels': [
+                    gram('accs'),
+                ],
+                'repeatable': True,
+            }
+        ]
+
     def test_extract(self):
         text = '600 рублей или 10 долларов'
         combinator = Combinator([self.Money])
@@ -559,4 +616,16 @@ class CombinatorTestCase(unittest.TestCase):
         matches = combinator.resolve_matches(matches)
         matched_rules = [match[0] for match in matches]
         self.assertIn(self.Person.Fullname, matched_rules)
-        self.assertIn(self.City.Default, matched_rules)
+
+        text = 'представитель администрации президента иван иванов'
+        combinator = Combinator([self.Person, self.Organisation])
+        matches = list(combinator.extract(text))
+        self.assertEqual(len(matches), 5)
+        matches = list(combinator.resolve_matches(matches, strict=False))
+        grammars = list(x[0] for x in matches)
+        values = list([y.value for y in x[1]] for x in matches)
+        self.assertEqual(grammars, [
+            self.Person.WithDescriptor,
+            self.Organisation.Simple,
+        ])
+        self.assertEqual(values, [['представитель', 'администрации', 'президента', 'иван', 'иванов'], ['администрации', 'президента']])

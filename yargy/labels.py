@@ -2,10 +2,7 @@
 from __future__ import unicode_literals
 from functools import wraps, partial
 
-try:
-    string_type = basestring
-except NameError:
-    string_type = str
+from yargy.compat import string_type
 
 
 GENDERS = ('masc', 'femn', 'neut', 'Ms-f', 'GNdr')
