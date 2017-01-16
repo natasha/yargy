@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 import sys
 import enum
 import os.path
+import platform
 import datetime
 import unittest
 import collections
@@ -55,7 +56,8 @@ class TokenizerTestCase(unittest.TestCase):
         value = next(self.tokenizer.transform(text)).value
         self.assertEqual(list(value), [1.5, 1.6, 1.7, 1.8, 1.9, 2.0])
 
-    @unittest.skipIf(sys.version_info.major < 3, 'python 2 and pypy creates different objects for same xrange calls')
+    @unittest.skipIf(sys.version_info.major < 3, 'python 2 creates different objects for same xrange calls')
+    @unittest.skipIf(platform.python_implementation() == 'PyPy', 'pypy & pypy3 have same semantics for range objects')
     def test_match_simple_numbers(self):
         text = '12 - 22 -3.4 3,4 1.0 1.5 - 2.5'
         tokens = list(self.tokenizer.transform(text))
