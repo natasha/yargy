@@ -2,8 +2,11 @@
 from __future__ import unicode_literals
 from copy import copy
 
+from intervaltree import IntervalTree
+
 from yargy.tokenizer import Token, Tokenizer
 from yargy.normalization import NormalizationType
+from yargy.utils import get_tokens_position
 
 
 class Stack(list):
@@ -38,14 +41,13 @@ class Grammar(object):
     which contains actual text match
     '''
 
-    def __init__(self, name, rules, changes_token_structure=False):
+    def __init__(self, name, rules):
         self.name = name
         self.rules = rules + [
             {
                 'terminal': True,
             },
         ]
-        self.changes_token_structure = changes_token_structure
         self.reset()
 
     def shift(self, token, recheck=False):
@@ -103,9 +105,6 @@ class Grammar(object):
         Reduce method returns grammar stack if
         current grammar index equals to last (terminal) rule
         '''
-        if not self.stack:
-            return None
-
         current_rule = self.rules[self.index]
         terminal_rule = self.rules[-1]
 
@@ -168,6 +167,7 @@ class Parser(object):
             match = grammar.reduce(end_of_stream=True)
             if match:
                 yield (grammar, match)
+            grammar.reset()
 
 class Combinator(object):
 
@@ -181,7 +181,7 @@ class Combinator(object):
         for _class in classes:
             _class_name = _class.__name__
             for rule in _class.__members__.values():
-                name = "{0}__{1}".format(_class_name, rule.name)
+                name = '{0}__{1}'.format(_class_name, rule.name)
                 self.classes[name] = rule
                 if not isinstance(rule.value, Grammar):
                     grammar = Grammar(name, rule.value)
@@ -194,18 +194,20 @@ class Combinator(object):
         for (rule, match) in self.parser.extract(text):
             yield self.classes[rule.name], match
 
-    def resolve_matches(self, matches):
+    def resolve_matches(self, matches, strict=True):
         matches = sorted(matches, key=lambda m: len(m[1]), reverse=True)
-        index = {}
-        for match in matches:
-            tokens = match[-1]
-            head, tail = tokens[0], tokens[-1]
-            x, y = head.position[0], tail.position[1]
-            length = 0 + (y - x)
-            for (m_x, m_y, m_len) in index.keys():
-                if (x >= m_x and y <= m_y):
-                    if (m_len > length):
-                        break
-            else:
-                index[(x, y, length)] = match
-        return index.values()
+        tree = IntervalTree()
+        for (grammar, match) in matches:
+            start, stop = get_tokens_position(match)
+            exists = tree[start:stop]
+            if exists and not strict:
+                for interval in exists:
+                    exists_grammar, _ = interval.data
+                    exists_contains_current_grammar = (interval.begin < start and interval.end > stop)
+                    exists_grammar_with_same_type = isinstance(exists_grammar, grammar.__class__)
+                    if not exists_grammar_with_same_type and exists_contains_current_grammar:
+                        exists = False
+            if not exists:
+                tree[start:stop] = (grammar, match)
+        for interval in tree:
+            yield interval.data

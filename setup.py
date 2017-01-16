@@ -6,6 +6,7 @@ REQUIREMENTS = [
     'pymorphy2==0.8',
     'enum34==1.1.6',
     'backports.functools-lru-cache==1.3',
+    'intervaltree==2.1.0',
 ]
 
 setup(
@@ -25,7 +26,7 @@ setup(
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
     ],
-    keywords='natural language processing, russian morphology, tomita',
+    keywords='natural language processing, russian morphology',
     packages=find_packages(),
     install_requires=REQUIREMENTS,
 )
