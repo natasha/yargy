@@ -387,8 +387,30 @@ class FactParserTestCase(unittest.TestCase):
             grammar,
         ])
         grammar, tokens = next(parser.extract(text))
+        print(tokens)
         normalized = get_normalized_text(tokens)
         self.assertEqual(normalized, 'институт радионавигации и времени')
+
+    def test_return_raw_stack(self):
+        text = 'иван иванов'
+        grammar = Grammar('Firstname_and_Lastname', [
+            {
+                'labels': [
+                    gram('Name'),
+                ],
+            },
+            {
+                'labels': [
+                    gram('Surn'),
+                    gnc_match(-1, solve_disambiguation=True),
+                ]
+            },
+        ])
+        parser = Parser([grammar])
+        g, tokens = next(parser.extract(text, return_flatten_stack=False))
+        self.assertEqual(grammar, g)
+        self.assertEqual([0, 1], [n for (n, _) in tokens])
+        self.assertEqual(['иван', 'иванов'], [t.value for t in [t for (_, t) in tokens]])
 
 class DictionaryPipelineTestCase(unittest.TestCase):
 

@@ -109,7 +109,7 @@ class Grammar(object):
         terminal_rule = self.rules[-1]
 
         if current_rule == terminal_rule:
-            match = self.stack.flatten()
+            match = self.stack
             self.reset()
             return match
 
@@ -122,7 +122,7 @@ class Grammar(object):
             is_optional = current_rule.get('optional', False)
             next_rule_is_terminal = (self.rules[self.index + 1] == terminal_rule)
             if (is_repeatable_and_have_matches or is_optional) and next_rule_is_terminal:
-                match = self.stack.flatten()
+                match = self.stack
                 self.reset()
                 return match
 
@@ -153,7 +153,7 @@ class Parser(object):
         self.tokenizer = tokenizer or Tokenizer(cache_size=cache_size)
         self.pipelines = pipelines or []
 
-    def extract(self, text):
+    def extract(self, text, return_flatten_stack=True):
         stream = self.tokenizer.transform(text)
         for pipeline in self.pipelines:
             stream = pipeline(stream)
@@ -162,10 +162,14 @@ class Parser(object):
                 grammar.shift(token)
                 match = grammar.reduce()
                 if match:
+                    if return_flatten_stack:
+                        match = match.flatten()
                     yield (grammar, match)
         for grammar in self.grammars:
             match = grammar.reduce(end_of_stream=True)
             if match:
+                if return_flatten_stack:
+                    match = match.flatten()
                 yield (grammar, match)
             grammar.reset()
 
