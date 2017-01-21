@@ -94,8 +94,11 @@ class Grammar(object):
                 # append token to stack if it's not a terminal rule and current rule
                 # doesn't have 'skip' option
                 if not skip:
-                    normalization_type = rule.get('normalization', NormalizationType.Normalized)
-                    token.normalization_type = normalization_type
+                    # add additional fields to tokens, like normalization
+                    # and interpretation rules
+                    token.normalization_type = rule.get('normalization', NormalizationType.Normalized)
+                    token.interpretation = rule.get('interpretation', None)
+                    # finally append match to stack
                     self.stack.append((self.index, token))
                 if not repeatable:
                     self.index += 1

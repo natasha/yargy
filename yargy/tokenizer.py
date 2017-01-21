@@ -20,7 +20,7 @@ int_token_regex = r'(?P<int>[+-]?\d+)'
 float_range_token_regex = r'(?P<float_range>[+-]?[\d]+[\.\,][\d]+\s*?[\-\—]\s*?[\d]+[\.\,][\d]+)'
 float_token_regex = r'(?P<float>[+-]?[\d]+[\.\,][\d]+)'
 quote_token_regex = r'(?P<quote>[\"\'\«\»\„\“])'
-punctuation_token_regex = string.punctuation.join(['(?P<punct>[', r']+)'])
+punctuation_token_regex = string.punctuation.join(['(?P<punct>[\—', r']+)'])
 email_token_regex = r'(?P<email>[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)'
 phone_number_token_regex = r'(?P<phone>(\+)?([-\s_()]?\d[-\s_()]?){10,14})' # found at https://toster.ru/answer?answer_id=852265#answers_list_answer
 end_of_line_token_regex = r'(?P<end_of_line>[\n\r]+)'
@@ -47,14 +47,16 @@ class Token(object):
         'value',
         'position',
         'forms',
-        'normalization_type'
+        'normalization_type',
+        'interpretation',
     )
 
-    def __init__(self, value, position, forms, normalization_type=None):
+    def __init__(self, value, position, forms, normalization_type=None, interpretation=None):
         self.value = value
         self.position = position
         self.forms = forms
-        self.normalization_type = None
+        self.normalization_type = normalization_type
+        self.interpretation = interpretation
 
     def __eq__(self, other):
         if not isinstance(other, Token):

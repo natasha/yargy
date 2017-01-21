@@ -9,7 +9,7 @@ import datetime
 import unittest
 import collections
 
-
+from yargy.compat import str
 from yargy.parser import Grammar, Parser, Combinator
 from yargy.labels import (
     and_,
@@ -33,6 +33,11 @@ from yargy.normalization import (
     NormalizationType,
     get_normalized_text,
 )
+from yargy.interpretation import (
+    InterpretationObject,
+    InterpretationEngine,
+)
+
 from yargy.utils import (
     get_original_text,
 )
@@ -653,3 +658,64 @@ class CombinatorTestCase(unittest.TestCase):
             self.Organisation.Simple,
         ])
         self.assertEqual(values, [['представитель', 'администрации', 'президента', 'иван', 'иванов'], ['администрации', 'президента']])
+
+class InterpretationEngineTestCase(unittest.TestCase):
+
+    def test_person_object_interpretation(self):
+
+        class PersonInterpretation(InterpretationObject):
+
+            class Attributes(enum.Enum):
+                Firstname = 0 # иван
+                Patrynomic = 1 # иванович
+                Lastname = 2 # иванов
+                Nickname = 3 # <иваныч>
+                Descriptor = 4 # президент
+                Description = 5 # российской федерации
+
+            def __eq__(self, other):
+                s_dict = {k: v if isinstance(v, str) else v.value for k, v in self.__dict__.items()}
+                return s_dict == other
+
+        class Person(enum.Enum):
+
+            FirstnameAndLastname = [
+                {
+                    'labels': [
+                        gram('Name'),
+                    ],
+                    'interpretation': {
+                        'attribute': PersonInterpretation.Attributes.Firstname,
+                    }
+                },
+                {
+                    'labels': [
+                        gram('Surn'),
+                    ],
+                    'interpretation': {
+                        'attribute': PersonInterpretation.Attributes.Lastname,
+                    }
+                }
+            ]
+
+            LastnameAndFirstname = list(
+                reversed(FirstnameAndLastname)
+            )
+
+        text = 'иван иванов и иванова саша'
+        combinator = Combinator([Person])
+        matches = combinator.resolve_matches(
+            combinator.extract(text)
+        )
+        engine = InterpretationEngine(object_class=PersonInterpretation)
+        objects = engine.extract(matches)
+        self.assertEqual(list(objects), [
+            PersonInterpretation(**{
+                'firstname': 'иван',
+                'lastname': 'иванов',
+            }),
+            PersonInterpretation(**{
+                'firstname': 'саша',
+                'lastname': 'иванова',
+            }),
+        ])

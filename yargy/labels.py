@@ -9,8 +9,11 @@ GENDERS = ('masc', 'femn', 'neut', 'Ms-f', 'GNdr')
 NUMBERS = ('sing', 'plur', 'Sgtm', 'Pltm')
 CASES = ('nomn', 'gent', 'datv', 'accs', 'ablt', 'loct', 'voct', 'gen2', 'acc2', 'loc2', 'Fixd')
 
+
 def get_token_features(candidate, case, grammemes):
-    return ([g in t['grammemes'] for g in grammemes] for t in (case, candidate))
+    return (
+        [g in t['grammemes'] for g in grammemes] for t in (case, candidate)
+    )
 
 def string_required(func):
     @wraps(func)
