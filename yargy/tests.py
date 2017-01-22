@@ -392,7 +392,6 @@ class FactParserTestCase(unittest.TestCase):
             grammar,
         ])
         grammar, tokens = next(parser.extract(text))
-        print(tokens)
         normalized = get_normalized_text(tokens)
         self.assertEqual(normalized, 'институт радионавигации и времени')
 
@@ -674,7 +673,7 @@ class InterpretationEngineTestCase(unittest.TestCase):
                 Description = 5 # российской федерации
 
             def __eq__(self, other):
-                s_dict = {k: v if isinstance(v, str) else v.value for k, v in self.__dict__.items()}
+                s_dict = {k: v if (isinstance(v, str) or v is None) else v.value for k, v in self.__dict__.items()}
                 return s_dict == other
 
         class Person(enum.Enum):
@@ -708,8 +707,8 @@ class InterpretationEngineTestCase(unittest.TestCase):
             combinator.extract(text)
         )
         engine = InterpretationEngine(object_class=PersonInterpretation)
-        objects = engine.extract(matches)
-        self.assertEqual(list(objects), [
+        objects = list(engine.extract(matches))
+        self.assertEqual(objects, [
             PersonInterpretation(**{
                 'firstname': 'иван',
                 'lastname': 'иванов',
@@ -719,3 +718,6 @@ class InterpretationEngineTestCase(unittest.TestCase):
                 'lastname': 'иванова',
             }),
         ])
+        self.assertEqual(objects[0].firstname.value, 'иван')
+        self.assertEqual(objects[0].lastname.value, 'иванов')
+        self.assertEqual(objects[0].descriptor, None)

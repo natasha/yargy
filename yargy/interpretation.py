@@ -7,6 +7,9 @@ class InterpretationObject(object):
     Attributes = None
 
     def __init__(self, **kwargs):
+        for key in self.Attributes.__members__.keys():
+            # set default values for object attributes
+            self.__dict__[key.lower()] = None
         for key, value in kwargs.items():
             self.__dict__[key] = value
 
