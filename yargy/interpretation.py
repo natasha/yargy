@@ -34,4 +34,5 @@ class InterpretationEngine(object):
                     if not field in self.object_class.Attributes:
                         continue
                     fields[field.name.lower()] = token
-            yield self.object_class(**fields)
+            if fields:
+                yield self.object_class(**fields)
