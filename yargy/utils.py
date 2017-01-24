@@ -1,3 +1,6 @@
+# coding: utf-8
+
+from __future__ import unicode_literals
 from itertools import count, takewhile
 
 
@@ -20,6 +23,12 @@ def get_original_text(text, tokens):
     else:
         start, end = position
     return text[start:end]
+
+def get_desired_index_matches(matches, *indexes):
+    for (n, tokens) in matches:
+        if n in indexes:
+            yield (n, tokens)
+
 
 # stealed from rosettacode
 ROMAN_VALUES = (
