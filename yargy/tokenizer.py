@@ -72,7 +72,7 @@ class Token(object):
         return Token(
             self.value,
             self.position,
-            self.forms,
+            self.forms[:],
             self.normalization_type,
         )
 
