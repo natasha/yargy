@@ -13,6 +13,10 @@ class InterpretationObject(object):
         for key, value in kwargs.items():
             self.__dict__[key] = value
 
+    def __iter__(self):
+        for k, v in self.__dict__.items():
+            yield k, v
+
     def __eq__(self, other):
         raise NotImplementedError
 
