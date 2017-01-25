@@ -1,3 +1,7 @@
+# coding: utf-8
+from __future__ import unicode_literals
+
+
 class InterpretationObject(object):
 
     '''
@@ -12,6 +16,12 @@ class InterpretationObject(object):
             self.__dict__[key.lower()] = None
         for key, value in kwargs.items():
             self.__dict__[key] = value
+
+    def __repr__(self):
+        return '{cls}({attrs})'.format(
+            cls=self.__class__.__name__,
+            attrs=self.__dict__,
+        )
 
     def __iter__(self):
         for k, v in self.__dict__.items():
@@ -37,6 +47,14 @@ class InterpretationEngine(object):
                     field = token.interpretation['attribute']
                     if not field in self.object_class.Attributes:
                         continue
-                    fields[field.name.lower()] = token
+                    name = field.name.lower()
+                    if fields.get(name, None):
+                        value = fields[name]
+                        if isinstance(value, list):
+                            value.append(token)
+                        else:
+                            fields[name] = [value, token]
+                    else:
+                        fields[name] = token
             if fields:
                 yield self.object_class(**fields)
