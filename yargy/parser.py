@@ -1,7 +1,8 @@
 # coding: utf-8
 from __future__ import unicode_literals
-from copy import copy
 
+from copy import copy
+from threading import Lock
 from intervaltree import IntervalTree
 
 from yargy.tokenizer import Token, Tokenizer
@@ -155,26 +156,28 @@ class Parser(object):
         self.grammars = grammars
         self.tokenizer = tokenizer or Tokenizer(cache_size=cache_size)
         self.pipelines = pipelines or []
+        self.lock = Lock()
 
     def extract(self, text, return_flatten_stack=True):
-        stream = self.tokenizer.transform(text)
-        for pipeline in self.pipelines:
-            stream = pipeline(stream)
-        for token in stream:
+        with self.lock:
+            stream = self.tokenizer.transform(text)
+            for pipeline in self.pipelines:
+                stream = pipeline(stream)
+            for token in stream:
+                for grammar in self.grammars:
+                    grammar.shift(token)
+                    match = grammar.reduce()
+                    if match:
+                        if return_flatten_stack:
+                            match = match.flatten()
+                        yield (grammar, match)
             for grammar in self.grammars:
-                grammar.shift(token)
-                match = grammar.reduce()
+                match = grammar.reduce(end_of_stream=True)
                 if match:
                     if return_flatten_stack:
                         match = match.flatten()
                     yield (grammar, match)
-        for grammar in self.grammars:
-            match = grammar.reduce(end_of_stream=True)
-            if match:
-                if return_flatten_stack:
-                    match = match.flatten()
-                yield (grammar, match)
-            grammar.reset()
+                grammar.reset()
 
 class Combinator(object):
 
@@ -202,6 +205,7 @@ class Combinator(object):
             yield self.classes[rule.name], match
 
     def resolve_matches(self, matches, strict=True):
+        # sort matches by tokens count in decreasing order
         matches = sorted(matches, key=lambda m: len(m[1]), reverse=True)
         tree = IntervalTree()
         for (grammar, match) in matches:
@@ -216,5 +220,4 @@ class Combinator(object):
                         exists = False
             if not exists:
                 tree[start:stop] = (grammar, match)
-        for interval in tree:
-            yield interval.data
+                yield (grammar, match)
