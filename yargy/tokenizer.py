@@ -15,12 +15,12 @@ from yargy.compat import range, lru_cache
 russian_token_regex = r'(?P<russian>[а-яё][а-яё\-]*)'
 latin_token_regex = r'(?P<latin>[a-z][a-z\-\']*)'
 int_separated_token_regex = r'(?P<int_separated>[1-9]\d*(\s\d{3})+)'
-int_range_token_regex = r'(?P<int_range>[+-]?\d+\s*?[\-\—]\s*?\d+)'
+int_range_token_regex = r'(?P<int_range>\d+\s*?[\-\—]\s*?\d+)'
 int_token_regex = r'(?P<int>[+-]?\d+)'
-float_range_token_regex = r'(?P<float_range>[+-]?[\d]+[\.\,][\d]+\s*?[\-\—]\s*?[\d]+[\.\,][\d]+)'
+float_range_token_regex = r'(?P<float_range>[\d]+[\.\,][\d]+\s*?[\-\—]\s*?[\d]+[\.\,][\d]+)'
 float_token_regex = r'(?P<float>[+-]?[\d]+[\.\,][\d]+)'
 quote_token_regex = r'(?P<quote>[\"\'\«\»\„\“])'
-punctuation_token_regex = string.punctuation.join(['(?P<punct>[\—', r']+)'])
+punctuation_token_regex = string.punctuation.join(['(?P<punct>[\—', r'])'])
 email_token_regex = r'(?P<email>[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)'
 phone_number_token_regex = r'(?P<phone>(\+)?([-\s_()]?\d[-\s_()]?){10,14})' # found at https://toster.ru/answer?answer_id=852265#answers_list_answer
 end_of_line_token_regex = r'(?P<end_of_line>[\n\r]+)'
@@ -179,8 +179,6 @@ class Tokenizer(object):
         :returns: Token with 'RANGE' and 'INT-RANGE' grammemes
         :rtype: Token instance
         '''
-        if value[0] == '-':
-            value = value[1:]
         values = map(int, re.split(r'[\-\—]', value))
         return Token(range(*values), position, [
             {'grammemes': {'RANGE', 'INT-RANGE'}, 'normal_form': value}
@@ -216,6 +214,7 @@ class Tokenizer(object):
         :returns: Token with 'RANGE' and 'FLOAT-RANGE' gremmemes
         :rtype: Token instance
         '''
+
         values = map(float, (x.replace(',', '.') for x in re.split(r'[\-\—]', value)))
         range_value = frange(*values, step=self.frange_step)
         return Token(range_value, position, [

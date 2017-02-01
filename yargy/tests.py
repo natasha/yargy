@@ -139,7 +139,12 @@ class TokenizerTestCase(unittest.TestCase):
         self.assertEqual(len(tokens), 2)
         self.assertEqual([t.value for t in tokens], [7, 'лет'])
 
-
+    @unittest.skipIf(sys.version_info.major < 3, 'python 2 creates different objects for same xrange calls')
+    @unittest.skipIf(platform.python_implementation() == 'PyPy', 'pypy & pypy3 have same semantics for range objects')
+    def test_match_complex_ranges(self):
+        text = 'А3-10-4,0-1.4301'
+        tokens = list(self.tokenizer.transform(text))
+        self.assertEqual([t.value for t in tokens[1:]], [range(3, 10), -4.0, -1.4301])
 
 class UtilsTestCase(unittest.TestCase):
 
