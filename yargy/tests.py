@@ -146,6 +146,12 @@ class TokenizerTestCase(unittest.TestCase):
         tokens = list(self.tokenizer.transform(text))
         self.assertEqual([t.value for t in tokens[1:]], [range(3, 10), -4.0, -1.4301])
 
+    def test_match_different_types_of_punctuation_characters(self):
+        text = ':."'
+        tokens = list(self.tokenizer.transform(text))
+        self.assertEqual(len(tokens), 3)
+        self.assertEqual([t.value for t in tokens], [':', '.', '"'])
+
 class UtilsTestCase(unittest.TestCase):
 
     def setUp(self):
