@@ -13,7 +13,7 @@ from yargy.compat import range, lru_cache
 
 
 russian_token_regex = r'(?P<russian>[а-яё][а-яё\-]*)'
-latin_token_regex = r'(?P<latin>[a-z][a-z\-\']*)'
+latin_token_regex = r'(?P<latin>[a-z]\-?[a-z\']*)'
 int_separated_token_regex = r'(?P<int_separated>[1-9]\d*(\s\d{3})+)'
 int_range_token_regex = r'(?P<int_range>\d+\s*?[\-\—]\s*?\d+)'
 int_token_regex = r'(?P<int>[+-]?\d+)'
@@ -190,7 +190,7 @@ class Tokenizer(object):
         :returns: Token with 'NUMBER' and 'INT' gramemes
         :rtype: Token instance
         '''
-        value = int(re.sub('\s', '', value))
+        value = int(re.sub('\D', '', value))
         return Token(value, position, [
             {'grammemes': {'NUMBER', 'INT', 'INT-SEPARATED'}, 'normal_form': value}
         ])
