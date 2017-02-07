@@ -3,11 +3,13 @@ try:
     str = unicode
     string_type = basestring
     range = xrange
+    RUNNING_ON_PYTHON_2_VERSION = True
 except NameError:
     # Python 3
     str = str
     string_type = str
     range = range
+    RUNNING_ON_PYTHON_2_VERSION = False
 
 try:
     # Python 3.4+

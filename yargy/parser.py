@@ -1,8 +1,8 @@
 # coding: utf-8
 from __future__ import unicode_literals
 
-from copy import copy
 from threading import Lock
+from copy import deepcopy, copy
 from intervaltree import IntervalTree
 
 from yargy.tokenizer import Token, Tokenizer
@@ -44,6 +44,11 @@ class Grammar(object):
 
     def __init__(self, name, rules):
         self.name = name
+        self.rules = []
+        for rule in rules:
+            if isinstance(rule, (Grammar)):
+                rule = deepcopy(rule) # copy rule, because it can be used in multiple parsers
+            self.rules.append(rule)
         self.rules = rules + [
             {
                 'terminal': True,
@@ -72,23 +77,26 @@ class Grammar(object):
         '''
         rule = self.rules[self.index]
 
-        repeatable = rule.get('repeatable', False)
-        optional = rule.get('optional', False)
-        terminal = rule.get('terminal', False)
-        skip = rule.get('skip', False)
-
         # need to clone tokens, because labels can modify
         # its forms or other attributes
         token = copy(token)
 
+        repeatable = rule.get('repeatable', False)
+        optional = rule.get('optional', False)
+        terminal = rule.get('terminal', False)
+        skip = rule.get('skip', False)
         if not all(self.match(token, rule)) and not terminal:
             last_index = self.index
+            recheck = False
             if optional or (repeatable and self.stack.have_matches_by_rule_index(self.index)):
                 self.index += 1
             else:
+                recheck = True
                 self.reset()
-            if not recheck and (self.index != last_index):
-                self.shift(token, recheck=True) # recheck current token on next rule
+            if (self.index != last_index) and (not recheck or (optional or repeatable)):
+                self.shift(token, recheck=recheck) # recheck current token on next rule
+            else:
+                self.reset()
         else:
             # token matches current rule
             if not terminal:

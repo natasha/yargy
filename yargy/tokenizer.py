@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 import re
+import sys
 import string
 import collections
 
@@ -9,7 +10,7 @@ from pymorphy2.shapes import is_roman_number
 
 from yargy.morph import Analyzer
 from yargy.utils import frange, decode_roman_number
-from yargy.compat import range, lru_cache
+from yargy.compat import range, lru_cache, RUNNING_ON_PYTHON_2_VERSION
 
 
 russian_token_regex = r'(?P<russian>[а-яё][а-яё\-]*)'
@@ -179,8 +180,16 @@ class Tokenizer(object):
         :returns: Token with 'RANGE' and 'INT-RANGE' grammemes
         :rtype: Token instance
         '''
-        values = map(int, re.split(r'[\-\—]', value))
-        return Token(range(*values), position, [
+        start, stop = map(int, re.split(r'[\-\—]', value))
+        if RUNNING_ON_PYTHON_2_VERSION:
+            # do as suggested in official docs: https://docs.python.org/2.7/library/functions.html#xrange
+            if start > sys.maxsize or stop > sys.maxsize:
+                value = frange(start, stop, 1)
+            else:
+                value = xrange(start, stop)
+        else:
+            value = range(start, stop)
+        return Token(value, position, [
             {'grammemes': {'RANGE', 'INT-RANGE'}, 'normal_form': value}
         ])
 

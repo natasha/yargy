@@ -129,8 +129,7 @@ def gram(value, token, stack):
     for form in token.forms:
         if value in form['grammemes']:
             return True
-    else:
-        return False
+    return False
 
 
 @label
