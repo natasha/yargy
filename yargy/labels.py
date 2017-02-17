@@ -80,8 +80,20 @@ def eq(value, token, stack):
 
 
 @label
+@string_required
+def length_eq(value, token, stack):
+    return len(token.value) == value
+
+
+@label
 def not_eq(value, token, stack):
     return token.value != value
+
+
+@label
+@string_required
+def length_not_eq(value, token, stack):
+    return len(token.value) != value
 
 
 @label
@@ -100,8 +112,20 @@ def gt(value, token, stack):
 
 
 @label
+@string_required
+def length_gt(value, token, stack):
+    return len(token.value) > value
+
+
+@label
 def lt(value, token, stack):
     return token.value < value
+
+
+@label
+@string_required
+def length_lt(value, token, stack):
+    return len(token.value) < value
 
 
 @label
@@ -110,8 +134,20 @@ def gte(value, token, stack):
 
 
 @label
+@string_required
+def length_gte(value, token, stack):
+    return len(token.value) >= value
+
+
+@label
 def lte(value, token, stack):
     return token.value <= value
+
+
+@label
+@string_required
+def length_lte(value, token, stack):
+    return len(token.value) <= value
 
 
 @label
