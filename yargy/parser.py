@@ -1,13 +1,23 @@
 # coding: utf-8
 from __future__ import unicode_literals
 
-from threading import Lock
 from copy import deepcopy, copy
+from threading import Lock
 from intervaltree import IntervalTree
 
 from yargy.tokenizer import Token, Tokenizer
 from yargy.normalization import NormalizationType
 from yargy.utils import get_tokens_position
+
+
+def create_or_copy_grammar(grammar):
+    if isinstance(grammar, list):
+        grammar = Grammar(None, grammar)
+    elif isinstance(grammar, (Operation, Grammar)):
+        grammar = deepcopy(grammar)
+    else:
+        raise ValueError('Not supported grammar type: {}'.format(grammar))
+    return grammar
 
 
 class Stack(list):
@@ -31,6 +41,55 @@ class Stack(list):
         '''
         return [value for (_, value) in self]
 
+
+class Operation(object):
+
+    def __init__(self, left, right, operator):
+        self.original_left = left
+        self.original_right = right
+        self.operator = operator
+        self.left = create_or_copy_grammar(self.original_left)
+        self.right = create_or_copy_grammar(self.original_right)
+
+    def reset(self):
+        self.left.reset()
+        self.right.reset()
+
+    def shift(self, token):
+        self.left.shift(token)
+        self.right.shift(token)
+
+    def reduce(self, end_of_stream=False):
+        if self.stack:
+            left_match = self.left.reduce(end_of_stream=end_of_stream)
+            right_match = self.right.reduce(end_of_stream=end_of_stream)
+            match = self.operator(left_match, right_match)
+            if match:
+                self.reset()
+                return match
+
+    @property
+    def stack(self):
+        return (
+            self.left.stack or self.right.stack
+        )
+
+
+class OR(Operation):
+
+    def __init__(self, left, right):
+        super(self.__class__, self).__init__(left, right, self.match)
+
+    def match(self, left, right):
+        if left and right:
+            if len(left) >= len(right):
+                return left
+            else:
+                return right
+        else:
+            return left or right
+
+
 class Grammar(object):
 
     '''
@@ -44,11 +103,6 @@ class Grammar(object):
 
     def __init__(self, name, rules):
         self.name = name
-        self.rules = []
-        for rule in rules:
-            if isinstance(rule, (Grammar)):
-                rule = deepcopy(rule) # copy rule, because it can be used in multiple parsers
-            self.rules.append(rule)
         self.rules = rules + [
             {
                 'terminal': True,
@@ -81,36 +135,42 @@ class Grammar(object):
         # its forms or other attributes
         token = copy(token)
 
-        repeatable = rule.get('repeatable', False)
-        optional = rule.get('optional', False)
-        terminal = rule.get('terminal', False)
-        skip = rule.get('skip', False)
-        if not all(self.match(token, rule)) and not terminal:
-            last_index = self.index
-            recheck = False
-            if optional or (repeatable and self.stack.have_matches_by_rule_index(self.index)):
-                self.index += 1
-            else:
-                recheck = True
-                self.reset()
-            if (self.index != last_index) and (not recheck or (optional or repeatable)):
-                self.shift(token, recheck=recheck) # recheck current token on next rule
-            else:
-                self.reset()
+        if isinstance(rule, (Operation, Grammar)):
+            rule.shift(token)
         else:
-            # token matches current rule
-            if not terminal:
-                # append token to stack if it's not a terminal rule and current rule
-                # doesn't have 'skip' option
-                if not skip:
-                    # add additional fields to tokens, like normalization
-                    # and interpretation rules
-                    token.normalization_type = rule.get('normalization', NormalizationType.Normalized)
-                    token.interpretation = rule.get('interpretation', None)
-                    # finally append match to stack
-                    self.stack.append((self.index, token))
-                if not repeatable:
+            repeatable = rule.get('repeatable', False)
+            optional = rule.get('optional', False)
+            terminal = rule.get('terminal', False)
+            skip = rule.get('skip', False)
+
+            if not all(self.match(token, rule)) and not terminal:
+                last_index = self.index
+                recheck = False
+                if optional or (repeatable and self.stack.have_matches_by_rule_index(self.index)):
                     self.index += 1
+                else:
+                    recheck = True
+                    self.reset()
+                if (self.index != last_index) and (not recheck or (optional or repeatable)):
+                    # recheck current token on next rule
+                    self.shift(token, recheck=recheck)
+                else:
+                    self.reset()
+            else:
+                # token matches current rule
+                if not terminal:
+                    # append token to stack if it's not a terminal rule and current rule
+                    # doesn't have 'skip' option
+                    if not skip:
+                        # add additional fields to tokens, like normalization
+                        # and interpretation rules
+                        token.normalization_type = rule.get(
+                            'normalization', NormalizationType.Normalized)
+                        token.interpretation = rule.get('interpretation', None)
+                        # finally append match to stack
+                        self.stack.append((self.index, token))
+                    if not repeatable:
+                        self.index += 1
 
     def reduce(self, end_of_stream=False):
         '''
@@ -120,24 +180,34 @@ class Grammar(object):
         current_rule = self.rules[self.index]
         terminal_rule = self.rules[-1]
 
-        if current_rule == terminal_rule:
+        is_grammar_object = isinstance(current_rule, (Operation, Grammar))
+
+        if is_grammar_object:
+            match = current_rule.reduce(end_of_stream=end_of_stream)
+            if match:
+                self.index += 1
+                for token in match.flatten():
+                    self.stack.append((self.index, token))
+                return self.reduce()
+
+        if (current_rule == terminal_rule) and self.stack:
             match = self.stack
             self.reset()
             return match
 
-        if end_of_stream:
+        if end_of_stream and not is_grammar_object:
             is_repeatable_and_have_matches = (
                 current_rule.get('repeatable', False)
                 and
                 self.stack.have_matches_by_rule_index(self.index)
             )
             is_optional = current_rule.get('optional', False)
-            next_rule_is_terminal = (self.rules[self.index + 1] == terminal_rule)
+            next_rule_is_terminal = (
+                self.rules[self.index + 1] == terminal_rule)
             if (is_repeatable_and_have_matches or is_optional) and next_rule_is_terminal:
                 match = self.stack
                 self.reset()
                 return match
-
 
     def reset(self):
         self.stack = Stack()
@@ -148,11 +218,15 @@ class Grammar(object):
         for label in rule.get('labels', []):
             yield label(token, stack)
 
+    def __copy__(self):
+        return Grammar(self.name, self.rules[:-1])
+
     def __repr__(self):
         return 'Grammar(name=\'{name}\', stack={stack})'.format(
             name=self.name,
             stack=self.stack,
         )
+
 
 class Parser(object):
 
@@ -187,6 +261,7 @@ class Parser(object):
                     yield (grammar, match)
                 grammar.reset()
 
+
 class Combinator(object):
 
     '''
@@ -201,10 +276,10 @@ class Combinator(object):
             for rule in _class.__members__.values():
                 name = '{0}__{1}'.format(_class_name, rule.name)
                 self.classes[name] = rule
-                if not isinstance(rule.value, Grammar):
-                    grammar = Grammar(name, rule.value)
+                if not isinstance(rule.value, (Operation, Grammar)):
+                    grammar = Grammar(name, deepcopy(rule.value))
                 else:
-                    grammar = rule.value
+                    grammar = deepcopy(rule.value)
                 self.grammars.append(grammar)
         self.parser = Parser(self.grammars, *args, **kwargs)
 
@@ -222,8 +297,10 @@ class Combinator(object):
             if exists and not strict:
                 for interval in exists:
                     exists_grammar, _ = interval.data
-                    exists_contains_current_grammar = (interval.begin < start and interval.end > stop)
-                    exists_grammar_with_same_type = isinstance(exists_grammar, grammar.__class__)
+                    exists_contains_current_grammar = (
+                        interval.begin < start and interval.end > stop)
+                    exists_grammar_with_same_type = isinstance(
+                        exists_grammar, grammar.__class__)
                     if not exists_grammar_with_same_type and exists_contains_current_grammar:
                         exists = False
             if not exists:

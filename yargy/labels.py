@@ -18,11 +18,11 @@ def get_token_features(candidate, case, grammemes):
 
 def string_required(func):
     @wraps(func)
-    def wrapper(value, token, stack):
+    def wrapper(value, token, stack, **kwargs):
         if not isinstance(token.value, string_type):
             return False
         else:
-            return func(value, token, stack)
+            return func(value, token, stack, **kwargs)
     return wrapper
 
 
@@ -260,6 +260,7 @@ def gender_match_check(candidate, case, genders=GENDERS):
 
 
 @label
+@string_required
 def gender_match(*args, **kwargs):
     return match_labels_with_disabmiguation_resolving(*args, match_labels=[
         gender_match_check,
@@ -295,6 +296,7 @@ def number_match_check(candidate, case, numbers=NUMBERS):
 
 
 @label
+@string_required
 def number_match(*args, **kwargs):
     return match_labels_with_disabmiguation_resolving(*args, match_labels=[
         number_match_check,
@@ -323,6 +325,7 @@ def case_match_check(candidate, case, cases=CASES):
 
 
 @label
+@string_required
 def case_match(*args, **kwargs):
     return match_labels_with_disabmiguation_resolving(*args, match_labels=[
         case_match_check,
@@ -330,6 +333,7 @@ def case_match(*args, **kwargs):
 
 
 @label
+@string_required
 def gnc_match(*args, **kwargs):
     return match_labels_with_disabmiguation_resolving(*args, match_labels=[
         gender_match_check,

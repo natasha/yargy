@@ -11,7 +11,7 @@ import itertools
 import collections
 
 from yargy.compat import str
-from yargy.parser import Grammar, Parser, Combinator
+from yargy.parser import Grammar, Parser, Combinator, Operation, OR
 from yargy.labels import (
     and_,
     or_,
@@ -439,6 +439,69 @@ class FactParserTestCase(unittest.TestCase):
         self.assertEqual(grammar, g)
         self.assertEqual([0, 1], [n for (n, _) in tokens])
         self.assertEqual(['иван', 'иванов'], [t.value for t in [t for (_, t) in tokens]])
+
+    def test_operations_in_grammars(self):
+        text = '1 и 2'
+        grammar = Grammar(None, [
+            OR([
+                {
+                    'labels': [
+                        gram('INT'),
+                    ],
+                },
+            ], [
+                {
+                    'labels': [
+                        gram('CONJ'),
+                    ],
+                },
+            ]),
+        ])
+        parser = Parser([grammar])
+        for (index, (grammar, tokens)) in enumerate(parser.extract(text)):
+            if index == 0:
+                self.assertEqual(tokens[0].value, 1)
+            if index == 1:
+                self.assertEqual(tokens[0].value, 'и')
+            if index == 2:
+                self.assertEqual(tokens[0].value, 2)
+
+        grammar = Grammar('House_Number', [
+            OR([
+                {
+                    'labels': [
+                        eq('кв'),
+                    ],
+                },
+                {
+                    'labels': [
+                        gram('INT'),
+                    ],
+                },
+            ],
+            [
+                {
+                    'labels': [
+                        eq('квартира'),
+                    ],
+                },
+                {
+                    'labels': [
+                        gram('INT'),
+                    ],
+                },
+            ])
+        ])
+        parser = Parser([grammar])
+        text = 'кв 1'
+        g, tokens = list(parser.extract(text))[0]
+        self.assertEqual(g, grammar)
+        self.assertEqual([t.value for t in tokens], ['кв', 1])
+
+        text = 'квартира 1'
+        g, tokens = list(parser.extract(text))[0]
+        self.assertEqual(g, grammar)
+        self.assertEqual([t.value for t in tokens], ['квартира', 1])
 
 class DictionaryPipelineTestCase(unittest.TestCase):
 
