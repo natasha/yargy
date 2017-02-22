@@ -441,30 +441,6 @@ class FactParserTestCase(unittest.TestCase):
         self.assertEqual(['иван', 'иванов'], [t.value for t in [t for (_, t) in tokens]])
 
     def test_operations_in_grammars(self):
-        text = '1 и 2'
-        grammar = Grammar(None, [
-            OR([
-                {
-                    'labels': [
-                        gram('INT'),
-                    ],
-                },
-            ], [
-                {
-                    'labels': [
-                        gram('CONJ'),
-                    ],
-                },
-            ]),
-        ])
-        parser = Parser([grammar])
-        for (index, (grammar, tokens)) in enumerate(parser.extract(text)):
-            if index == 0:
-                self.assertEqual(tokens[0].value, 1)
-            if index == 1:
-                self.assertEqual(tokens[0].value, 'и')
-            if index == 2:
-                self.assertEqual(tokens[0].value, 2)
 
         grammar = Grammar('House_Number', [
             OR([

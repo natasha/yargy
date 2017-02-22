@@ -137,6 +137,9 @@ class Grammar(object):
 
         if isinstance(rule, (Operation, Grammar)):
             rule.shift(token)
+            if not rule.stack:
+                rule.reset()
+                self.reset()
         else:
             repeatable = rule.get('repeatable', False)
             optional = rule.get('optional', False)
@@ -188,7 +191,6 @@ class Grammar(object):
                 self.index += 1
                 for token in match.flatten():
                     self.stack.append((self.index, token))
-                return self.reduce()
 
         if (current_rule == terminal_rule) and self.stack:
             match = self.stack
