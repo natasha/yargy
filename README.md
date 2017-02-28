@@ -162,10 +162,21 @@ Multiple pipelines can be chained into one, if you need it.
 
 Source code of `yargy` is distributed under MIT license (allows modification and commercial usage)
 
-# Version history
+# Changelog
 
-## 0.6 (dev)
+## 0.7 (dev)
 * Recursive grammars support
+
+## 0.6.0
+* Initial object interpretation support
+* Replaced custom tree-like struct used in `combinator.resolve_matches` method with `IntervalTree`
+* `number_match` and `case_match` labels now have understand same arguments as `gnc_match` label
+
+## 0.5.1 - 0.5.3
+* Support `match_all_disambiguation_forms` argument in `gnc_match` label
+* New token types - `ROMN` for roman numbers, like `XXI`, `EMAIL` for emails and `PHONE` for phone numbers
+* New labels - `and_` & `or_`
+* Implemented `get_normalized_text` function that returns normalized text from parsed tokens
 
 ## 0.5.0
 * Partial morphology disambiguation solving support (`gnc_match` label now accepts optional boolean argument `solve_disambiguation`, which when is True, reduces number of token forms in result match)
