@@ -7,6 +7,7 @@ from pymorphy2.tagset import OpencorporaTag
 from pymorphy2.analyzer import Parse
 
 from yargy.morph import Analyzer
+from yargy.tokenizer import Token
 from yargy.compat import str
 
 
@@ -33,6 +34,8 @@ def build_word_object(token, form, morph_analyzer=Analyzer):
     return word
 
 def get_normalized_text(tokens, morph_analyzer=Analyzer, required_grammemes={'nomn', 'sing'}):
+    if isinstance(tokens, Token):
+        tokens = [tokens]
     words = []
     for token in tokens:
         form = token.forms[0]
