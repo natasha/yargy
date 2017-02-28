@@ -736,8 +736,16 @@ class InterpretationEngineTestCase(unittest.TestCase):
                 Description = 5 # российской федерации
 
             def __eq__(self, other):
-                s_dict = {k: v if (isinstance(v, str) or v is None) else v.value for k, v in self.__dict__.items()}
-                return s_dict == other
+                if isinstance(self.firstname, Token):
+                    self_firstname = self.firstname.value
+                else:
+                    self_firstname = self.firstname
+
+                if isinstance(other.firstname, Token):
+                    other_firstname = other.firstname.value
+                else:
+                    other_firstname = other.firstname
+                return self_firstname == other_firstname
 
         class Person(enum.Enum):
 
@@ -746,6 +754,7 @@ class InterpretationEngineTestCase(unittest.TestCase):
                     'labels': [
                         gram('Name'),
                     ],
+                    'normalization': NormalizationType.Inflected,
                     'interpretation': {
                         'attribute': PersonInterpretation.Attributes.Firstname,
                     }
@@ -753,16 +762,36 @@ class InterpretationEngineTestCase(unittest.TestCase):
                 {
                     'labels': [
                         gram('Surn'),
+                        gnc_match(-1, solve_disambiguation=True),
                     ],
+                    'normalization': NormalizationType.Inflected,
                     'interpretation': {
                         'attribute': PersonInterpretation.Attributes.Lastname,
                     }
                 }
             ]
 
-            LastnameAndFirstname = list(
-                reversed(FirstnameAndLastname)
-            )
+            LastnameAndFirstname = [
+                {
+                    'labels': [
+                        gram('Surn'),
+                    ],
+                    'normalization': NormalizationType.Inflected,
+                    'interpretation': {
+                        'attribute': PersonInterpretation.Attributes.Lastname,
+                    }
+                },
+                {
+                    'labels': [
+                        gram('Name'),
+                        gnc_match(-1, solve_disambiguation=True),
+                    ],
+                    'normalization': NormalizationType.Inflected,
+                    'interpretation': {
+                        'attribute': PersonInterpretation.Attributes.Firstname,
+                    }
+                },
+            ]
 
         text = 'иван иванов и иванова саша'
         combinator = Combinator([Person])
@@ -784,3 +813,20 @@ class InterpretationEngineTestCase(unittest.TestCase):
         self.assertEqual(objects[0].firstname.value, 'иван')
         self.assertEqual(objects[0].lastname.value, 'иванов')
         self.assertEqual(objects[0].descriptor, None)
+
+        self.assertEqual(objects[0].normalized, 'иван иванов')
+        self.assertEqual(objects[1].normalized, 'иванова саша')
+
+        self.assertEqual(
+            objects[0].difference(
+                objects[0],
+            ),
+            0,
+        )
+
+        self.assertEqual(
+            objects[0].difference(
+                objects[1],
+            ),
+            7,
+        )

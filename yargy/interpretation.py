@@ -1,6 +1,11 @@
 # coding: utf-8
 from __future__ import unicode_literals
 
+# TODO: using raw python version due to jellyfish#issues/55
+from jellyfish._jellyfish import damerau_levenshtein_distance
+
+from yargy.normalization import get_normalized_text
+
 
 class InterpretationObject(object):
 
@@ -10,12 +15,26 @@ class InterpretationObject(object):
 
     Attributes = None
 
+    SIMILARITY_THRESHOLD = 3
+
     def __init__(self, **kwargs):
         for key in self.Attributes.__members__.keys():
             # set default values for object attributes
             self.__dict__[key.lower()] = None
         for key, value in kwargs.items():
             self.__dict__[key] = value
+
+    @property
+    def normalized(self):
+        return get_normalized_text(
+            self.spans[0],
+        ).lower()
+
+    def difference(self, other):
+        return damerau_levenshtein_distance(
+            self.normalized,
+            other.normalized,
+        )
 
     def __repr__(self):
         return '{cls}({attrs})'.format(
@@ -28,7 +47,18 @@ class InterpretationObject(object):
             yield k, v
 
     def __eq__(self, other):
-        raise NotImplementedError
+        if isinstance(other, self.__class__):
+            self_name = self.normalized
+            other_name = other.normalized
+            if len(self_name) > len(other_name):
+                a, b = self_name, other_name
+            else:
+                a, b = other_name, self_name
+            if b in a:
+                return True
+            if self.difference(other) <= self.SIMILARITY_THRESHOLD:
+                return True
+        return False
 
 class InterpretationEngine(object):
 
@@ -57,4 +87,7 @@ class InterpretationEngine(object):
                     else:
                         fields[name] = token
             if fields:
+                fields['spans'] = [
+                    tokens
+                ]
                 yield self.object_class(**fields)
