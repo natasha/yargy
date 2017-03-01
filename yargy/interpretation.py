@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 
 # TODO: using raw python version due to jellyfish#issues/55
-from jellyfish._jellyfish import damerau_levenshtein_distance
+from jellyfish._jellyfish import damerau_levenshtein_distance, levenshtein_distance
 
 from yargy.normalization import get_normalized_text
 
@@ -15,7 +15,7 @@ class InterpretationObject(object):
 
     Attributes = None
 
-    SIMILARITY_THRESHOLD = 3
+    SIMILARITY_THRESHOLD = 2
 
     def __init__(self, **kwargs):
         for key in self.Attributes.__members__.keys():
@@ -30,10 +30,10 @@ class InterpretationObject(object):
             self.spans[0],
         ).lower()
 
-    def difference(self, other):
+    def difference(self, another):
         return damerau_levenshtein_distance(
             self.normalized,
-            other.normalized,
+            another.normalized,
         )
 
     def __repr__(self):
@@ -46,17 +46,9 @@ class InterpretationObject(object):
         for k, v in self.__dict__.items():
             yield k, v
 
-    def __eq__(self, other):
-        if isinstance(other, self.__class__):
-            self_name = self.normalized
-            other_name = other.normalized
-            if len(self_name) > len(other_name):
-                a, b = self_name, other_name
-            else:
-                a, b = other_name, self_name
-            if b in a:
-                return True
-            if self.difference(other) <= self.SIMILARITY_THRESHOLD:
+    def __eq__(self, another):
+        if isinstance(another, self.__class__):
+            if self.difference(another) <= self.SIMILARITY_THRESHOLD:
                 return True
         return False
 
@@ -74,10 +66,19 @@ class InterpretationEngine(object):
             fields = {}
             for token in tokens:
                 if token.interpretation:
-                    field = token.interpretation['attribute']
-                    if not field in self.object_class.Attributes:
-                        continue
-                    name = field.name.lower()
+                    attribute = token.interpretation['attribute']
+                    if isinstance(attribute, list):
+                        required_attribute = None
+                        for field in attribute:
+                            if field in self.object_class.Attributes:
+                                required_attribute = field
+                        if not required_attribute:
+                            continue
+                        attribute = required_attribute
+                    else:
+                        if not attribute in self.object_class.Attributes:
+                            continue
+                    name = attribute.name.lower()
                     if fields.get(name, None):
                         value = fields[name]
                         if isinstance(value, list):
