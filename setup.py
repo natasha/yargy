@@ -7,6 +7,7 @@ REQUIREMENTS = [
     'enum34==1.1.6',
     'backports.functools-lru-cache==1.3',
     'intervaltree==2.1.0',
+    'jellyfish==0.5.6',
 ]
 
 setup(
