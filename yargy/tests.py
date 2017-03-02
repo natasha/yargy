@@ -489,21 +489,15 @@ class DictionaryPipelineTestCase(unittest.TestCase):
             'нижний_новгород': [{'grammemes': ['Geox/City'], 'normal_form': 'нижний новгород'}],
         })
         stream = pipeline(tokens)
-        matches = []
-        while True:
-            try:
-                token = next(stream)
-            except StopIteration:
-                break
+        for token in stream:
             if token.value != 'нижний_новгород':
                 continue
             else:
-                matches.append(token)
-        self.assertEqual(matches, [Token(
-            'нижний_новгород',
-            (15, 30),
-            [{'grammemes': ['Geox/City'], 'normal_form': 'нижний новгород'}]
-        )])
+                self.assertEqual(token, Token(
+                    'нижний_новгород',
+                    (15, 30),
+                    [{'grammemes': ['Geox/City'], 'normal_form': 'нижний новгород'}]
+                ))
 
     def test_match_in_different_form(self):
         text = 'в нижнем новгороде прошел ещё один день'
@@ -513,21 +507,15 @@ class DictionaryPipelineTestCase(unittest.TestCase):
             'нижний_новгород': [{'grammemes': ['Geox/City'], 'normal_form': 'нижний новгород'}],
         })
         stream = pipeline(tokens)
-        matches = []
-        while True:
-            try:
-                token = next(pipeline)
-            except StopIteration:
-                break
-            if token.value != 'нижнем_новгороде':
+        for token in stream:
+            if token.value != 'нижний_новгород':
                 continue
             else:
-                matches.append(token)
-        self.assertEqual(matches, [Token(
-            'нижнем_новгороде',
-            (2, 18),
-            [{'grammemes': ['Geox/City'], 'normal_form': 'нижний новгород'}]
-        )])
+                self.assertEqual(token, Token(
+                    'нижнем_новгороде',
+                    (2, 18),
+                    [{'grammemes': ['Geox/City'], 'normal_form': 'нижний новгород'}]
+                ))
 
     def test_match_with_parser(self):
         text = 'в нижнем новгороде прошел ещё один день'
