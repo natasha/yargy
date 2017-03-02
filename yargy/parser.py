@@ -6,18 +6,27 @@ from threading import Lock
 from intervaltree import IntervalTree
 
 from yargy.tokenizer import Token, Tokenizer
+from yargy.pipeline import PipelineStatus
 from yargy.normalization import NormalizationType
 from yargy.utils import get_tokens_position
 
 
-def create_or_copy_grammar(grammar):
+def create_or_copy_grammar(grammar, name=None):
     if isinstance(grammar, list):
-        grammar = Grammar(None, grammar)
+        grammar = Grammar(name, deepcopy(grammar))
     elif isinstance(grammar, (Operation, Grammar)):
         grammar = deepcopy(grammar)
     else:
         raise ValueError('Not supported grammar type: {}'.format(grammar))
     return grammar
+
+
+def build_grammars_from_multiple_classes(classes):
+    for _class in classes:
+        _class_name = _class.__name__
+        for rule in _class.__members__.values():
+            name = '{0}__{1}'.format(_class_name, rule.name)
+            yield rule, name, create_or_copy_grammar(rule.value, name)
 
 
 class Stack(list):
@@ -245,8 +254,10 @@ class Parser(object):
     def extract(self, text, return_flatten_stack=True):
         with self.lock:
             stream = self.tokenizer.transform(text)
+            
             for pipeline in self.pipelines:
                 stream = pipeline(stream)
+
             for token in stream:
                 for grammar in self.grammars:
                     grammar.shift(token)
@@ -273,16 +284,9 @@ class Combinator(object):
     def __init__(self, classes, *args, **kwargs):
         self.classes = {}
         self.grammars = []
-        for _class in classes:
-            _class_name = _class.__name__
-            for rule in _class.__members__.values():
-                name = '{0}__{1}'.format(_class_name, rule.name)
-                self.classes[name] = rule
-                if not isinstance(rule.value, (Operation, Grammar)):
-                    grammar = Grammar(name, deepcopy(rule.value))
-                else:
-                    grammar = deepcopy(rule.value)
-                self.grammars.append(grammar)
+        for rule, name, grammar in build_grammars_from_multiple_classes(classes):
+            self.classes[name] = rule
+            self.grammars.append(grammar)
         self.parser = Parser(self.grammars, *args, **kwargs)
 
     def extract(self, text):
