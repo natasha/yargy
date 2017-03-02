@@ -12,8 +12,17 @@ except ImportError:
     from dawg_python import CompletionDAWG, RecordDAWG
     c_based_dawg = False
 
+from enum import Enum
+
 from yargy.compat import str
 from yargy.tokenizer import Token
+
+
+class PipelineStatus(Enum):
+
+    NotFound = 0
+    CommonPrefix = 1
+    Found = 2
 
 
 class Pipeline(object):
@@ -30,7 +39,7 @@ class Pipeline(object):
         return self
 
     def __iter__(self):
-        return self
+        raise NotImplementedError
 
     def next(self):
         # Python 2
@@ -38,7 +47,9 @@ class Pipeline(object):
 
     def __next__(self):
         # Python 3
-        raise NotImplementedError
+        for token in self:
+            return token
+
 
 class DictionaryPipeline(Pipeline):
 
@@ -54,7 +65,7 @@ class DictionaryPipeline(Pipeline):
 
     def __init__(self, dictionary):
         self.dictionary = dictionary
-        self.return_stack = []
+        self.stack = []
 
     def merge_stack(self, stack):
         '''
@@ -64,8 +75,8 @@ class DictionaryPipeline(Pipeline):
         for (index, token) in enumerate(stack):
             for form in (token.forms or []):
                 normal_form = form['normal_form']
-                words[index] |= {str(normal_form).lower(),}
-            words[index] |= {str(token.value).lower(),}
+                words[index] |= {str(normal_form).lower(), }
+            words[index] |= {str(token.value).lower(), }
         return product(*words)
 
     def matches_prefix(self, stack):
@@ -106,42 +117,32 @@ class DictionaryPipeline(Pipeline):
             self.dictionary.get(match),
         )
 
-    def get_next_token(self):
-        stack = []
-        while True:
-            try:
-                token = next(self.stream)
-            except StopIteration:
-                break
-            possible_stack = stack + [token]
-            match = self.matches_prefix(possible_stack)
-            if match:
-                stack.append(token)
-            else:
-                match, key = self.matches_complete_word(possible_stack)
-                if match:
-                    yield self.create_new_token(possible_stack, key)
-                else:
-                    yield stack + [token]
-                stack = []
-        if stack:
-            match, key = self.matches_complete_word(stack)
-            if match:
-                yield self.create_new_token(stack, key)
-            else:
-                yield stack + [token]
-            stack = []
-
-    def __next__(self):
-        if self.return_stack:
-            return self.return_stack.pop(0)
+    def shift(self, token):
+        possible_stack = self.stack[:] + [token]
+        match = self.matches_prefix(possible_stack)
+        if match:
+            self.stack.append(token)
+            return PipelineStatus.CommonPrefix, None
         else:
-            match = next(self.get_next_token())
-            if isinstance(match, list):
-                self.return_stack = match
-                return next(self)
+            self.stack = []
+            match, key = self.matches_complete_word(possible_stack)
+            if match:
+                return PipelineStatus.Found, self.create_new_token(possible_stack, key)
             else:
-                return match
+                return PipelineStatus.NotFound, possible_stack
+
+    def __iter__(self):
+        for token in self.stream:
+            status, result = self.shift(token)
+            if status == PipelineStatus.CommonPrefix:
+                continue
+            elif status == PipelineStatus.Found:
+                yield result
+            else:
+                for token in result:
+                    yield token
+        self.stack = []
+
 
 class DAWGPipeline(DictionaryPipeline):
 
@@ -170,6 +171,7 @@ class DAWGPipeline(DictionaryPipeline):
             if key in self.dictionary:
                 return True, key
         return False, None
+
 
 class CustomGrammemesPipeline(DAWGPipeline):
 
@@ -229,4 +231,5 @@ class CustomGrammemesPipeline(DAWGPipeline):
         if c_based_dawg:
             self.dictionary.save(self.Path)
         else:
-            raise NotImplementedError('You platform doesn\'t support building of dictionaries')
+            raise NotImplementedError(
+                'You platform doesn\'t support building of dictionaries')
