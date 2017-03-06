@@ -33,7 +33,7 @@ def build_word_object(token, form, morph_analyzer=Analyzer):
     word._morph = morph_analyzer
     return word
 
-def get_normalized_text(tokens, morph_analyzer=Analyzer, required_grammemes={'nomn', 'sing'}):
+def get_inflected_text(tokens, required_grammemes, morph_analyzer=Analyzer, delimiter=' '):
     if isinstance(tokens, Token):
         tokens = [tokens]
     words = []
@@ -64,4 +64,7 @@ def get_normalized_text(tokens, morph_analyzer=Analyzer, required_grammemes={'no
             words.append(
                 str(token.value)
             )
-    return ' '.join(words)
+    return delimiter.join(words)
+
+def get_normalized_text(tokens, morph_analyzer=Analyzer):
+    return get_inflected_text(tokens, {'nomn', 'sing'})
