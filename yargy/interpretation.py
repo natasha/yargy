@@ -68,7 +68,7 @@ class InterpretationObject(object):
         for span in self.spans:
             if len(span) > 1:
                 abbr |= {
-                    ''.join(str(x.value[0]).lower() for x in span),
+                    ''.join(str(x.value)[0].lower() for x in span),
                 }
             else:
                 abbr |= {
