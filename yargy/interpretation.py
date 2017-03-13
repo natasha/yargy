@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 # TODO: using raw python version due to jellyfish#issues/55
 from jellyfish._jellyfish import damerau_levenshtein_distance, levenshtein_distance
 
+from yargy.compat import str
 from yargy.normalization import get_normalized_text
 
 
@@ -67,11 +68,11 @@ class InterpretationObject(object):
         for span in self.spans:
             if len(span) > 1:
                 abbr |= {
-                    ''.join(x.value[0].lower() for x in span),
+                    ''.join(str(x.value[0]).lower() for x in span),
                 }
             else:
                 abbr |= {
-                    span[0].value.lower(),
+                    str(span[0].value).lower(),
                 }
         return abbr
 
