@@ -100,6 +100,11 @@ class InterpretationObject(object):
 
     def __eq__(self, another):
         if isinstance(another, self.__class__):
+            a, b = self.normalized, another.normalized
+            if b > a:
+                a, b = b, a
+            if b in a or a.startswith(b):
+                return True
             if self.abbr & another.abbr:
                 return True
             if self.difference(another) <= self.SIMILARITY_THRESHOLD:
