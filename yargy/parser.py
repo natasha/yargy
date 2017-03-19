@@ -53,50 +53,39 @@ class Stack(list):
 
 class Operation(object):
 
-    def __init__(self, left, right, operator):
-        self.original_left = left
-        self.original_right = right
-        self.operator = operator
-        self.left = create_or_copy_grammar(self.original_left)
-        self.right = create_or_copy_grammar(self.original_right)
+    def __init__(self, *grammars):
+        self.grammars = [
+            create_or_copy_grammar(grammar) 
+            for grammar in grammars
+        ]
 
     def reset(self):
-        self.left.reset()
-        self.right.reset()
+        for grammar in self.grammars:
+            if grammar.stack:
+                grammar.reset()
 
     def shift(self, token):
-        self.left.shift(token)
-        self.right.shift(token)
+        for grammar in self.grammars:
+            grammar.shift(token)
 
     def reduce(self, end_of_stream=False):
-        if self.stack:
-            left_match = self.left.reduce(end_of_stream=end_of_stream)
-            right_match = self.right.reduce(end_of_stream=end_of_stream)
-            match = self.operator(left_match, right_match)
-            if match:
-                self.reset()
-                return match
+        for grammar in self.grammars:
+            if grammar.stack:
+                match = grammar.reduce(end_of_stream=end_of_stream)
+                if match:
+                    self.reset()
+                    return match
 
     @property
     def stack(self):
-        return (
-            self.left.stack or self.right.stack
+        return any(
+            grammar.stack for grammar in self.grammars
         )
 
 
 class OR(Operation):
 
-    def __init__(self, left, right):
-        super(self.__class__, self).__init__(left, right, self.match)
-
-    def match(self, left, right):
-        if left and right:
-            if len(left) >= len(right):
-                return left
-            else:
-                return right
-        else:
-            return left or right
+    pass
 
 
 class Grammar(object):
