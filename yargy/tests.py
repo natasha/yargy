@@ -393,6 +393,35 @@ class FactParserTestCase(unittest.TestCase):
             ]
         )
 
+        text = 'иоганн вольфганг'
+        grammar = Grammar('Latin_name', [
+            {
+                'labels': [
+                    gram('Name'),
+                ],
+            },
+            {
+                'labels': [
+                    gram('Name'),
+                    gnc_match(-1, solve_disambiguation=True)
+                ],
+            },
+        ])
+        parser = Parser([
+            grammar,
+        ])
+        results = list(parser.extract(text))
+        self.assertEqual([[x.forms[0]['grammemes'] for x in tokens] for _, tokens in results], 
+            [
+                [
+                    {'nomn', 'Name', 'NOUN', 'masc', 'sing', 'anim'},
+                    {'nomn', 'Name', 'NOUN', 'masc', 'sing', 'anim'},
+                ],
+            ]
+        )
+        values = [[x.value for x in tokens] for _, tokens in results]
+        self.assertEqual(values, [['иоганн', 'вольфганг']])
+
     def test_normalization_in_rules(self):
         text = 'в институте радионавигации и времени'
         grammar = Grammar('Educational', [
