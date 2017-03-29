@@ -16,14 +16,16 @@ def get_token_features(candidate, case, grammemes):
     )
 
 
-def string_required(func):
-    @wraps(func)
-    def wrapper(value, token, stack, **kwargs):
-        if not isinstance(token.value, string_type):
-            return False
-        else:
-            return func(value, token, stack, **kwargs)
-    return wrapper
+def type_required(type):
+    def handler(func):
+        @wraps(func)
+        def wrapper(value, token, stack, **kwargs):
+            if not isinstance(token.value, type):
+                return False
+            else:
+                return func(value, token, stack, **kwargs)
+        return wrapper
+    return handler
 
 
 def label(func):
@@ -48,25 +50,25 @@ def or_(labels, token, stack):
 
 
 @label
-@string_required
+@type_required(string_type)
 def is_lower(value, token, stack):
     return token.value.islower() == value
 
 
 @label
-@string_required
+@type_required(string_type)
 def is_upper(value, token, stack):
     return token.value.isupper() == value
 
 
 @label
-@string_required
+@type_required(string_type)
 def is_title(value, token, stack):
     return token.value.istitle() == value
 
 
 @label
-@string_required
+@type_required(string_type)
 def is_capitalized(value, token, stack):
     '''
     http://bugs.python.org/issue7008
@@ -80,7 +82,7 @@ def eq(value, token, stack):
 
 
 @label
-@string_required
+@type_required(string_type)
 def length_eq(value, token, stack):
     return len(token.value) == value
 
@@ -91,7 +93,7 @@ def not_eq(value, token, stack):
 
 
 @label
-@string_required
+@type_required(string_type)
 def length_not_eq(value, token, stack):
     return len(token.value) != value
 
@@ -107,45 +109,49 @@ def not_in(value, token, stack):
 
 
 @label
+@type_required((int, float))
 def gt(value, token, stack):
     return token.value > value
 
 
 @label
-@string_required
+@type_required(string_type)
 def length_gt(value, token, stack):
     return len(token.value) > value
 
 
 @label
+@type_required((int, float))
 def lt(value, token, stack):
     return token.value < value
 
 
 @label
-@string_required
+@type_required(string_type)
 def length_lt(value, token, stack):
     return len(token.value) < value
 
 
 @label
+@type_required((int, float))
 def gte(value, token, stack):
     return token.value >= value
 
 
 @label
-@string_required
+@type_required(string_type)
 def length_gte(value, token, stack):
     return len(token.value) >= value
 
 
 @label
+@type_required((int, float))
 def lte(value, token, stack):
     return token.value <= value
 
 
 @label
-@string_required
+@type_required(string_type)
 def length_lte(value, token, stack):
     return len(token.value) <= value
 
@@ -260,7 +266,7 @@ def gender_match_check(candidate, case, genders=GENDERS):
 
 
 @label
-@string_required
+@type_required(string_type)
 def gender_match(*args, **kwargs):
     return match_labels_with_disabmiguation_resolving(*args, match_labels=[
         gender_match_check,
@@ -296,7 +302,7 @@ def number_match_check(candidate, case, numbers=NUMBERS):
 
 
 @label
-@string_required
+@type_required(string_type)
 def number_match(*args, **kwargs):
     return match_labels_with_disabmiguation_resolving(*args, match_labels=[
         number_match_check,
@@ -325,7 +331,7 @@ def case_match_check(candidate, case, cases=CASES):
 
 
 @label
-@string_required
+@type_required(string_type)
 def case_match(*args, **kwargs):
     return match_labels_with_disabmiguation_resolving(*args, match_labels=[
         case_match_check,
@@ -333,7 +339,7 @@ def case_match(*args, **kwargs):
 
 
 @label
-@string_required
+@type_required(string_type)
 def gnc_match(*args, **kwargs):
     return match_labels_with_disabmiguation_resolving(*args, match_labels=[
         gender_match_check,
@@ -343,12 +349,44 @@ def gnc_match(*args, **kwargs):
 
 
 @label
-@string_required
+@type_required(string_type)
 def dictionary(values, token, stack):
     return any((form['normal_form'] in values) for form in token.forms)
 
 
 @label
-@string_required
+@type_required(string_type)
 def dictionary_not(values, token, stack):
     return not dictionary(values)(token, stack)
+
+
+def get_token_prediction_methods(token):
+    for form in token.forms: # iterate over all word forms returned by pymorphy2
+        methods = form.get('methods_stack', None) # https://github.com/kmike/pymorphy2/issues/89#issuecomment-278016091
+        if methods: # methods_stack attribute avaible only for russian words
+            for method in methods:
+                yield method[0] # return only method name, e.g. DictionaryAnalyzer / KnownSuffixAnalyzer
+
+
+@label
+@type_required(string_type)
+def is_predicted(value, token, stack):
+    prediction_methods = set(
+        get_token_prediction_methods(token)
+    )
+
+    # Uncomment this lines to see more info about pymorphy2 word lookup methods
+    # print('Token value:', token.value)
+    # print('Token lookup methods:', prediction_methods)
+
+    prediction_methods_names = set(
+        # use class names, because pymorphy2 units isn't global singleton objects,
+        # e.g. DictionaryAnalyzer() and DictionaryAnalyzer() are different objects
+        m.__class__.__name__ for m in prediction_methods
+    )
+
+    is_predicted_word = not (
+        'DictionaryAnalyzer' in prediction_methods_names
+    )
+
+    return value == is_predicted_word

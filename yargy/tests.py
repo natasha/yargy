@@ -24,6 +24,7 @@ from yargy.labels import (
     gender_match,
     number_match,
     gnc_match,
+    is_predicted,
 )
 from yargy.tokenizer import Token, Tokenizer
 from yargy.pipeline import (
@@ -507,6 +508,32 @@ class FactParserTestCase(unittest.TestCase):
         g, tokens = list(parser.extract(text))[0]
         self.assertEqual(g, grammar)
         self.assertEqual([t.value for t in tokens], ['квартира', 1])
+
+    def test_is_predicted_label(self):
+
+        grammars = [
+            Grammar('PredictedWord', [
+                {
+                    'labels': [
+                        is_predicted(True),
+                    ]
+                }
+            ]),
+            Grammar('DictionaryWord', [
+                {
+                    'labels': [
+                        is_predicted(False),
+                    ]
+                }
+            ]),
+        ]
+
+        text = 'алексеюшка навальный'
+        combinator = Parser(grammars)
+        results = list(combinator.extract(text))
+        self.assertEqual(results[0][0], grammars[0])
+        self.assertEqual(results[1][0], grammars[1])
+
 
 class DictionaryPipelineTestCase(unittest.TestCase):
 
