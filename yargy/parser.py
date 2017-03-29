@@ -143,8 +143,9 @@ class Grammar(object):
             optional = rule.get('optional', False)
             terminal = rule.get('terminal', False)
             skip = rule.get('skip', False)
+            labels = rule.get('labels', [])
 
-            if not all(self.match(token, rule)) and not terminal:
+            if not all(self.match(token, labels)) and not terminal:
                 last_index = self.index
                 recheck = False
                 if optional or (repeatable and self.stack.have_matches_by_rule_index(self.index)):
@@ -213,9 +214,9 @@ class Grammar(object):
         self.stack = Stack()
         self.index = 0
 
-    def match(self, token, rule):
+    def match(self, token, labels):
         stack = self.stack.flatten()
-        for label in rule.get('labels', []):
+        for label in labels:
             yield label(token, stack)
 
     def __copy__(self):
