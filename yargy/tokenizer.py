@@ -59,6 +59,11 @@ class Token(object):
         self.normalization_type = normalization_type
         self.interpretation = interpretation
 
+    def __hash__(self):
+        return hash(
+            self.value
+        )
+
     def __eq__(self, other):
         if not isinstance(other, Token):
             return False
