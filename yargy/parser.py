@@ -65,8 +65,11 @@ class Operation(object):
                 grammar.reset()
 
     def shift(self, token):
-        for grammar in self.grammars:
+        return any(
             grammar.shift(token)
+            for grammar in self.grammars
+        )
+            
 
     def reduce(self, end_of_stream=False):
         for grammar in self.grammars:
@@ -134,16 +137,20 @@ class Grammar(object):
         token = copy(token)
 
         if isinstance(rule, (Operation, Grammar)):
-            rule.shift(token)
+            recheck = rule.shift(token)
             if not rule.stack:
                 rule.reset()
                 self.reset()
+            return recheck
         else:
             repeatable = rule.get('repeatable', False)
             optional = rule.get('optional', False)
             terminal = rule.get('terminal', False)
             skip = rule.get('skip', False)
             labels = rule.get('labels', [])
+
+            if terminal:
+                return True
 
             if not all(self.match(token, labels)) and not terminal:
                 last_index = self.index
@@ -153,9 +160,10 @@ class Grammar(object):
                 else:
                     recheck = True
                     self.reset()
+
                 if (self.index != last_index) and (not recheck or (optional or repeatable)):
                     # recheck current token on next rule
-                    self.shift(token, recheck=recheck)
+                    return self.shift(token, recheck=recheck)
                 else:
                     self.reset()
             else:
@@ -250,12 +258,22 @@ class Parser(object):
 
             for token in stream:
                 for grammar in self.grammars:
-                    grammar.shift(token)
+                    recheck = grammar.shift(token)
                     match = grammar.reduce()
                     if match:
                         if return_flatten_stack:
                             match = match.flatten()
                         yield (grammar, match)
+
+                    if recheck:
+                        grammar.shift(token)
+                        match = grammar.reduce()
+
+                        if match:
+                            if return_flatten_stack:
+                                match = match.flatten()
+                            yield (grammar, match)
+
             for grammar in self.grammars:
                 match = grammar.reduce(end_of_stream=True)
                 if match:
