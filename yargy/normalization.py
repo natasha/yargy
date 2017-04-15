@@ -66,5 +66,5 @@ def get_inflected_text(tokens, required_grammemes, morph_analyzer=Analyzer, deli
             )
     return delimiter.join(words)
 
-def get_normalized_text(tokens, morph_analyzer=Analyzer):
-    return get_inflected_text(tokens, {'nomn', 'sing'})
+def get_normalized_text(tokens, morph_analyzer=Analyzer, delimiter=' '):
+    return get_inflected_text(tokens, {'nomn', 'sing'}, morph_analyzer, delimiter)
