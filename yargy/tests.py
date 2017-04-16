@@ -470,7 +470,60 @@ class FactParserTestCase(unittest.TestCase):
         self.assertEqual([0, 1], [n for (n, _) in tokens])
         self.assertEqual(['иван', 'иванов'], [t.value for t in [t for (_, t) in tokens]])
 
-    def test_operations_in_grammars(self):
+    def test_is_predicted_label(self):
+
+        grammars = [
+            Grammar('PredictedWord', [
+                {
+                    'labels': [
+                        is_predicted(True),
+                    ]
+                }
+            ]),
+            Grammar('DictionaryWord', [
+                {
+                    'labels': [
+                        is_predicted(False),
+                    ]
+                }
+            ]),
+        ]
+
+        text = 'алексеюшка навальный'
+        combinator = Parser(grammars)
+        results = list(combinator.extract(text))
+        self.assertEqual(results[0][0], grammars[0])
+        self.assertEqual(results[1][0], grammars[1])
+
+    def test_repeatable_end(self):
+
+        grammar = Grammar('Grammar', [
+            {
+                'labels': [
+                    eq('ф')
+                ]
+            },
+            {
+                'labels': [
+                    eq('ы')
+                ],
+                'repeatable': True
+            },
+        ])
+
+        parser = Parser([grammar])
+        text = 'ф ы ы ф ы'
+        matches = list(parser.extract(text))
+        self.assertEqual(len(matches), 2)
+        _, tokens = matches[0]
+        self.assertEqual([t.value for t in tokens], ['ф', 'ы', 'ы'])
+        _, tokens = matches[1]
+        self.assertEqual([t.value for t in tokens], ['ф', 'ы'])
+
+
+class RecursiveTestCase(unittest.TestCase):
+
+    def test_simple_or_grammars(self):
 
         grammar = Grammar('House_Number', [
             OR([
@@ -509,30 +562,140 @@ class FactParserTestCase(unittest.TestCase):
         self.assertEqual(g, grammar)
         self.assertEqual([t.value for t in tokens], ['квартира', 1])
 
-    def test_is_predicted_label(self):
+    def test_longest_or_grammars(self):
+        grammar = Grammar('Grammar', [
+            {
+                'labels': [
+                    eq('в')
+                ],
+            },
+            OR(
+                [
+                    {
+                        'labels': [
+                            eq('а')
+                        ],
+                    }
+                ],
+                [
+                    {
+                        'labels': [
+                            eq('а')
+                        ],
+                    },
+                    {
+                        'labels': [
+                            eq('/')
+                        ],
+                    },
+                    {
+                        'labels': [
+                            eq('б')
+                        ],
+                    },
+                ],
+            ),
+            {
+                'labels': [
+                    eq('д')
+                ],
+                'optional': True
+            },
+        ])
 
-        grammars = [
-            Grammar('PredictedWord', [
-                {
-                    'labels': [
-                        is_predicted(True),
-                    ]
-                }
-            ]),
-            Grammar('DictionaryWord', [
-                {
-                    'labels': [
-                        is_predicted(False),
-                    ]
-                }
-            ]),
-        ]
+        parser = Parser([grammar])
+        text = 'в а/б'
+        g, tokens = list(parser.extract(text))[0]
+        self.assertEqual(g, grammar)
+        self.assertEqual([t.value for t in tokens], ['в', 'а', '/', 'б'])
 
-        text = 'алексеюшка навальный'
-        combinator = Parser(grammars)
-        results = list(combinator.extract(text))
-        self.assertEqual(results[0][0], grammars[0])
-        self.assertEqual(results[1][0], grammars[1])
+        parser = Parser([grammar])
+        text = 'в а'
+        g, tokens = list(parser.extract(text))[0]
+        self.assertEqual(g, grammar)
+        self.assertEqual([t.value for t in tokens], ['в', 'а'])
+
+        parser = Parser([grammar])
+        text = 'в а д'
+        g, tokens = list(parser.extract(text))[0]
+        self.assertEqual(g, grammar)
+        self.assertEqual([t.value for t in tokens], ['в', 'а', 'д'])
+
+    def test_or_inside_or(self):
+        grammar = Grammar('Grammar', [
+            OR(
+                [
+                    OR(
+                        [
+                            {
+                                'labels': [
+                                    eq('а')
+                                ],
+                            }
+                        ],
+                    )
+                ]
+            )
+        ])
+
+        parser = Parser([grammar])
+        text = 'а'
+        g, tokens = list(parser.extract(text))[0]
+        self.assertEqual(g, grammar)
+        self.assertEqual([t.value for t in tokens], ['а'])
+
+    @unittest.skip('requires backtracking')
+    def test_hard_or_grammar(self):
+        grammar = Grammar('Grammar', [
+            OR(
+                [
+                    {
+                        'labels': [
+                            eq('а')
+                        ],
+                    }
+                ],
+                [
+                    {
+                        'labels': [
+                            eq('а')
+                        ],
+                    },
+                    {
+                        'labels': [
+                            eq('б')
+                        ],
+                    },
+                    {
+                        'labels': [
+                            eq('в')
+                        ],
+                    },
+                ],
+            ),
+            {
+                'labels': [
+                    eq('б')
+                ],
+            },
+            {
+                'labels': [
+                    eq('д')
+                ],
+            },
+        ])
+
+        parser = Parser([grammar])
+        text = 'а б в б д'
+        g, tokens = list(parser.extract(text))[0]
+        self.assertEqual(g, grammar)
+        self.assertEqual([t.value for t in tokens], ['а', 'б', 'в', 'б', 'д'])
+
+        parser = Parser([grammar])
+        text = 'а б д'
+        g, tokens = list(parser.extract(text))[0]
+        self.assertEqual(g, grammar)
+        self.assertEqual([t.value for t in tokens], ['а', 'б', 'д'])
 
 
 class DictionaryPipelineTestCase(unittest.TestCase):

@@ -54,35 +54,49 @@ class Stack(list):
 class Operation(object):
 
     def __init__(self, *grammars):
+        self.matches = []
         self.grammars = [
             create_or_copy_grammar(grammar) 
             for grammar in grammars
         ]
-
+        self.working = self.grammars
+ 
     def reset(self):
-        for grammar in self.grammars:
+        self.matches = []
+        self.working = self.grammars
+        for grammar in self.working:
             if grammar.stack:
                 grammar.reset()
 
     def shift(self, token):
-        return any(
+        recheck = any([
             grammar.shift(token)
-            for grammar in self.grammars
-        )
-            
+            for grammar in self.working
+        ])
+        self.update_working()
+        return recheck or bool(self.matches and not self.working)
 
     def reduce(self, end_of_stream=False):
-        for grammar in self.grammars:
-            if grammar.stack:
-                match = grammar.reduce(end_of_stream=end_of_stream)
-                if match:
-                    self.reset()
-                    return match
+        for grammar in self.working:
+            match = grammar.reduce(end_of_stream=end_of_stream)
+            if match:
+                self.matches.append(match)
+        self.update_working()
+        if self.matches and (not self.working or end_of_stream):
+            match = max(self.matches, key=len)
+            self.reset()
+            return match
+
+    def update_working(self):
+        self.working = [
+            grammar for grammar in self.working
+            if grammar.active
+        ]
 
     @property
-    def stack(self):
-        return any(
-            grammar.stack for grammar in self.grammars
+    def active(self):
+        return bool(self.matches) or any(
+            grammar.active for grammar in self.working
         )
 
 
@@ -138,7 +152,7 @@ class Grammar(object):
 
         if isinstance(rule, (Operation, Grammar)):
             recheck = rule.shift(token)
-            if not rule.stack:
+            if not rule.active:
                 rule.reset()
                 self.reset()
             return recheck
@@ -192,10 +206,12 @@ class Grammar(object):
 
         is_grammar_object = isinstance(current_rule, (Operation, Grammar))
 
-        if is_grammar_object:
+        if is_grammar_object and current_rule.active:
             match = current_rule.reduce(end_of_stream=end_of_stream)
             if match:
                 self.index += 1
+                current_rule = self.rules[self.index]
+                is_grammar_object = isinstance(current_rule, (Operation, Grammar))
                 for token in match.flatten():
                     self.stack.append((self.index, token))
 
@@ -218,9 +234,19 @@ class Grammar(object):
                 self.reset()
                 return match
 
+    @property
+    def active(self):
+        return bool(self.stack) or any(
+            rule.active for rule in self.rules
+            if isinstance(rule, (Operation, Grammar))
+        )
+
     def reset(self):
         self.stack = Stack()
         self.index = 0
+        for rule in self.rules:
+            if isinstance(rule, (Operation, Grammar)):
+                rule.reset()
 
     def match(self, token, labels):
         stack = self.stack.flatten()
@@ -260,6 +286,7 @@ class Parser(object):
                 for grammar in self.grammars:
                     recheck = grammar.shift(token)
                     match = grammar.reduce()
+
                     if match:
                         if return_flatten_stack:
                             match = match.flatten()
