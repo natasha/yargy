@@ -1,6 +1,7 @@
-# coding: utf-8
-from __future__ import unicode_literals
 
-from yargy.parser import Grammar, Parser, Combinator
 
-__version__ = '0.8.0'
+from .parser import Parser
+from .api import *
+
+
+__version__ = '0.9.0'
