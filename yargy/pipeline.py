@@ -118,6 +118,12 @@ class DictionaryPipeline(Pipeline):
         )
 
     def shift(self, token):
+        if not token:  # end of stream
+            match, key = self.matches_complete_word(self.stack)
+            if match:
+                return PipelineStatus.Found, self.create_new_token(self.stack, key)
+            return PipelineStatus.NotFound, self.stack
+
         possible_stack = self.stack[:] + [token]
         match = self.matches_prefix(possible_stack)
         if match:
@@ -141,6 +147,12 @@ class DictionaryPipeline(Pipeline):
             else:
                 for token in result:
                     yield token
+        else:
+            # end of stream
+            if self.stack:
+                status, result = self.shift(None)
+                if status == PipelineStatus.Found:
+                    yield result
         self.stack = []
 
 
