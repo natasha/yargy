@@ -804,6 +804,12 @@ class DictionaryPipelineTestCase(unittest.TestCase):
                 'текст',
                 'текст_песня',
             }
+
+            Path = os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                'testdata/text_pipe.dawg',
+            )
+
         text = 'Текст'
 
         tokenizer = Tokenizer()
