@@ -795,7 +795,7 @@ class DictionaryPipelineTestCase(unittest.TestCase):
             [Token('торговым_домом', (21, 35), [{'normal_form': 'торговый_дом', 'grammemes': {'Orgn/Type'}}])])
         ])
 
-    def test_custom_grammemes_pipeline_end_of_stream(self):
+    def test_custom_grammemes_pipeline_common_prefix(self):
         class CustomPipeline(CustomGrammemesPipeline):
             Grammemes = {
                 'Gram',
@@ -815,6 +815,11 @@ class DictionaryPipelineTestCase(unittest.TestCase):
         tokenizer = Tokenizer()
 
         tokens = tokenizer.transform(text)
+        tokens = list(CustomPipeline()(tokens))
+
+        self.assertIn({'grammemes': {'Gram'}, 'normal_form': 'текст'}, tokens[0].forms)
+
+        tokens = tokenizer.transform('Текст АБВ')
         tokens = list(CustomPipeline()(tokens))
 
         self.assertIn({'grammemes': {'Gram'}, 'normal_form': 'текст'}, tokens[0].forms)

@@ -82,7 +82,7 @@ class DictionaryPipeline(Pipeline):
     def matches_prefix(self, stack):
         words = self.merge_stack(stack)
         for form in words:
-            string = self.DICTIONARY_WORD_SEPARATOR.join(form) + '_'
+            string = self.DICTIONARY_WORD_SEPARATOR.join(form)
             for key in self.dictionary.keys():
                 if key.startswith(string):
                     return True
@@ -131,9 +131,9 @@ class DictionaryPipeline(Pipeline):
             return PipelineStatus.CommonPrefix, None
         else:
             self.stack = []
-            match, key = self.matches_complete_word(possible_stack)
+            match, key = self.matches_complete_word(possible_stack[:-1])
             if match:
-                return PipelineStatus.Found, self.create_new_token(possible_stack, key)
+                return PipelineStatus.Found, self.create_new_token(possible_stack[:-1], key)
             else:
                 return PipelineStatus.NotFound, possible_stack
 
@@ -171,7 +171,7 @@ class DAWGPipeline(DictionaryPipeline):
     def matches_prefix(self, stack):
         words = self.merge_stack(stack)
         for form in words:
-            key = '{0}_'.format(self.DICTIONARY_WORD_SEPARATOR.join(form))
+            key = self.DICTIONARY_WORD_SEPARATOR.join(form)
             if self.dictionary.keys(key):
                 return True
         return False
