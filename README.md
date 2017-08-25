@@ -1,1 +1,1 @@
-# Yargy [![Build Status](https://travis-ci.org/bureaucratic-labs/yargy.svg?branch=master)](https://travis-ci.org/bureaucratic-labs/yargy)
+# Yargy [![Build Status](https://travis-ci.org/bureaucratic-labs/yargy.svg?branch=master)](https://travis-ci.org/bureaucratic-labs/yargy) [![Documentation Status](https://readthedocs.org/projects/yargy/badge/?version=latest)](http://yargy.readthedocs.io/en/latest/?badge=latest)
