@@ -1,349 +1,275 @@
 # coding: utf-8
 from __future__ import unicode_literals
 
-from copy import deepcopy, copy
 from threading import Lock
+from collections import defaultdict
+
 from intervaltree import IntervalTree
 
-from yargy.tokenizer import Token, Tokenizer
-from yargy.pipeline import PipelineStatus
-from yargy.normalization import NormalizationType
-from yargy.utils import get_tokens_position
+from yargy.compat import str
+from .utils import Record
+from .token import get_tokens_span
+from .tree import (
+    Node,
+    InterpretationNode,
+    Leaf,
+    Tree
+)
+from .tokenizer import Tokenizer
+from .predicate import is_relation_predicate
+from .relation import Graph as Relations
+from .rule.bnf import is_rule
 
 
-def create_or_copy_grammar(grammar, name=None):
-    if isinstance(grammar, list):
-        grammar = Grammar(name, deepcopy(grammar))
-    elif isinstance(grammar, (Operation, Grammar)):
-        grammar = deepcopy(grammar)
-    else:
-        raise ValueError('Not supported grammar type: {}'.format(grammar))
-    return grammar
+class Chart(object):
+    def __init__(self, tokens):
+        self.tokens = list(tokens)
 
+        self.columns = [Column(0, None)]
+        for index, token in enumerate(self.tokens, 1):
+            self.columns.append(Column(index, token))
 
-def build_grammars_from_multiple_classes(classes):
-    for _class in classes:
-        _class_name = _class.__name__
-        for rule in _class.__members__.values():
-            name = '{0}__{1}'.format(_class_name, rule.name)
-            yield rule, name, create_or_copy_grammar(rule.value, name)
+    def matches(self, rule):
+        for column in self.columns:
+            for state in column:
+                if state.completed and id(state.rule) == id(rule):
+                    yield state
 
+    def __iter__(self):
+        return iter(self.columns)
 
-class Stack(list):
+    def __getitem__(self, index):
+        return self.columns[index]
 
-    '''
-    Special list for grammar, which holds matches with rule index
-    (by which token was captured)
-    '''
-
-    def have_matches_by_rule_index(self, rule_index):
-        '''
-        Checks that stack contains matches by rule index
-        '''
-        return any(
-            (rule == rule_index for (rule, _) in reversed(self))
-        )
-
-    def flatten(self):
-        '''
-        Returns matched tokens without rule indexes
-        '''
-        return [value for (_, value) in self]
-
-
-class Operation(object):
-
-    def __init__(self, *grammars):
-        self.matches = []
-        self.grammars = [
-            create_or_copy_grammar(grammar) 
-            for grammar in grammars
-        ]
-        self.working = self.grammars
- 
-    def reset(self):
-        self.matches = []
-        self.working = self.grammars
-        for grammar in self.working:
-            if grammar.stack:
-                grammar.reset()
-
-    def shift(self, token):
-        recheck = any([
-            grammar.shift(token)
-            for grammar in self.working
-        ])
-        self.update_working()
-        return recheck or bool(self.matches and not self.working)
-
-    def reduce(self, end_of_stream=False):
-        for grammar in self.working:
-            match = grammar.reduce(end_of_stream=end_of_stream)
-            if match:
-                self.matches.append(match)
-        self.update_working()
-        if self.matches and (not self.working or end_of_stream):
-            match = max(self.matches, key=len)
-            self.reset()
-            return match
-
-    def update_working(self):
-        self.working = [
-            grammar for grammar in self.working
-            if grammar.active
-        ]
-
-    @property
-    def active(self):
-        return bool(self.matches) or any(
-            grammar.active for grammar in self.working
-        )
-
-
-class OR(Operation):
-
-    pass
-
-
-class Grammar(object):
-
-    '''
-    Grammar contains stack and list of rules.
-    When GLR-parser iterates over tokens it calls
-    `shift` & `reduce` methods on each grammar which checks
-    current grammar stack & provided token on current rule
-    when stack contents matches all rules - grammar returns stack,
-    which contains actual text match
-    '''
-
-    def __init__(self, name, rules):
-        self.name = name
-        self.rules = rules + [
-            {
-                'terminal': True,
-            },
-        ]
-        self.reset()
-
-    def shift(self, token, recheck=False):
-        '''
-        Parser <- [grammar_1, grammar_2]
-                   |
-                   V
-                shift(token_1)
-        Grammar_1 -> []
-        Grammar_2 -> [token_1]
-                   |
-                   V
-                shift(token_2)
-        Grammar_1 -> []
-        Grammar_2 -> [token_1, token_2]
-                   |
-                   V
-                reduce()
-        Grammar_1 -> []
-        Grammar_2 -> [] <-> returns stack [token_1, token_2]
-        '''
-        rule = self.rules[self.index]
-
-        # need to clone tokens, because labels can modify
-        # its forms or other attributes
-        token = copy(token)
-
-        if isinstance(rule, (Operation, Grammar)):
-            recheck = rule.shift(token)
-            if not rule.active:
-                rule.reset()
-                self.reset()
-            return recheck
-        else:
-            repeatable = rule.get('repeatable', False)
-            optional = rule.get('optional', False)
-            terminal = rule.get('terminal', False)
-            skip = rule.get('skip', False)
-            labels = rule.get('labels', [])
-
-            if terminal:
-                return True
-
-            if not all(self.match(token, labels)) and not terminal:
-                last_index = self.index
-                recheck = False
-                if optional or (repeatable and self.stack.have_matches_by_rule_index(self.index)):
-                    self.index += 1
-                else:
-                    recheck = True
-                    self.reset()
-
-                if (self.index != last_index) and (not recheck or (optional or repeatable)):
-                    # recheck current token on next rule
-                    return self.shift(token, recheck=recheck)
-                else:
-                    self.reset()
-            else:
-                # token matches current rule
-                if not terminal:
-                    # append token to stack if it's not a terminal rule and current rule
-                    # doesn't have 'skip' option
-                    if not skip:
-                        # add additional fields to tokens, like normalization
-                        # and interpretation rules
-                        token.normalization_type = rule.get(
-                            'normalization', NormalizationType.Normalized)
-                        token.interpretation = rule.get('interpretation', None)
-                        # finally append match to stack
-                        self.stack.append((self.index, token))
-                    if not repeatable:
-                        self.index += 1
-
-    def reduce(self, end_of_stream=False):
-        '''
-        Reduce method returns grammar stack if
-        current grammar index equals to last (terminal) rule
-        '''
-        current_rule = self.rules[self.index]
-        terminal_rule = self.rules[-1]
-
-        is_grammar_object = isinstance(current_rule, (Operation, Grammar))
-
-        if is_grammar_object and current_rule.active:
-            match = current_rule.reduce(end_of_stream=end_of_stream)
-            if match:
-                self.index += 1
-                current_rule = self.rules[self.index]
-                is_grammar_object = isinstance(current_rule, (Operation, Grammar))
-                for token in match.flatten():
-                    self.stack.append((self.index, token))
-
-        if (current_rule == terminal_rule) and self.stack:
-            match = self.stack
-            self.reset()
-            return match
-
-        if end_of_stream and not is_grammar_object:
-            is_repeatable_and_have_matches = (
-                current_rule.get('repeatable', False)
-                and
-                self.stack.have_matches_by_rule_index(self.index)
-            )
-            is_optional = current_rule.get('optional', False)
-            next_rule_is_terminal = (
-                self.rules[self.index + 1] == terminal_rule)
-            if (is_repeatable_and_have_matches or is_optional) and next_rule_is_terminal:
-                match = self.stack
-                self.reset()
-                return match
-
-    @property
-    def active(self):
-        return bool(self.stack) or any(
-            rule.active for rule in self.rules
-            if isinstance(rule, (Operation, Grammar))
-        )
-
-    def reset(self):
-        self.stack = Stack()
-        self.index = 0
-        for rule in self.rules:
-            if isinstance(rule, (Operation, Grammar)):
-                rule.reset()
-
-    def match(self, token, labels):
-        stack = self.stack.flatten()
-        for label in labels:
-            yield label(token, stack)
-
-    def __copy__(self):
-        return Grammar(self.name, self.rules[:-1])
+    def __len__(self):
+        return len(self.columns)
 
     def __repr__(self):
-        return 'Grammar(name=\'{name}\', stack={stack})'.format(
-            name=self.name,
-            stack=self.stack,
+        return 'Chart({columns!r}, ...)'.format(
+            columns=self.columns
         )
+
+    @property
+    def source(self):
+        for column in self.columns:
+            for line in column.source:
+                yield line
+            yield ''
+
+    def _repr_pretty_(self, printer, cycle):
+        for line in self.source:
+            printer.text(line)
+            printer.break_()
+
+
+class Column(object):
+    def __init__(self, index, token):
+        self.index = index
+        self.token = token
+        self.states = []
+        self.hashes = set()
+        self.states_index = defaultdict(list)
+
+    def __iter__(self):
+        return iter(self.states)
+
+    def append(self, state):
+        value = hash(state)
+        if value not in self.hashes:
+            self.hashes.add(value)
+            self.states.append(state)
+            self.update_index(state)
+            
+    def update_index(self, state):
+        if not state.completed:
+            next_term = state.next_term
+            if is_rule(next_term):
+                self.states_index[id(next_term)].append(state)
+
+    def __repr__(self):
+        return 'Column({index!r}, {token!r}, ...)'.format(
+            index=self.index,
+            token=self.token
+        )
+
+    @property
+    def source(self):
+        yield '{index!r} {token!r}'.format(
+            index=self.index,
+            token=self.token
+        )
+        yield '----------------'
+        for state in self.states:
+            yield str(state)
+
+    def _repr_pretty_(self, printer, cycle):
+        for line in self.source:
+            printer.text(line)
+            printer.break_()
+
+
+class State(object):
+    def __init__(self, rule, production, dot_index,
+                 start_column, stop_column, children,
+                 relations):
+        self.rule = rule
+        self.production = production
+        self.dot_index = dot_index
+        self.start_column = start_column
+        self.stop_column = stop_column
+        self.children = children
+        self.relations = relations
+
+    def __hash__(self):
+        return hash((
+            id(self.rule), id(self.production), self.dot_index,
+            self.start_column.index, self.stop_column.index
+        ))
+
+    @property
+    def completed(self):
+        return self.dot_index >= len(self.production.terms)
+
+    @property
+    def next_term(self):
+        return self.production.terms[self.dot_index]
+
+    def __str__(self):
+        terms = self.production.terms
+        production = ' '.join(
+            [_.label for _ in terms[:self.dot_index]]
+            + ['$']
+            + [_.label for _ in terms[self.dot_index:]]
+        )
+        return '[{start}:{stop}] {name} -> {production}'.format(
+            start=self.start_column.index,
+            stop=self.stop_column.index,
+            name=self.rule.label,
+            production=production,
+        )
+
+
+class Match(Record):
+    __attributes__ = ['tokens', 'span']
+
+    def __init__(self, rule, tree):
+        self.rule = rule
+        self.tree = tree
+        self.tokens = [_.token for _ in tree.walk(types=Leaf)]
+        self.span = get_tokens_span(self.tokens)
+
+    @property
+    def fact(self):
+        fact = self.tree.interpret()
+        return fact.normalized
+
+
+def prepare_node(rule, children):
+    if rule.interpretator:
+        return InterpretationNode(rule, children)
+    else:
+        return Node(rule, children)
 
 
 class Parser(object):
-
-    '''
-    Yet another GLR-parser.
-    '''
-
-    def __init__(self, grammars, tokenizer=None, pipelines=None, cache_size=0):
-        self.grammars = grammars
-        self.tokenizer = tokenizer or Tokenizer(cache_size=cache_size)
+    def __init__(self, rule, tokenizer=None, pipelines=None):
+        self.rule = rule.normalized.as_bnf.start
+        self.tokenizer = tokenizer or Tokenizer()
         self.pipelines = pipelines or []
         self.lock = Lock()
 
-    def extract(self, text, return_flatten_stack=True):
+    def chart(self, text):
         with self.lock:
-            stream = self.tokenizer.transform(text)
-            
+            stream = self.tokenizer(text)
+
             for pipeline in self.pipelines:
                 stream = pipeline(stream)
 
-            for token in stream:
-                for grammar in self.grammars:
-                    recheck = grammar.shift(token)
-                    match = grammar.reduce()
-
-                    if match:
-                        if return_flatten_stack:
-                            match = match.flatten()
-                        yield (grammar, match)
-
-                    if recheck:
-                        grammar.shift(token)
-                        match = grammar.reduce()
-
-                        if match:
-                            if return_flatten_stack:
-                                match = match.flatten()
-                            yield (grammar, match)
-
-            for grammar in self.grammars:
-                match = grammar.reduce(end_of_stream=True)
-                if match:
-                    if return_flatten_stack:
-                        match = match.flatten()
-                    yield (grammar, match)
-                grammar.reset()
-
-
-class Combinator(object):
-
-    '''
-    Combinator merges multiple grammars (in multiple enums) into one parser
-    '''
-
-    def __init__(self, classes, *args, **kwargs):
-        self.classes = {}
-        self.grammars = []
-        for rule, name, grammar in build_grammars_from_multiple_classes(classes):
-            self.classes[name] = rule
-            self.grammars.append(grammar)
-        self.parser = Parser(self.grammars, *args, **kwargs)
+            chart = Chart(stream)
+            for column in chart:
+                self.predict(column, self.rule)
+                for state in column:
+                    if state.completed:
+                        self.complete(column, state)
+                    else:
+                        next_term = state.next_term
+                        if is_rule(next_term):
+                            self.predict(column, next_term)
+                        elif column.index + 1 < len(chart):
+                            next_column = chart[column.index + 1]
+                            self.scan(next_column, next_term, state)
+            return chart
 
     def extract(self, text):
-        for (rule, match) in self.parser.extract(text):
-            yield self.classes[rule.name], match
+        chart = self.chart(text)
+        for state in chart.matches(self.rule):
+            root = prepare_node(self.rule, state.children)
+            tree = Tree(root).replace_token_forms(state.relations.nodes)
+            yield Match(self.rule, tree)
 
-    def resolve_matches(self, matches, strict=True):
-        # sort matches by tokens count in decreasing order
-        matches = sorted(matches, key=lambda m: len(m[1]), reverse=True)
+    def resolve(self, matches):
+        matches = sorted(matches, key=lambda _: len(_.tokens), reverse=True)
         tree = IntervalTree()
-        for (grammar, match) in matches:
-            start, stop = get_tokens_position(match)
-            exists = tree[start:stop]
-            if exists and not strict:
-                for interval in exists:
-                    exists_grammar, _ = interval.data
-                    exists_contains_current_grammar = (
-                        interval.begin < start and interval.end > stop)
-                    exists_grammar_with_same_type = isinstance(
-                        exists_grammar, grammar.__class__)
-                    if not exists_grammar_with_same_type and exists_contains_current_grammar:
-                        exists = False
-            if not exists:
-                tree[start:stop] = (grammar, match)
-                yield (grammar, match)
+        for match in matches:
+            start, stop = match.span
+            if not tree[start:stop]:
+                tree[start:stop] = match
+                yield match
+
+    def findall(self, text):
+        matches = self.extract(text)
+        return self.resolve(matches)
+
+    def match(self, text):
+        # NOTE Not an optimal implementation. Assume `match` is used
+        # not very often
+        for match in self.extract(text):
+            if match.span == (0, len(text)):
+                yield match
+
+    def predict(self, column, rule):
+        for production in rule.productions:
+            state = State(
+                rule, production,
+                dot_index=0,
+                start_column=column,
+                stop_column=column,
+                children=[],
+                relations=Relations()
+            )
+            column.append(state)
+
+    def scan(self, column, predicate, state):
+        token = column.token
+        if predicate(token):
+            relations = state.relations
+            if is_relation_predicate(predicate):
+                relations = relations.copy().add(token, predicate)
+                if not relations:
+                    return
+            node = Leaf(predicate, token)
+            state = State(
+                state.rule, state.production,
+                dot_index=state.dot_index + 1,
+                start_column=state.start_column,
+                stop_column=column,
+                children=state.children + [node],
+                relations=relations
+            )
+            column.append(state)
+
+    def complete(self, column, completed):
+        node = prepare_node(completed.rule, completed.children)
+        states = completed.start_column.states_index[id(completed.rule)]
+        for state in states:
+            relations = state.relations.copy().merge(completed.relations)
+            if relations:
+                state = State(
+                    state.rule, state.production,
+                    dot_index=state.dot_index + 1,
+                    start_column=state.start_column,
+                    stop_column=column,
+                    children=state.children + [node],
+                    relations=relations
+                )
+                column.append(state)

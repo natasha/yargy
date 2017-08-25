@@ -1,5 +1,0 @@
-pymorphy2==0.8
-backports.functools-lru-cache==1.3
-enum34==1.1.6
-intervaltree==2.1.0
-jellyfish==0.5.6

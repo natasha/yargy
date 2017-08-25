@@ -1,10 +1,12 @@
+# coding: utf-8
+from __future__ import unicode_literals
+
 from sys import version_info
 from setuptools import setup, find_packages
 
 
 REQUIREMENTS = [
     'pymorphy2==0.8',
-    'enum34==1.1.6',
     'backports.functools-lru-cache==1.3',
     'intervaltree==2.1.0',
     'jellyfish==0.5.6',
