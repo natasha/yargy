@@ -1,6 +1,6 @@
 # Yargy [![Build Status](https://travis-ci.org/bureaucratic-labs/yargy.svg?branch=master)](https://travis-ci.org/bureaucratic-labs/yargy) [![Documentation Status](https://readthedocs.org/projects/yargy/badge/?version=latest)](http://yargy.readthedocs.io/en/latest/?badge=latest)
 
-`Yargy` is a GLR-parser, that uses russian morphology for facts extraction process, and written in pure python
+`Yargy` is a Earley parser, that uses russian morphology for facts extraction process, and written in pure python
 
 # Install
 
@@ -67,7 +67,7 @@ for match in parser.findall(text):
 ```
 
 And in output you will see something like this:
-```
+```python
 Person(position='президент', name=Name(first='владимир', last='путин'))
 ```
 
