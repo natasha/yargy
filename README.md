@@ -71,7 +71,7 @@ And in output you will see something like this:
 Person(position='президент', name=Name(first='владимир', last='путин'))
 ```
 
-For more examples details on grammar syntax, predicates and pipelines see [Yargy documentation](http://yargy.readthedocs.io/en/latest/).
+For more examples, details on grammar syntax, predicates and pipelines see [Yargy documentation](http://yargy.readthedocs.io/en/latest/).
 
 # License
 
