@@ -79,7 +79,7 @@ class Column(object):
             self.hashes.add(value)
             self.states.append(state)
             self.update_index(state)
-            
+
     def update_index(self, state):
         if not state.completed:
             next_term = state.next_term

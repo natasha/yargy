@@ -7,4 +7,4 @@ python:
   - "pypy"
   - "pypy3"
 script:
-  - pytest -v yargy
+  - pytest --pep8 -v yargy

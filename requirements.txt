@@ -6,3 +6,4 @@ jellyfish==0.5.6
 
 # dev
 pytest==3.2.1
+pytest-pep8==1.0.6
