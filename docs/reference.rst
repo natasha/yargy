@@ -12,7 +12,7 @@
 Токенизатор реализован на регулярных выражениях. Для каждого типа
 токенов есть своё правило со своей регуляркой:
 
-.. code:: ipython3
+.. code:: python
 
     from yargy.tokenizer import DEFAULT_RULES
     
@@ -37,7 +37,7 @@
 Токенизатор инициализируется списком правил. По-умолчанию — это
 ``DEFAULT_RULES``:
 
-.. code:: ipython3
+.. code:: python
 
     from yargy.tokenizer import Tokenizer
     
@@ -61,7 +61,7 @@
 
 Пользователь может убрать часть правил из списка или добавить новых:
 
-.. code:: ipython3
+.. code:: python
 
     from yargy.tokenizer import LatinRule
     
@@ -83,7 +83,7 @@
 Например, в Yargy есть примитивные правила для токенизации емейлов и
 телефонов. По-умолчанию они не используются:
 
-.. code:: ipython3
+.. code:: python
 
     from yargy.tokenizer import EmailRule, PhoneRule
     
@@ -112,7 +112,7 @@
 Можно даже запрограммировать своё правило. Например, так выглядит
 простое правило для извлечения доменов:
 
-.. code:: ipython3
+.. code:: python
 
     from yargy.tokenizer import TokenRule
     
@@ -153,7 +153,7 @@
 ``CaselessPipeline``. ``MorphPipeline`` перед работой приводит слова к
 нормальной форме:
 
-.. code:: ipython3
+.. code:: python
 
     from yargy.pipelines import MorphPipeline
     
@@ -199,7 +199,7 @@
 нормальной форме. Например, есть арабские имена: "Абд Аль-Азиз Бин
 Мухаммад", "Абд ар-Рахман Наср ас-Са ди". Их нужно обработать как есть:
 
-.. code:: ipython3
+.. code:: python
 
     from yargy.pipelines import CaselessPipeline
     
@@ -283,7 +283,7 @@
 используется метод ``attribute``. Например, в ``Date`` по-умолчанию год
 будет равен 2017:
 
-.. code:: ipython3
+.. code:: python
 
     from IPython.display import display
     from yargy import Parser, rule, fact, attribute, and_, or_
@@ -364,7 +364,7 @@
 Для дат деревья разбора выглядят просто: вершина-конструктор и несколько
 детей-атрибутов:
 
-.. code:: ipython3
+.. code:: python
 
     parser = Parser(DATE)
     for line in text.splitlines():
@@ -386,7 +386,7 @@
 вершин с токенами? Пойдём от простого к сложному. Когда под
 вершиной-атрибутом несколько токенов, они объединяются:
 
-.. code:: ipython3
+.. code:: python
 
     from yargy.predicates import eq, gram, dictionary
     
@@ -425,7 +425,7 @@
 
 В ``Money.value`` будет два слова:
 
-.. code:: ipython3
+.. code:: python
 
     match.fact
 
@@ -441,7 +441,7 @@
 
 Получить доступ к исходным токенам можно через атрибут ``raw``:
 
-.. code:: ipython3
+.. code:: python
 
     match.fact.raw.value
 
@@ -467,7 +467,7 @@
 Когда под вершиной-атрибутом смесь из токенов и вершин-конструктов, они
 объединяются в список, а не строку:
 
-.. code:: ipython3
+.. code:: python
 
     from yargy.predicates import true
     
@@ -506,7 +506,7 @@
 
 В ``A.x`` будет список из строки и объекта ``B``:
 
-.. code:: ipython3
+.. code:: python
 
     match.fact
 
@@ -522,7 +522,7 @@
 Если под вершиной-атрибутом другая вершина-атрибут, нижняя просто
 исчезает:
 
-.. code:: ipython3
+.. code:: python
 
     from yargy.predicates import true
     
@@ -550,7 +550,7 @@
 
 "X" попадёт в ``A.y``, не в ``A.x``:
 
-.. code:: ipython3
+.. code:: python
 
     match.fact
 
@@ -567,7 +567,7 @@
 Что если под вершиной-конструктом несколько одинаковых вершин-атрибутов?
 Самый правый атрибут перезаписывает все остальные:
 
-.. code:: ipython3
+.. code:: python
 
     A = fact(
         'A',
@@ -592,7 +592,7 @@
 
 В ``A.x`` попадёт 3:
 
-.. code:: ipython3
+.. code:: python
 
     match.fact
 
@@ -609,7 +609,7 @@
 вершин-атрибутов, не только самой правой. В этом случае поле помечается
 как ``repeatable``:
 
-.. code:: ipython3
+.. code:: python
 
     from yargy import not_
     
@@ -648,7 +648,7 @@
 «Дядя Ваня» не перезапишет «Каштанка», они оба окажутся в
 ``Item.titles``:
 
-.. code:: ipython3
+.. code:: python
 
     match.fact
 
@@ -665,7 +665,7 @@
 вершины-конструктора, другая вершина-конструктор. Такая ситуация
 возникает при использовании рекурсивных грамматик:
 
-.. code:: ipython3
+.. code:: python
 
     from yargy import forward, or_
     
@@ -706,7 +706,7 @@
 ``Item(title='«Каштанка»', date=None)`` и
 ``Item(title=None, date=Date(18, 'июня'))``. В конце произойдёт слияние:
 
-.. code:: ipython3
+.. code:: python
 
     match.fact
 
