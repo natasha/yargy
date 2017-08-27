@@ -8,7 +8,8 @@ from yargy.dot import (
     BLUE,
     ORANGE,
     RED,
-    PURPLE
+    PURPLE,
+    GREEN
 )
 
 from .constructors import (
