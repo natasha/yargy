@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 import re
 
 from .utils import Record, assert_type
+from .compat import string_type
 from .token import Token
 from .morph import Form, MORPH
 
@@ -48,9 +49,19 @@ class LatinRule(TokenRule):
         return value.lower()
 
 
+class StrInt(int):
+    def __init__(self, string):
+        assert_type(string, string_type)
+        int.__init__(string)
+        self.raw = string
+        
+    def __str__(self):
+        return self.raw
+
+
 class IntRule(TokenRule):
     pattern = r'\d+'
-    construct = int
+    construct = StrInt
     grammemes = {'NUMBER', 'INT'}
 
 
