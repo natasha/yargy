@@ -32,7 +32,7 @@ class TokenRule(Record):
 
 class RussianRule(TokenRule):
     # TODO Why does it differ from LatinRule pattern?
-    pattern = r'[а-яё][а-яё\-]*'
+    pattern = r'[а-яё]+'
 
     def __init__(self, morph=MORPH):
         self.morph = morph
@@ -42,7 +42,7 @@ class RussianRule(TokenRule):
 
 
 class LatinRule(TokenRule):
-    pattern = r'[a-z]\-?[a-z\']*'
+    pattern = r'[a-z]+'
     grammemes = {'LATN'}
 
     def normalize(self, value):
