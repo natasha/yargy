@@ -93,6 +93,9 @@ class Rule(Record):
             items = (_ for _ in items if isinstance(_, types))
         return items
 
+    def __or__(self, other):
+        return OrRule([self, other])
+
 
 def is_rule(item):
     return isinstance(item, Rule)
