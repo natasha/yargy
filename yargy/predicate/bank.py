@@ -107,6 +107,30 @@ class in_(ParameterPredicate):
         return 'in_(...)'
 
 
+class in_caseless(ParameterPredicate):
+    """a.lower() in b
+
+    >>> predicate = in_caseless({'S', 'M', 'L'})
+    >>> a, b = tokenize('S m')
+    >>> predicate(a)
+    True
+    >>> predicate(b)
+    True
+
+    """
+
+    def __init__(self, value):
+        value = {_.lower() for _ in value}
+        super(in_caseless, self).__init__(value)
+
+    def __call__(self, token):
+        return token.value.lower() in self.value
+
+    @property
+    def label(self):
+        return 'in_caseless(...)'
+
+
 class gte(ParameterPredicate):
     """a >= b
 
