@@ -54,7 +54,7 @@ class StrInt(int):
         assert_type(string, string_type)
         int.__init__(string)
         self.raw = string
-        
+
     def __str__(self):
         return self.raw
 
