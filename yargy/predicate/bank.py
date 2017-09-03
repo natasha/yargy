@@ -14,6 +14,7 @@ __all__ = [
     'eq',
     'caseless',
     'in_',
+    'in_caseless',
     'gte',
     'lte',
     'length_eq',
@@ -123,6 +124,7 @@ class in_caseless(ParameterPredicate):
         value = {_.lower() for _ in value}
         super(in_caseless, self).__init__(value)
 
+    @type_required(string_type)
     def __call__(self, token):
         return token.value.lower() in self.value
 
