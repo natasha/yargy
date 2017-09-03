@@ -8,4 +8,4 @@ python:
   - "pypy"
   - "pypy3"
 script:
-  - pytest --pep8 -v yargy
+  - pytest --pep8 --doctest-modules -v yargy
