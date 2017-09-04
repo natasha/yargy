@@ -52,7 +52,7 @@ class LatinRule(TokenRule):
 class StrInt(int):
     def __init__(self, string):
         assert_type(string, string_type)
-        int.__init__(string)
+        int.__init__(int(string))  # int(..) for pypy
         self.raw = string
 
     def __str__(self):
