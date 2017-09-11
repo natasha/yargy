@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 import re
 
 from .utils import Record, assert_type
-from .compat import string_type
+from .compat import string_type, long
 from .token import Token
 from .morph import Form, MORPH
 
@@ -49,11 +49,12 @@ class LatinRule(TokenRule):
         return value.lower()
 
 
-class StrInt(int):
-    def __init__(self, string):
+class StrInt(long):
+    def __new__(cls, string):
         assert_type(string, string_type)
-        int.__init__(int(string))  # int(..) for pypy
+        self = super(StrInt, cls).__new__(cls, string)
         self.raw = string
+        return self
 
     def __str__(self):
         return self.raw

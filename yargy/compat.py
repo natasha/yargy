@@ -1,16 +1,17 @@
 try:
     # Python 2
     str = unicode
+    long = long
     string_type = basestring
     range = xrange
     RUNNING_ON_PYTHON_2_VERSION = True
 except NameError:
     # Python 3
     str = str
+    long = int
     string_type = str
     range = range
     RUNNING_ON_PYTHON_2_VERSION = False
-
 try:
     # Python 3.4+
     from functools import lru_cache
