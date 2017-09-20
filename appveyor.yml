@@ -33,4 +33,4 @@ test_script:
   # Note that you must use the environment variable %PYTHON% to refer to
   # the interpreter you're using - Appveyor does not do anything special
   # to put the Python version you want to use on PATH.
-  - "build.cmd %PYTHON%\\python.exe -m pytest --pep8 --doctest-modules -v yargy"
+  - "%PYTHON%\\python.exe -m pytest --pep8 --doctest-modules -v yargy"
