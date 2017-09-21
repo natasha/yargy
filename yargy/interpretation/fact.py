@@ -3,7 +3,10 @@ from __future__ import unicode_literals
 
 from collections import OrderedDict
 
-from yargy.utils import Record
+from yargy.utils import (
+    Record,
+    assert_type
+)
 from yargy.token import join_tokens
 from .attribute import (
     AttributeSchemeBase,
@@ -22,6 +25,9 @@ def normalize(item):
     from .interpretator import Chain
 
     if isinstance(item, Chain):
+        if item.value is not None:
+            return item.value
+
         items = item.items
         if len(items) == 1:
             item = items[0]

@@ -9,11 +9,6 @@ class Normalizer(Record):
         raise NotImplementedError
 
 
-class RawNormalizer(Normalizer):
-    def __call__(self, token):
-        return token.value
-
-
 class NormalFormNormalizer(Normalizer):
     def __call__(self, token):
         form = token.forms[0]

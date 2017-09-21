@@ -7,7 +7,7 @@ from .normalizer import (
     NormalFormNormalizer
 )
 from .interpretator import (
-    RuleInterpretator,
+    InterpretatorBase,
     prepare_token_interpretator,
     prepare_rule_interpretator
 )

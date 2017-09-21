@@ -179,9 +179,9 @@ class InterpretationRule(WrapperRule):
     __attributes__ = ['rule', 'interpretator']
 
     def __init__(self, rule, interpretator):
-        from yargy.interpretation import RuleInterpretator
+        from yargy.interpretation import InterpretatorBase
         super(InterpretationRule, self).__init__(rule)
-        assert_type(interpretator, RuleInterpretator)
+        assert_type(interpretator, InterpretatorBase)
         self.interpretator = interpretator
 
 

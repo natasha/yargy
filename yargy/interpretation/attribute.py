@@ -7,7 +7,7 @@ from yargy.utils import (
 )
 from .normalizer import (
     InflectNormalizer,
-    NormalFormNormalizer
+    NormalFormNormalizer,
 )
 
 
@@ -64,8 +64,11 @@ class FactAttribute(FactAttributeBase):
     def inflected(self, grammemes=None):
         return InflectedFactAttribute(self, grammemes)
 
-    def normalized(self):
-        return NormalizedFactAttribute(self)
+    def normalized(self, item=None):
+        if item:
+            return ConstFactAttribute(self, item)
+        else:
+            return NormalizedFactAttribute(self)
 
 
 class RepeatableFactAttribute(FactAttributeBase):
@@ -97,3 +100,15 @@ class NormalizedFactAttribute(MorphFactAttribute):
     @property
     def normalizer(self):
         return NormalFormNormalizer()
+
+
+class CustomFactAttribute(FactAttributeBase):
+    pass
+
+
+class ConstFactAttribute(CustomFactAttribute):
+    __attributes__ = ['attribute', 'value']
+
+    def __init__(self, attribute, value):
+        self.attribute = attribute
+        self.value = value
