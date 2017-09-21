@@ -14,7 +14,7 @@ class Gender(Record):
         self.male = 'masc' in grammemes
         self.female = 'femn' in grammemes
         self.neutral = 'neut' in grammemes
-        self.bi = 'Ms-f' in grammemes
+        self.bi = 'Ms-f' in grammemes or 'ms-f' in grammemes
         self.general = 'GNdr' in grammemes
 
 
