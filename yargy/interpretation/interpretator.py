@@ -41,6 +41,9 @@ class Chain(Record):
         self.items = items
         self.value = value
 
+    def __iter__(self):
+        return iter(self.items)
+
     def flatten(self):
         items = list(flatten(self.items, Chain))
         return Chain(items, self.value)
@@ -100,6 +103,10 @@ class AttributeInterpretator(InterpretatorBase):
         return self.attribute.label
 
     def __call__(self, items):
+        items = [
+            (_.value if is_wrapper(_) else _)
+            for _ in items
+        ]
         items = Chain(items).flatten()
         return Wrapper(items, self.attribute)
 
