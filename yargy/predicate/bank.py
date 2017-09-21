@@ -3,7 +3,9 @@ from __future__ import unicode_literals
 
 from functools import wraps
 
-from yargy.compat import string_type
+from yargy.compat import (
+    string_type, long
+)
 from .constructors import (
     Predicate,
     ParameterPredicate
@@ -147,7 +149,7 @@ class gte(ParameterPredicate):
 
     """
 
-    @type_required((int, float))
+    @type_required((int, float, long))
     def __call__(self, token):
         return token.value >= self.value
 
@@ -165,7 +167,7 @@ class lte(ParameterPredicate):
     False
 
     """
-    @type_required((int, float))
+    @type_required((int, float, long))
     def __call__(self, token):
         return token.value <= self.value
 
@@ -256,7 +258,7 @@ class custom(Predicate):
     """function в качестве предиката
 
     >>> from math import log
-    >>> predicate = custom(lambda x: int(log(x, 10)) == 2, types=int)
+    >>> predicate = custom(lambda x: int(log(x, 10)) == 2, types=(int, long))
     >>> a, b = tokenize('12 123')
     >>> predicate(a)
     False
