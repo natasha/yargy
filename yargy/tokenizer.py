@@ -136,9 +136,11 @@ class Tokenizer(object):
 
     def add_rules(self, *rules):
         self.__init__(self.rules + rules)
+        return self
 
     def remove_rules(self, *rules):
         self.__init__([_ for _ in self.rules if _ not in rules])
+        return self
 
     def compile(self, rules):
         mapping = {}
