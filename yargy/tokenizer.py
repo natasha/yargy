@@ -135,7 +135,7 @@ class Tokenizer(object):
         self.regexp, self.mapping = self.compile(rules)
 
     def add_rules(self, *rules):
-        self.__init__(self.rules + rules)
+        self.__init__(list(rules) + self.rules)
         return self
 
     def remove_rules(self, *rules):
