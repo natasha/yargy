@@ -61,10 +61,10 @@ def test_person():
 
     parser = Parser(PERSON, pipelines=[PositionPipeline()])
 
-    matches = list(parser.match('управляющий директор Иван Ульянов'))
-    assert len(matches) == 1
+    match = parser.match('управляющий директор Иван Ульянов')
+    assert match
 
-    assert matches[0].fact == Person(
+    assert match.fact == Person(
         position='управляющий директор',
         name=Name(
             first='Иван',

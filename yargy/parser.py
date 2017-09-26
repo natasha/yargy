@@ -222,10 +222,10 @@ class Parser(object):
 
     def match(self, text):
         # NOTE Not an optimal implementation. Assume `match` is used
-        # not very often
+        # not very often.
         for match in self.extract(text):
             if match.span == (0, len(text)):
-                yield match
+                return match
 
     def predict(self, column, rule):
         for production in rule.productions:
