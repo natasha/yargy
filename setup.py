@@ -16,8 +16,8 @@ setup(
     name='yargy',
     version='0.8.0',
     description='Tiny rule-based facts extraction package',
-    url='https://github.com/bureaucratic-labs/yargy',
-    author='Dmitry Veselov',
+    url='https://github.com/natasha/yargy',
+    author='Yargy contributors',
     author_email='d.a.veselov@yandex.ru',
     license='MIT',
     classifiers=[
@@ -28,6 +28,7 @@ setup(
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
     ],
     keywords='natural language processing, russian morphology',
     packages=find_packages(),
