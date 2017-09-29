@@ -8,6 +8,8 @@ from yargy.utils import (
 from .normalizer import (
     InflectNormalizer,
     NormalFormNormalizer,
+    ConstNormalizer,
+    FunctionNormalizer
 )
 
 
@@ -53,6 +55,16 @@ class FactAttributeBase(Record):
         )
 
 
+def prepare_normalized(attribute, item):
+    if item is not None:
+        if callable(item):
+            return FunctionFactAttribute(attribute, item)
+        else:
+            return ConstFactAttribute(attribute, item)
+    else:
+        return NormalizedFactAttribute(attribute)
+
+
 class FactAttribute(FactAttributeBase):
     __attributes__ = ['fact', 'name', 'default']
 
@@ -65,10 +77,7 @@ class FactAttribute(FactAttributeBase):
         return InflectedFactAttribute(self, grammemes)
 
     def normalized(self, item=None):
-        if item:
-            return ConstFactAttribute(self, item)
-        else:
-            return NormalizedFactAttribute(self)
+        return prepare_normalized(self, item)
 
 
 class RepeatableFactAttribute(FactAttributeBase):
@@ -112,3 +121,19 @@ class ConstFactAttribute(CustomFactAttribute):
     def __init__(self, attribute, value):
         self.attribute = attribute
         self.value = value
+
+    @property
+    def normalizer(self):
+        return ConstNormalizer(self.value)
+
+
+class FunctionFactAttribute(CustomFactAttribute):
+    __attributes__ = ['attribute', 'function']
+
+    def __init__(self, attribute, function):
+        self.attribute = attribute
+        self.function = function
+
+    @property
+    def normalizer(self):
+        return FunctionNormalizer(self.function)

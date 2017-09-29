@@ -35,18 +35,22 @@ def is_wrapper(item):
 
 
 class Chain(Record):
-    __attributes__ = ['items', 'value']
+    __attributes__ = ['items', 'normalizer']
 
-    def __init__(self, items, value=None):
+    def __init__(self, items, normalizer=None):
         self.items = items
-        self.value = value
+        self.normalizer = normalizer
 
     def __iter__(self):
         return iter(self.items)
 
     def flatten(self):
         items = list(flatten(self.items, Chain))
-        return Chain(items, self.value)
+        return Chain(items, self.normalizer)
+
+
+def is_chain(item):
+    return isinstance(item, Chain)
 
 
 class InterpretatorBase(Record):
@@ -102,12 +106,14 @@ class AttributeInterpretator(InterpretatorBase):
     def label(self):
         return self.attribute.label
 
+    def normalize(self, item):
+        if is_wrapper(item):
+            item = item.value
+        return item
+
     def __call__(self, items):
-        items = [
-            (_.value if is_wrapper(_) else _)
-            for _ in items
-        ]
-        items = Chain(items).flatten()
+        items = Chain([self.normalize(_) for _ in items])
+        items = items.flatten()
         return Wrapper(items, self.attribute)
 
 
@@ -134,14 +140,17 @@ class MorphAttributeInterpretator(AttributeInterpretator):
 
 
 class CustomAttributeInterpretator(AttributeInterpretator):
-    __attributes__ = ['attribute', 'value']
+    __attributes__ = ['attribute', 'normalizer']
 
-    def __init__(self, attribute, value):
+    def __init__(self, attribute, normalizer):
         super(CustomAttributeInterpretator, self).__init__(attribute)
-        self.value = value
+        self.normalizer = normalizer
 
     def __call__(self, items):
-        items = Chain(items, self.value)
+        items = Chain(
+            [self.normalize(_) for _ in items],
+            self.normalizer
+        )
         items = items.flatten()
         return Wrapper(items, self.attribute)
 
@@ -155,7 +164,7 @@ def prepare_attribute_interpretator(item):
     elif isinstance(item, CustomFactAttribute):
         return CustomAttributeInterpretator(
             item.attribute,
-            item.value
+            item.normalizer
         )
     else:
         return AttributeInterpretator(item)
