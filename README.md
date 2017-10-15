@@ -13,7 +13,7 @@ $ pip install yargy
 # Usage
 
 ```python
-from yargy import Parser, fact
+from yargy import Parser, fact, rule
 from yargy.predicates import gram
 from yargy.pipelines import MorphPipeline
 
