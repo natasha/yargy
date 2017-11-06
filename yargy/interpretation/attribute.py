@@ -79,6 +79,9 @@ class FactAttribute(FactAttributeBase):
     def normalized(self, item=None):
         return prepare_normalized(self, item)
 
+    def constant(self, value):
+        return ConstFactAttribute(self, value)
+
 
 class RepeatableFactAttribute(FactAttributeBase):
     pass
