@@ -55,16 +55,6 @@ class FactAttributeBase(Record):
         )
 
 
-def prepare_normalized(attribute, item):
-    if item is not None:
-        if callable(item):
-            return FunctionFactAttribute(attribute, item)
-        else:
-            return ConstFactAttribute(attribute, item)
-    else:
-        return NormalizedFactAttribute(attribute)
-
-
 class FactAttribute(FactAttributeBase):
     __attributes__ = ['fact', 'name', 'default']
 
@@ -76,8 +66,14 @@ class FactAttribute(FactAttributeBase):
     def inflected(self, grammemes=None):
         return InflectedFactAttribute(self, grammemes)
 
-    def normalized(self, item=None):
-        return prepare_normalized(self, item)
+    def normalized(self):
+        return NormalizedFactAttribute(self)
+
+    def const(self, value):
+        return ConstFactAttribute(self, value)
+
+    def custom(self, function):
+        return FunctionFactAttribute(self, function)
 
 
 class RepeatableFactAttribute(FactAttributeBase):
