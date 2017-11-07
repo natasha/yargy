@@ -17,7 +17,7 @@ def test_constant_attribute():
             Money.count
         ),
         dictionary({'тысяча'}).interpretation(
-            Money.base.constant(10**3)
+            Money.base.const(10**3)
         ),
         dictionary({'рубль', 'доллар'}).interpretation(
             Money.currency
