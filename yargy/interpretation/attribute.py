@@ -66,7 +66,7 @@ class FactAttribute(FactAttributeBase):
     def inflected(self, grammemes=None):
         return InflectedFactAttribute(self, grammemes)
 
-    def normalized(self, item=None):
+    def normalized(self):
         return NormalizedFactAttribute(self)
 
     def const(self, value):
