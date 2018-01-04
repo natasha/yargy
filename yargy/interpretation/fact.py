@@ -52,6 +52,8 @@ def normalize(item):
 def serialize(item):
     if is_fact(item):
         return item.as_json
+    elif isinstance(item, list):
+        return [serialize(_) for _ in item]
     return item
 
 
