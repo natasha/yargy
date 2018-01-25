@@ -1,10 +1,11 @@
 # coding: utf-8
 from __future__ import unicode_literals
 
-from yargy import Parser, rule, and_, not_, fact
+from yargy import Parser, rule, and_, not_
+from yargy.interpretation import fact
 from yargy.predicates import gram
 from yargy.relations import gnc_relation
-from yargy.pipelines import MorphPipeline
+from yargy.pipelines import morph_pipeline
 
 
 def test_person():
@@ -26,24 +27,19 @@ def test_person():
         not_(gram('Abbr')),
     )
 
-    class PositionPipeline(MorphPipeline):
-        grammemes = {'Position'}
-        keys = [
-            'управляющий директор',
-            'вице-мэр'
-        ]
-
-    POSITION = gram('Position')
+    POSITION = morph_pipeline(
+        'управляющий директор',
+        'вице-мэр'
+    )
 
     gnc = gnc_relation()
-
     NAME = rule(
-        FIRST.match(gnc).interpretation(
+        FIRST.interpretation(
             Name.first
-        ),
-        LAST.match(gnc).interpretation(
+        ).match(gnc),
+        LAST.interpretation(
             Name.last
-        )
+        ).match(gnc)
     ).interpretation(
         Name
     )
@@ -51,7 +47,7 @@ def test_person():
     PERSON = rule(
         POSITION.interpretation(
             Person.position
-        ),
+        ).match(gnc),
         NAME.interpretation(
             Person.name
         )
@@ -59,7 +55,7 @@ def test_person():
         Person
     )
 
-    parser = Parser(PERSON, pipelines=[PositionPipeline()])
+    parser = Parser(PERSON)
 
     match = parser.match('управляющий директор Иван Ульянов')
     assert match

@@ -9,12 +9,16 @@ from yargy.dot import (
     ORANGE,
     RED,
     PURPLE,
-    GREEN
+    GREEN,
+    GRAY,
+    DARKGRAY
 )
 
+from yargy.predicates import is_predicate
 from .constructors import (
     is_rule,
     Production,
+    EmptyProduction,
     Rule,
     OrRule,
     ExtendedRule,
@@ -23,23 +27,44 @@ from .constructors import (
     RepeatableOptionalRule,
     NamedRule,
     InterpretationRule,
+    RelationRule,
     ForwardRule,
-    EmptyRule
+    EmptyRule,
+    PipelineRule
 )
+
+
+class InplaceRuleTransformator(Visitor):
+    def __call__(self, root):
+        for item in root.walk(types=(Rule, Production)):
+            self.visit(item)
+        return self.visit(root)
+
+    def visit_term(self, item):
+        return item
+
+    def visit_Production(self, item):
+        item.terms = [self.visit_term(_) for _ in item.terms]
+        return item
+
+    def visit_EmptyProduction(self, item):
+        return item
+
+    def visit_PipelineProduction(self, item):
+        return item
+
+    def visit_Rule(self, item):
+        return item
 
 
 class RuleTransformator(Visitor):
     def __init__(self):
-        self.entered = {}
         self.visited = {}
 
     def __call__(self, root):
-        forwards = [
-            _ for _ in root.walk(types=ForwardRule)
-            if _.defined
-        ]
-        for item in forwards:
-            item.define(self.visit(item.rule))
+        for item in root.walk(types=ForwardRule):
+            if item.rule:
+                item.define(self.visit(item.rule))
         return self.visit(root)
 
     def visit(self, item):
@@ -47,7 +72,6 @@ class RuleTransformator(Visitor):
         if item_id in self.visited:
             return self.visited[item_id]
         else:
-            self.entered[item_id] = item
             item = self.resolve_method(item)(item)
             self.visited[item_id] = item
             return item
@@ -59,7 +83,16 @@ class RuleTransformator(Visitor):
             return item
 
     def visit_Production(self, item):
-        return Production([self.visit_term(_) for _ in item.terms])
+        return Production(
+            [self.visit_term(_) for _ in item.terms],
+            item.main
+        )
+
+    def visit_EmptyProduction(self, item):
+        return item
+
+    def visit_PipelineProduction(self, item):
+        return item
 
     def visit_Rule(self, item):
         return Rule([self.visit(_) for _ in item.productions])
@@ -82,10 +115,32 @@ class RuleTransformator(Visitor):
     def visit_InterpretationRule(self, item):
         return InterpretationRule(self.visit(item.rule), item.interpretator)
 
+    def visit_RelationRule(self, item):
+        return RelationRule(self.visit(item.rule), item.relation)
+
     def visit_ForwardRule(self, item):
         return item
 
     def visit_EmptyRule(self, item):
+        return item
+
+    def visit_PipelineRule(self, item):
+        return item
+
+
+class ActivateTransformator(InplaceRuleTransformator):
+    def __init__(self, tokenizer):
+        super(ActivateTransformator, self).__init__()
+        self.tokenizer = tokenizer
+
+    def visit_term(self, item):
+        if is_predicate(item):
+            return item.activate(self.tokenizer)
+        else:
+            return item
+
+    def visit_PipelineRule(self, item):
+        item.pipeline = item.pipeline.activate(self.tokenizer)
         return item
 
 
@@ -116,11 +171,6 @@ class SquashExtendedTransformator(RuleTransformator):
             return RepeatableOptionalRule(self.visit(child))
 
 
-class ReplaceOrTransformator(RuleTransformator):
-    def visit_OrRule(self, item):
-        return Rule([Production([self.visit(_)]) for _ in item.rules])
-
-
 class FlattenTransformator(RuleTransformator):
     def visit_term(self, item):
         if type(item) is Rule:
@@ -144,7 +194,17 @@ class FlattenTransformator(RuleTransformator):
         return super(FlattenTransformator, self).visit_Production(item)
 
 
-class ExpandExtendedTransformator(RuleTransformator):
+class ReplaceOrTransformator(RuleTransformator):
+    def visit_OrRule(self, item):
+        return Rule([Production([self.visit(_)]) for _ in item.rules])
+
+
+class ReplaceEmptyTransformator(RuleTransformator):
+    def visit_EmptyRule(self, item):
+        return Rule([EmptyProduction()])
+
+
+class ReplaceExtendedTransformator(RuleTransformator):
     def visit_RepeatableRule(self, item):
         from yargy.api import forward, or_, rule
 
@@ -177,36 +237,109 @@ class ExpandExtendedTransformator(RuleTransformator):
         )
 
 
-class DotRuleTransformator(DotTransformator, RuleTransformator):
-    def visit_PredicateBase(self, item):
-        return style(label=item.label)
+class DotRuleTransformator(DotTransformator, InplaceRuleTransformator):
+    def visit_Predicate(self, item):
+        self.style(
+            item,
+            style(label=item.label)
+        )
 
     def visit_Production(self, item):
-        return style(label='Production', fillcolor=BLUE)
+        self.graph.add_node(
+            item,
+            style(label='Production', fillcolor=BLUE)
+        )
+        for index, child in enumerate(item.children):
+            styling = (
+                style(color=DARKGRAY)
+                if item.main > 0 and item.main == index
+                else None
+            )
+            self.graph.add_edge(
+                item, child,
+                style=styling
+            )
+
+    def visit_EmptyProduction(self, item):
+        self.style(
+            item,
+            style(label='EmptyProduction')
+        )
+
+    def visit_PipelineProduction(self, item):
+        self.style(
+            item,
+            style(label='PipelineProduction', fillcolor=BLUE)
+        )
 
     def visit_Rule(self, item):
-        return style(label='Rule', fillcolor=BLUE)
+        self.style(
+            item,
+            style(label='Rule', fillcolor=BLUE)
+        )
 
     def visit_OrRule(self, item):
-        return style(label='Or', fillcolor=BLUE)
+        self.style(
+            item,
+            style(label='Or', fillcolor=BLUE)
+        )
 
     def visit_OptionalRule(self, item):
-        return style(label='Optional', fillcolor=ORANGE)
+        self.style(
+            item,
+            style(label='Optional', fillcolor=ORANGE)
+        )
 
     def visit_RepeatableRule(self, item):
-        return style(label='Repeatable', fillcolor=ORANGE)
+        self.style(
+            item,
+            style(label='Repeatable', fillcolor=ORANGE)
+        )
 
     def visit_RepeatableOptionalRule(self, item):
-        return style(label='RepeatableOptional', fillcolor=ORANGE)
+        self.style(
+            item,
+            style(label='RepeatableOptional', fillcolor=ORANGE)
+        )
 
     def visit_NamedRule(self, item):
-        return style(label=item.name, fillcolor=RED)
+        self.style(
+            item,
+            style(label=item.name, fillcolor=RED)
+        )
 
     def visit_InterpretationRule(self, item):
-        return style(label=item.interpretator.label, fillcolor=GREEN)
+        self.style(
+            item,
+            style(label=item.interpretator.label, fillcolor=GREEN)
+        )
+
+    def visit_RelationRule(self, item):
+        self.style(
+            item,
+            style(label=item.relation.label, fillcolor=PURPLE)
+        )
 
     def visit_ForwardRule(self, item):
-        return style(label='Forward', fillcolor=PURPLE)
+        self.style(
+            item,
+            style(label='Forward', fillcolor=PURPLE)
+        )
 
     def visit_EmptyRule(self, item):
-        return style(label='Empty')
+        self.style(
+            item,
+            style(label='Empty')
+        )
+
+    def visit_PipelineRule(self, item):
+        self.style(
+            item,
+            style(label=item.pipeline.label, fillcolor=PURPLE)
+        )
+
+    def visit_BNFRule(self, item):
+        self.style(
+            item,
+            style(label=item.label, fillcolor=GREEN)
+        )

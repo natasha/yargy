@@ -13,14 +13,16 @@ __all__ = [
 
 
 class gender_relation(Relation):
+    label = 'gender'
+
     def __call__(self, form, other):
-        if form.number.plural and other.number.plural:
+        if form.grams.number.plural and other.grams.number.plural:
             return True
 
         (form_male, form_female, form_neutral,
-         form_bi, form_general) = form.gender
+         form_bi, form_general) = form.grams.gender
         (other_male, other_female, other_neutral,
-         other_bi, other_general) = other.gender
+         other_bi, other_general) = other.grams.gender
         return (
             (form_male and other_male)
             or (form_female and other_female)
@@ -33,11 +35,13 @@ class gender_relation(Relation):
 
 
 class number_relation(Relation):
+    label = 'number'
+
     def __call__(self, form, other):
         (form_single, form_plural,
-         form_only_single, form_only_plural) = form.number
+         form_only_single, form_only_plural) = form.grams.number
         (other_single, other_plural,
-         other_only_single, other_only_plural) = other.number
+         other_only_single, other_only_plural) = other.grams.number
 
         return (
             (form_single and other_single)
@@ -50,9 +54,11 @@ class number_relation(Relation):
 
 
 class case_relation(Relation):
+    label = 'case'
+
     def __call__(self, form, other):
-        form_mask, form_fixed = form.case
-        other_mask, other_fixed = other.case
+        form_mask, form_fixed = form.grams.case
+        other_mask, other_fixed = other.grams.case
         return (
             form_mask == other_mask
             or form_fixed
@@ -61,6 +67,8 @@ class case_relation(Relation):
 
 
 class gnc_relation(gender_relation, number_relation, case_relation):
+    label = 'gnc'
+
     def __call__(self, form, other):
         return (
             gender_relation.__call__(self, form, other)

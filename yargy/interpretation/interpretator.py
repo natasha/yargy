@@ -3,166 +3,236 @@ from __future__ import unicode_literals
 
 from inspect import isclass
 
-from yargy.utils import (
-    Record,
-    assert_type,
-    assert_subclass,
-    flatten
-)
+from yargy.utils import Record, assert_subclass
 from yargy.token import (
-    Token,
-    NormalizedToken
+    is_token,
+    join_tokens,
+    get_tokens_span
 )
 from .attribute import (
-    FactAttributeBase,
-    MorphFactAttribute,
-    CustomFactAttribute
+    AttributeBase,
+    MorphAttribute,
+    CustomAttribute
 )
-from .normalizer import Normalizer
-from .fact import is_fact, Fact
+from .normalizer import (
+    Normalizer,
+    ConstNormalizer
+)
+from .fact import (
+    Fact,
+    InterpretatorFact
+)
 
 
-class Wrapper(Record):
+class InterpretatorInput(Record):
+    __attributes__ = ['items', 'key']
+
+    def __init__(self, items, key=None):
+        self.items = list(items)
+        self.key = key
+
+
+class InterpretatorResult(Record):
+    normalized = None
+    spans = None
+
+
+class Chain(InterpretatorResult):
+    __attributes__ = ['tokens', 'key']
+
+    def __init__(self, tokens, key):
+        self.tokens = tokens
+        self.key = key
+
+    @property
+    def normalized(self):
+        return join_tokens(self.tokens)
+
+    @property
+    def spans(self):
+        yield get_tokens_span(self.tokens)
+
+    @property
+    def as_json(self):
+        return self.normalized
+
+
+class FactResult(InterpretatorResult):
+    __attributes__ = ['fact']
+
+    def __init__(self, fact):
+        self.fact = fact
+
+    @property
+    def normalized(self):
+        return self.fact.normalized
+
+    @property
+    def spans(self):
+        for span in self.fact.spans:
+            yield span
+
+    @property
+    def as_json(self):
+        return self.fact.as_json
+
+
+class AttributeResult(InterpretatorResult):
     __attributes__ = ['value', 'attribute']
 
     def __init__(self, value, attribute):
         self.value = value
         self.attribute = attribute
 
+    @property
+    def normalized(self):
+        return self.value.normalized
 
-def is_wrapper(item):
-    return isinstance(item, Wrapper)
+    @property
+    def spans(self):
+        for span in self.value.spans:
+            yield span
 
-
-class Chain(Record):
-    __attributes__ = ['items', 'normalizer']
-
-    def __init__(self, items, normalizer=None):
-        self.items = items
-        self.normalizer = normalizer
-
-    def __iter__(self):
-        return iter(self.items)
-
-    def flatten(self):
-        items = list(flatten(self.items, Chain))
-        return Chain(items, self.normalizer)
+    @property
+    def as_json(self):
+        return self.value.as_json
 
 
-def is_chain(item):
-    return isinstance(item, Chain)
+class NormalizerResult(InterpretatorResult):
+    __attributes__ = ['value', 'input']
+
+    def __init__(self, value, input):
+        self.value = value
+        self.input = input
+
+    @property
+    def normalized(self):
+        return self.value
+
+    @property
+    def spans(self):
+        for span in self.input.spans:
+            yield span
+
+    @property
+    def as_json(self):
+        if isinstance(self.value, InterpretatorResult):
+            return self.value.as_json
+        else:
+            return self.value
 
 
-class InterpretatorBase(Record):
-    pass
+class Interpretator(Record):
+    label = 'Interpretator'
+
+    def __call__(self, input):
+        raise NotImplemented
 
 
-class FactInterpretator(InterpretatorBase):
+class FactInterpretator(Interpretator):
     __attributes__ = ['fact']
 
     def __init__(self, fact):
         assert_subclass(fact, Fact)
         self.fact = fact
 
-    @property
-    def label(self):
-        return self.fact.__name__
-
-    def __call__(self, items):
-        fact = self.fact()
-        for item in items:
-            if is_wrapper(item) and issubclass(self.fact, item.attribute.fact):
+    def __call__(self, input):
+        fact = InterpretatorFact(self.fact)
+        for item in input.items:
+            if isinstance(item, AttributeResult) and issubclass(self.fact, item.attribute.fact):
                 fact.set(
                     item.attribute.name,
                     item.value
                 )
-            elif is_fact(item) and isinstance(item, self.fact):
-                fact.merge(item)
-        return fact
+            elif isinstance(item, FactResult) and issubclass(item.fact.scheme, self.fact):
+                fact.merge(item.fact)
+        return FactResult(fact)
+
+    @property
+    def label(self):
+        return self.fact.__name__
 
 
-class NormalizerInterpretator(InterpretatorBase):
-    __attributes__ = ['normalizer']
-
-    def __init__(self, normalizer):
-        assert_type(normalizer, Normalizer)
-        self.normalizer = normalizer
-
-    def __call__(self, tokens):
-        return Chain([
-            NormalizedToken(self.normalizer, _)
-            for _ in tokens
-        ])
-
-
-class AttributeInterpretator(InterpretatorBase):
+class AttributeInterpretator(Interpretator):
     __attributes__ = ['attribute']
 
     def __init__(self, attribute):
-        assert_type(attribute, FactAttributeBase)
         self.attribute = attribute
+
+    def __call__(self, input):
+        items = input.items
+        if all(is_token(_) for _ in items):
+            value = Chain(items, input.key)
+        elif len(items) == 1:
+            item = items[0]
+            if isinstance(item, AttributeResult):
+                value = item.value
+            elif isinstance(item, (NormalizerResult, FactResult)):
+                value = item
+            else:
+                raise TypeError(type(item))
+        else:
+            raise TypeError('{attribute!r} -> {types!r}'.format(
+                attribute=self,
+                types=[type(_) for _ in items]
+            ))
+        return AttributeResult(value, self.attribute)
 
     @property
     def label(self):
         return self.attribute.label
 
-    def normalize(self, item):
-        if is_wrapper(item):
-            item = item.value
-        return item
 
-    def __call__(self, items):
-        items = Chain([self.normalize(_) for _ in items])
-        items = items.flatten()
-        return Wrapper(items, self.attribute)
+class NormalizerInterpretator(Interpretator):
+    __attributes__ = ['normalizer']
 
-
-class MorphAttributeInterpretator(AttributeInterpretator):
-    __attributes__ = ['attribute', 'normalizer']
-
-    def __init__(self, attribute, normalizer):
-        super(MorphAttributeInterpretator, self).__init__(attribute)
-        assert_type(normalizer, Normalizer)
+    def __init__(self, normalizer):
         self.normalizer = normalizer
 
-    def normalize(self, item):
-        if is_wrapper(item):
-            item = item.value
-        if isinstance(item, Token) and not isinstance(item, NormalizedToken):
-            return NormalizedToken(self.normalizer, item)
+    def __call__(self, input):
+        if isinstance(self.normalizer, ConstNormalizer):
+            value = self.normalizer.value
         else:
-            return item
+            items = input.items
+            if all(is_token(_) for _ in items):
+                input = Chain(items, input.key)
+            elif len(items) == 1:
+                input = items[0]
+            else:
+                raise TypeError('{normalizer!r} -> {types!r}'.format(
+                    normalizer=self,
+                    types=[type(_) for _ in items]
+                ))
+            value = self.normalizer(input)
+        return NormalizerResult(value, input)
 
-    def __call__(self, items):
-        items = Chain([self.normalize(_) for _ in items])
-        items = items.flatten()
-        return Wrapper(items, self.attribute)
+    @property
+    def label(self):
+        return self.normalizer.label
 
 
-class CustomAttributeInterpretator(AttributeInterpretator):
+class AttributeNormalizerInterpretator(AttributeInterpretator, NormalizerInterpretator):
     __attributes__ = ['attribute', 'normalizer']
 
     def __init__(self, attribute, normalizer):
-        super(CustomAttributeInterpretator, self).__init__(attribute)
-        self.normalizer = normalizer
+        AttributeInterpretator.__init__(self, attribute)
+        NormalizerInterpretator.__init__(self, normalizer)
 
     def __call__(self, items):
-        items = Chain(
-            [self.normalize(_) for _ in items],
-            self.normalizer
+        value = NormalizerInterpretator.__call__(self, items)
+        return AttributeResult(value, self.attribute)
+
+    @property
+    def label(self):
+        return '{attribute}.{normalizer}'.format(
+            attribute=self.attribute.label,
+            normalizer=self.normalizer.label
         )
-        items = items.flatten()
-        return Wrapper(items, self.attribute)
 
 
 def prepare_attribute_interpretator(item):
-    if isinstance(item, MorphFactAttribute):
-        return MorphAttributeInterpretator(
-            item.attribute,
-            item.normalizer
-        )
-    elif isinstance(item, CustomFactAttribute):
-        return CustomAttributeInterpretator(
+    if isinstance(item, MorphAttribute) or isinstance(item, CustomAttribute):
+        return AttributeNormalizerInterpretator(
             item.attribute,
             item.normalizer
         )
@@ -171,20 +241,22 @@ def prepare_attribute_interpretator(item):
 
 
 def prepare_token_interpretator(item):
-    if isinstance(item, FactAttributeBase):
+    if isinstance(item, AttributeBase):
         return prepare_attribute_interpretator(item)
     elif isinstance(item, Normalizer):
         return NormalizerInterpretator(item)
     else:
-        raise TypeError(type(item))
+        raise TypeError(item)
 
 
 def prepare_rule_interpretator(item):
-    if isinstance(item, InterpretatorBase):
+    if isinstance(item, Interpretator):
         return item
-    elif isinstance(item, FactAttributeBase):
-        return prepare_attribute_interpretator(item)
     elif isclass(item) and issubclass(item, Fact):
         return FactInterpretator(item)
+    elif isinstance(item, AttributeBase):
+        return prepare_attribute_interpretator(item)
+    elif isinstance(item, Normalizer):
+        return NormalizerInterpretator(item)
     else:
-        raise TypeError(type(item))
+        raise TypeError(item)

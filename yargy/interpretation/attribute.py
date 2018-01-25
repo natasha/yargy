@@ -6,10 +6,11 @@ from yargy.utils import (
     assert_equals
 )
 from .normalizer import (
-    InflectNormalizer,
-    NormalFormNormalizer,
+    InflectedNormalizer,
+    NormalizedNormalizer,
     ConstNormalizer,
-    FunctionNormalizer
+    FunctionNormalizer,
+    MorphFunctionNormalizer,
 )
 
 
@@ -28,7 +29,7 @@ class AttributeScheme(AttributeSchemeBase):
         return RepeatableAttributeScheme(self)
 
     def construct(self, fact):
-        return FactAttribute(fact, self.name, self.default)
+        return Attribute(fact, self.name, self.default)
 
 
 class RepeatableAttributeScheme(AttributeSchemeBase):
@@ -37,10 +38,10 @@ class RepeatableAttributeScheme(AttributeSchemeBase):
         self.name = attribute.name
 
     def construct(self, fact):
-        return RepeatableFactAttribute(fact, self.name)
+        return RepeatableAttribute(fact, self.name)
 
 
-class FactAttributeBase(Record):
+class AttributeBase(Record):
     __attributes__ = ['fact', 'name']
 
     def __init__(self, fact, name):
@@ -55,7 +56,7 @@ class FactAttributeBase(Record):
         )
 
 
-class FactAttribute(FactAttributeBase):
+class Attribute(AttributeBase):
     __attributes__ = ['fact', 'name', 'default']
 
     def __init__(self, fact, name, default):
@@ -63,55 +64,61 @@ class FactAttribute(FactAttributeBase):
         self.name = name
         self.default = default
 
-    def inflected(self, grammemes=None):
-        return InflectedFactAttribute(self, grammemes)
+    def inflected(self, grams={'nomn', 'sing'}):
+        return InflectedAttribute(self, grams)
 
     def normalized(self):
-        return NormalizedFactAttribute(self)
+        return NormalizedAttribute(self)
 
     def const(self, value):
-        return ConstFactAttribute(self, value)
+        return ConstAttribute(self, value)
 
     def custom(self, function):
-        return FunctionFactAttribute(self, function)
+        return FunctionAttribute(self, function)
 
 
-class RepeatableFactAttribute(FactAttributeBase):
+class RepeatableAttribute(AttributeBase):
     pass
 
 
-class MorphFactAttribute(FactAttributeBase):
+class MorphAttribute(AttributeBase):
     pass
 
 
-class InflectedFactAttribute(MorphFactAttribute):
-    __attributes__ = ['attribute', 'grammemes']
+class InflectedAttribute(MorphAttribute):
+    __attributes__ = ['attribute', 'grams']
 
-    def __init__(self, attribute, grammemes):
+    def __init__(self, attribute, grams):
         self.attribute = attribute
-        self.grammemes = grammemes
+        self.grams = grams
+
+    def custom(self, function):
+        return InflectedFunctionAttribute(self.attribute, self.grams, function)
 
     @property
     def normalizer(self):
-        return InflectNormalizer(self.grammemes)
+        return InflectedNormalizer(self.grams)
 
 
-class NormalizedFactAttribute(MorphFactAttribute):
+class NormalizedAttribute(MorphAttribute):
     __attributes__ = ['attribute']
 
     def __init__(self, attribute):
         self.attribute = attribute
 
+    def custom(self, function):
+        return NormalizedFunctionAttribute(self.attribute, function)
+
     @property
     def normalizer(self):
-        return NormalFormNormalizer()
+        return NormalizedNormalizer()
 
 
-class CustomFactAttribute(FactAttributeBase):
+class CustomAttribute(AttributeBase):
     pass
 
 
-class ConstFactAttribute(CustomFactAttribute):
+class ConstAttribute(CustomAttribute):
     __attributes__ = ['attribute', 'value']
 
     def __init__(self, attribute, value):
@@ -123,7 +130,7 @@ class ConstFactAttribute(CustomFactAttribute):
         return ConstNormalizer(self.value)
 
 
-class FunctionFactAttribute(CustomFactAttribute):
+class FunctionAttribute(CustomAttribute):
     __attributes__ = ['attribute', 'function']
 
     def __init__(self, attribute, function):
@@ -133,3 +140,34 @@ class FunctionFactAttribute(CustomFactAttribute):
     @property
     def normalizer(self):
         return FunctionNormalizer(self.function)
+
+
+class InflectedFunctionAttribute(MorphAttribute, CustomAttribute):
+    __attributes__ = ['attribute', 'grams', 'function']
+
+    def __init__(self, attribute, grams, function):
+        self.attribute = attribute
+        self.grams = grams
+        self.function = function
+
+    @property
+    def normalizer(self):
+        return MorphFunctionNormalizer(
+            InflectedNormalizer(self.grams),
+            self.function
+        )
+
+
+class NormalizedFunctionAttribute(MorphAttribute, CustomAttribute):
+    __attributes__ = ['attribute', 'function']
+
+    def __init__(self, attribute, function):
+        self.attribute = attribute
+        self.function = function
+
+    @property
+    def normalizer(self):
+        return MorphFunctionNormalizer(
+            NormalizedNormalizer(),
+            self.function
+        )

@@ -1,19 +1,53 @@
 # coding: utf-8
 from __future__ import unicode_literals
 
-from yargy.utils import assert_type
-
-from .base import PredicateBase
+from yargy.utils import Record, assert_type
 
 
-class Predicate(PredicateBase):
-    def match(self, *items):
-        from .relation import RelationPredicate
-        return RelationPredicate(self, items)
+class Predicate(Record):
+    children = []
+
+    def __call__(self, token):
+        # return True of False
+        raise NotImplementedError
+
+    def optional(self):
+        from yargy.api import rule
+        return rule(self).optional()
+
+    def repeatable(self):
+        from yargy.api import rule
+        return rule(self).repeatable()
+
+    def interpretation(self, attribute):
+        from yargy.api import rule
+        from yargy.interpretation import prepare_token_interpretator
+        interpretator = prepare_token_interpretator(attribute)
+        return rule(self).interpretation(interpretator)
+
+    def match(self, relation):
+        from yargy.api import rule
+        return rule(self).match(relation)
+
+    def activate(self, _):
+        return self
+
+    def constrain(self, token):
+        return token
+
+    @property
+    def label(self):
+        return repr(self)
 
 
 def is_predicate(item):
     return isinstance(item, Predicate)
+
+
+class PredicateScheme(Predicate):
+    def activate(self, tokenizer):
+        # return Predicate not a scheme
+        raise NotImplementedError
 
 
 class PredicatesComposition(Predicate):
@@ -30,6 +64,12 @@ class PredicatesComposition(Predicate):
 
     def __call__(self, token):
         return self.operator(_(token) for _ in self.predicates)
+
+    def activate(self, tokenizer):
+        return self.__class__(
+            _.activate(tokenizer)
+            for _ in self.predicates
+        )
 
     @property
     def label(self):
@@ -59,6 +99,9 @@ class NotPredicate(Predicate):
     def __call__(self, token):
         return not self.predicate(token)
 
+    def activate(self, tokenizer):
+        return NotPredicate(self.predicate.activate(tokenizer))
+
     @property
     def label(self):
         return 'not_({predicate})'.format(
@@ -71,3 +114,7 @@ class ParameterPredicate(Predicate):
 
     def __init__(self, value):
         self.value = value
+
+
+class ParameterPredicateScheme(ParameterPredicate, PredicateScheme):
+    pass

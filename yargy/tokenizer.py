@@ -4,165 +4,131 @@ from __future__ import unicode_literals
 import re
 
 from .utils import Record, assert_type
-from .compat import string_type, long
-from .token import Token
-from .morph import Form, MORPH
+from .token import (
+    Span,
+    Token,
+    MorphToken
+)
 
 
 class TokenRule(Record):
-    __attributes__ = ['pattern', 'grammemes']
+    __attributes__ = ['type', 'pattern']
 
-    pattern = None
-    grammemes = set()
-
-    def construct(self, value):
-        return value
-
-    def normalize(self, value):
-        return value
-
-    def forms(self, value):
-        yield Form(self.normalize(value), self.grammemes)
-
-    def __call__(self, value, span):
-        value = self.construct(value)
-        forms = list(self.forms(value))
-        return Token(value, span, forms)
+    def __init__(self, type, pattern):
+        self.type = type
+        self.pattern = pattern
 
 
-class RussianRule(TokenRule):
-    # TODO Why does it differ from LatinRule pattern?
-    pattern = r'[а-яё]+'
+RUSSIAN = 'RU'
+LATIN = 'LATIN'
+INT = 'INT'
+PUNCT = 'PUNCT'
+EOL = 'EOL'
+OTHER = 'OTHER'
 
-    def __init__(self, morph=MORPH):
-        self.morph = morph
+EMAIL_RULE = TokenRule(
+    'EMAIL',
+    r'[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+'
+)
+# https://toster.ru/answer?answer_id=852265#answers_list_answer
+PHONE_RULE = TokenRule(
+    'PHONE',
+    r'(\+)?([-\s_()]?\d[-\s_()]?){10,14}'
+)
 
-    def forms(self, value):
-        return self.morph.parse(value)
+GENERAL_QUOTES = '"\'”'
+LEFT_QUOTES = '«„ʼ'
+RIGHT_QUOTES = '»“ʻ'
+QUOTES = LEFT_QUOTES + GENERAL_QUOTES + RIGHT_QUOTES
 
-
-class LatinRule(TokenRule):
-    pattern = r'[a-z]+'
-    grammemes = {'LATN'}
-
-    def normalize(self, value):
-        return value.lower()
-
-
-class StrInt(long):
-    def __new__(cls, string):
-        assert_type(string, string_type)
-        self = super(StrInt, cls).__new__(cls, string)
-        self.raw = string
-        return self
-
-    def __str__(self):
-        return self.raw
-
-    def __repr__(self):
-        return self.raw
-
-
-class IntRule(TokenRule):
-    pattern = r'\d+'
-    construct = StrInt
-    grammemes = {'NUMBER', 'INT'}
-
-
-class QuoteRule(TokenRule):
-    # TODO Are ʼʻ” generic? Need to include ˈ and ´
-    pattern = r'["\'«»„“ʼʻ”]'
-
-    def forms(self, value):
-        grammemes = {'QUOTE', }
-        if value in {'«', '„'}:
-            grammemes |= {'L-QUOTE'}  # left quote
-        elif value in {'»', '“'}:
-            grammemes |= {'R-QUOTE'}  # right quote
-        else:
-            grammemes |= {'G-QUOTE'}  # generic quote like <">
-
-        yield Form(value, grammemes)
-
-
-class PunctuationRule(TokenRule):
-    pattern = r'[-\\/!#$%&()\[\]\*\+,\.:;<=>?@^_`{|}~№…]'
-    grammemes = {'PUNCT'}
-
-
-class EOLRule(TokenRule):
-    pattern = r'[\n\r]+'
-    grammemes = {'END-OF-LINE'}
-
-    def normalize(self, value):
-        return '\n'
-
-
-class OtherRule(TokenRule):
-    pattern = r'\S'
-    grammemes = {'OTHER'}
-
-
-class EmailRule(TokenRule):
-    pattern = r'[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+'
-    grammemes = {'EMAIL'}
-
-
-class PhoneRule(TokenRule):
-    # found at https://toster.ru/answer?answer_id=852265#answers_list_answer
-    pattern = r'(\+)?([-\s_()]?\d[-\s_()]?){10,14}'
-    grammemes = {'PHONE'}
-
-
-DEFAULT_RULES = [
-    RussianRule(),
-    LatinRule(),
-    IntRule(),
-    QuoteRule(),
-    PunctuationRule(),
-    EOLRule(),
-    OtherRule(),
-    # EmailRule(),
-    # PhoneRule()
+RULES = [
+    TokenRule(RUSSIAN, r'[а-яё]+'),
+    TokenRule(LATIN, r'[a-z]+'),
+    TokenRule(INT, r'\d+'),
+    TokenRule(
+        PUNCT,
+        r'[-\\/!#$%&()\[\]\*\+,\.:;<=>?@^_`{|}~№…"\'«»„“ʼʻ”]'
+    ),
+    TokenRule(EOL, r'[\n\r]+'),
+    TokenRule(OTHER, r'\S'),
 ]
 
 
 class Tokenizer(object):
-    def __init__(self, rules=DEFAULT_RULES):
+    def __init__(self, rules=RULES):
         for rule in rules:
             assert_type(rule, TokenRule)
         self.rules = rules
-        self.regexp, self.mapping = self.compile(rules)
+        self.regexp, self.mapping, self.types = self.compile(rules)
 
     def add_rules(self, *rules):
         self.__init__(list(rules) + self.rules)
         return self
 
-    def remove_rules(self, *rules):
-        self.__init__([_ for _ in self.rules if _ not in rules])
+    def remove_types(self, *types):
+        for type in types:
+            self.check_type(type)
+        self.__init__([_ for _ in self.rules if _.type not in types])
         return self
 
+    def check_type(self, type):
+        if type not in self.types:
+            raise ValueError(type)
+
     def compile(self, rules):
+        types = set()
         mapping = {}
         patterns = []
         for rule in rules:
+            type, pattern = rule
             name = 'rule_{id}'.format(id=id(rule))
             pattern = r'(?P<{name}>{pattern})'.format(
                 name=name,
-                pattern=rule.pattern
+                pattern=pattern
             )
-            mapping[name] = rule
+            mapping[name] = type
+            types.add(type)
             patterns.append(pattern)
-
         pattern = '|'.join(patterns)
         regexp = re.compile(pattern, re.UNICODE | re.IGNORECASE)
-        return regexp, mapping
+        return regexp, mapping, types
 
     def __call__(self, text):
         for match in re.finditer(self.regexp, text):
             name = match.lastgroup
             value = match.group(0)
-            span = match.span()
-            rule = self.mapping[name]
-            token = rule(value, span)
+            start, stop = match.span()
+            type = self.mapping[name]
+            token = Token(value, Span(start, stop), type)
             yield token
+
+    def split(self, text):
+        return [_.value for _ in self(text)]
+
+
+class MorphTokenizer(Tokenizer):
+    def __init__(self, rules=RULES, morph=None):
+        super(MorphTokenizer, self).__init__(rules)
+        if not morph:
+            from .morph import CachedMorphAnalyzer
+            morph = CachedMorphAnalyzer()
+        self.morph = morph
+
+    def __call__(self, text):
+        tokens = Tokenizer.__call__(self, text)
+        for token in tokens:
+            if token.type == RUSSIAN:
+                forms = self.morph(token.value)
+                yield token.morphed(forms)
+            else:
+                yield token
+
+
+class TagMorphTokenizer(MorphTokenizer):
+    def __init__(self, tagger, rules=RULES, morph=None):
+        super(TagMorphTokenizer, self).__init__(rules, morph)
+        self.tagger = tagger
+
+    def __call__(self, text):
+        tokens = MorphTokenizer.__call__(self, text)
+        return self.tagger(tokens)

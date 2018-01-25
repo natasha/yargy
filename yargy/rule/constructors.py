@@ -4,28 +4,54 @@ from __future__ import unicode_literals
 from yargy.compat import string_type
 from yargy.utils import Record, assert_type
 from yargy.visitor import TransformatorsComposition
-from yargy.predicate import is_predicate, PredicateBase
+from yargy.predicates import is_predicate, Predicate
+from yargy.relations import Main
+
+
+def prepare_terms(items):
+    main = None
+    terms = []
+    for index, item in enumerate(items):
+        assert_type(item, (Predicate, Rule, Main))
+        if isinstance(item, Main):
+            if main is not None:
+                raise ValueError('>1 main')
+            main = index
+            item = item.term
+        terms.append(item)
+    if main is None:
+        main = 0
+    return terms, main
 
 
 class Production(Record):
-    __attributes__ = ['terms']
+    __attributes__ = ['terms', 'main']
 
-    def __init__(self, terms):
-        terms = list(terms)
-        for term in terms:
-            assert_type(term, (PredicateBase, Rule))
-        self.terms = terms
-
-    @property
-    def defined(self):
-        return all(
-            isinstance(_, PredicateBase) or _.defined
-            for _ in self.terms
-        )
+    def __init__(self, terms, main=0):
+        self.terms, self.main = prepare_terms(terms)
+        if main > 0:
+            self.main = main
 
     @property
     def children(self):
         return self.terms
+
+    def __str__(self):
+        labels = []
+        for index, term in enumerate(self.terms):
+            label = term.label
+            if self.main > 0 and self.main == index:
+                label = '^' + label
+            labels.append(label)
+        return ' '.join(labels)
+
+
+class EmptyProduction(Production):
+    def __init__(self):
+        super(EmptyProduction, self).__init__([])
+
+    def __str__(self):
+        return 'e'
 
 
 class Rule(Record):
@@ -55,22 +81,31 @@ class Rule(Record):
         interpretator = prepare_rule_interpretator(item)
         return InterpretationRule(self, interpretator)
 
+    def match(self, relation):
+        return RelationRule(self, relation)
+
     def transform(self, *transformators):
         return TransformatorsComposition(transformators)(self)
+
+    def activate(self, tokenizer):
+        from .transformators import ActivateTransformator
+        return ActivateTransformator(tokenizer)(self)
 
     @property
     def normalized(self):
         from .transformators import (
             SquashExtendedTransformator,
             ReplaceOrTransformator,
-            FlattenTransformator,
-            ExpandExtendedTransformator,
+            ReplaceEmptyTransformator,
+            ReplaceExtendedTransformator,
+            FlattenTransformator
         )
         return self.transform(
             SquashExtendedTransformator,
-            ExpandExtendedTransformator,
+            ReplaceExtendedTransformator,
             ReplaceOrTransformator,
-            FlattenTransformator
+            ReplaceEmptyTransformator,
+            FlattenTransformator,
         )
 
     @property
@@ -80,21 +115,20 @@ class Rule(Record):
 
     @property
     def as_bnf(self):
-        from .bnf import BNFTransformator
-        return self.transform(BNFTransformator)
-
-    @property
-    def defined(self):
-        return all(_.defined for _ in self.productions)
+        from .bnf import (
+            BNFTransformator,
+            RemoveForwardTransformator,
+        )
+        return self.transform(
+            BNFTransformator,
+            RemoveForwardTransformator,
+        ).as_bnf
 
     def walk(self, types=None):
         items = bfs_rule(self)
         if types:
             items = (_ for _ in items if isinstance(_, types))
         return items
-
-    def __or__(self, other):
-        return OrRule([self, other])
 
 
 def is_rule(item):
@@ -123,10 +157,6 @@ class OrRule(Rule):
         self.rules = rules
 
     @property
-    def defined(self):
-        return all(_.defined for _ in self.rules)
-
-    @property
     def children(self):
         return self.rules
 
@@ -140,10 +170,6 @@ class WrapperRule(Rule):
 
     def define(self, *args):
         return self.rule.define(*args)
-
-    @property
-    def defined(self):
-        return self.rule.defined
 
     @property
     def children(self):
@@ -179,48 +205,72 @@ class InterpretationRule(WrapperRule):
     __attributes__ = ['rule', 'interpretator']
 
     def __init__(self, rule, interpretator):
-        from yargy.interpretation import InterpretatorBase
+        from yargy.interpretation import Interpretator
+
         super(InterpretationRule, self).__init__(rule)
-        assert_type(interpretator, InterpretatorBase)
+        assert_type(interpretator, Interpretator)
         self.interpretator = interpretator
 
 
-class ForwardRule(WrapperRule):
+class RelationRule(WrapperRule):
+    __attributes__ = ['rule', 'relation']
+
+    def __init__(self, rule, relation):
+        from yargy.relations import Relation
+
+        super(RelationRule, self).__init__(rule)
+        assert_type(relation, Relation)
+        self.relation = relation
+
+
+class ForwardRule(Rule):
+    __attributes__ = ['rule']
+
     def __init__(self):
         self.rule = None
 
     def define(self, item, *items):
         if not items and is_rule(item):
+            if isinstance(item, ForwardRule):
+                raise ValueError('forward(forward(...)) not allowed')
             self.rule = item
         else:
             self.rule = rule(item, *items)
         return self
 
     @property
-    def defined(self):
-        return self.rule is not None
-
-    @property
     def children(self):
-        if self.defined:
+        if self.rule:
             yield self.rule
 
     def __eq__(self, other):
         return id(self) == id(other)
 
     def __repr__(self):
-        if self.defined:
-            # sorry, need to prevent resursion
+        if self.rule:
+            # sorry, need to prevent recursion
             return 'ForwardRule(...)'
         else:
             return 'ForwardRule()'
 
 
+def is_forward_rule(item):
+    return isinstance(item, ForwardRule)
+
+
 class EmptyRule(Rule):
     __attributes__ = []
 
-    defined = True
     children = []
 
     def __init__(self):
         pass
+
+
+class PipelineRule(Rule):
+    __attributes__ = ['pipeline']
+
+    children = []
+
+    def __init__(self, pipeline):
+        self.pipeline = pipeline

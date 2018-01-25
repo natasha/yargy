@@ -79,6 +79,36 @@ class Record(object):
                     printer.pretty(value)
 
 
+class KVRecord(Record):
+    def __repr__(self):
+        name = self.__class__.__name__
+        args = ', '.join(
+            '{key}={value!r}'.format(
+                key=_,
+                value=getattr(self, _)
+            )
+            for _ in self.__attributes__
+        )
+        return '{name}({args})'.format(
+            name=name,
+            args=args
+        )
+
+    def _repr_pretty_(self, printer, cycle):
+        name = self.__class__.__name__
+        if cycle:
+            printer.text('{name}(...)'.format(name=name))
+        else:
+            with printer.group(len(name) + 1, '{name}('.format(name=name), ')'):
+                for index, key in enumerate(self.__attributes__):
+                    if index > 0:
+                        printer.text(',')
+                        printer.break_()
+                    with printer.group(len(key) + 1, key + '='):
+                        value = getattr(self, key)
+                        printer.pretty(value)
+
+
 def flatten(items, list=list):
     for item in items:
         if isinstance(item, list):
