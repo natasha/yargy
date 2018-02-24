@@ -171,7 +171,7 @@ class eq(ParameterPredicate):
 
     @property
     def label(self):
-        return repr(self.value)
+        return "'%s'" % self.value
 
 
 class length_eq(ParameterPredicate):
@@ -380,7 +380,7 @@ class GramPredicate(ParameterPredicate):
 
     @property
     def label(self):
-        return 'gram({value!r})'.format(value=self.value)
+        return "gram('%s')" % self.value
 
 
 class type(ParameterPredicateScheme):
