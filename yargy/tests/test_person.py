@@ -27,10 +27,10 @@ def test_person():
         not_(gram('Abbr')),
     )
 
-    POSITION = morph_pipeline(
+    POSITION = morph_pipeline([
         'управляющий директор',
         'вице-мэр'
-    )
+    ])
 
     gnc = gnc_relation()
     NAME = rule(

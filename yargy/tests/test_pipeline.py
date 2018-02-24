@@ -17,7 +17,7 @@ from yargy.pipelines import (
 
 def test_pipeline():
     RULE = rule(
-        pipeline('a b c', 'b c'),
+        pipeline(['a b c', 'b c']),
         'd'
     )
     parser = Parser(RULE)
@@ -25,25 +25,25 @@ def test_pipeline():
     assert parser.match('a b c d')
 
     RULE = rule(
-        pipeline('a b').repeatable(),
+        pipeline(['a b']).repeatable(),
         'c'
     )
     parser = Parser(RULE)
     assert parser.match('a b a b c')
 
     RULE = rule(
-        caseless_pipeline('A B'),
+        caseless_pipeline(['A B']),
         'c'
     )
     parser = Parser(RULE)
     assert parser.match('A b c')
 
-    RULE = morph_pipeline(
+    RULE = morph_pipeline([
         'текст',
         'текст песни',
         'материал',
         'информационный материал',
-    )
+    ])
     parser = Parser(RULE)
     matches = list(parser.findall('текстом песни музыкальной группы'))
     assert len(matches) == 1
@@ -55,6 +55,6 @@ def test_pipeline():
     match = matches[0]
     assert [_.value for _ in match.tokens] == ['информационного', 'материала']
 
-    RULE = morph_pipeline('1 B.')
+    RULE = morph_pipeline(['1 B.'])
     parser = Parser(RULE)
     assert parser.match('1 b .')

@@ -174,16 +174,16 @@ class MorphPipelineScheme(PipelineScheme):
         )
 
 
-def pipeline(*lines):
+def pipeline(lines):
     from .rule.constructors import PipelineRule
     return PipelineRule(PipelineScheme(lines))
 
 
-def caseless_pipeline(*lines):
+def caseless_pipeline(lines):
     from .rule.constructors import PipelineRule
     return PipelineRule(CaselessPipelineScheme(lines))
 
 
-def morph_pipeline(*lines):
+def morph_pipeline(lines):
     from .rule.constructors import PipelineRule
     return PipelineRule(MorphPipelineScheme(lines))

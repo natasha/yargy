@@ -366,10 +366,10 @@ def test_pipeline_key():
     from yargy import or_
     from yargy.pipelines import morph_pipeline
 
-    pipeline = morph_pipeline(
+    pipeline = morph_pipeline([
         'закрытое общество',
         'завод'
-    )
+    ])
 
     F = fact('F', ['a'])
 

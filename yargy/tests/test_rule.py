@@ -58,7 +58,7 @@ def test_activate():
 
     tokenizer = MorphTokenizer()
 
-    A = pipeline('a').named('A')
+    A = pipeline(['a']).named('A')
     B = A.activate(tokenizer)
     assert_bnf(
         B,
