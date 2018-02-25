@@ -38,9 +38,6 @@ def test_inflect(morph):
     assert form.inflect() == 'александр'
     assert form.inflect({'nomn', 'plur'}) == 'александры'
 
-    with pytest.raises(ValueError):
-        form.inflect({'VERB'})
-
 
 def test_check_gram(morph):
     with pytest.raises(ValueError):

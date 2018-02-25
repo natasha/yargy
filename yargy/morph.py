@@ -82,7 +82,7 @@ class Form(Record):
     def inflect(self, grams={'nomn', 'sing'}):
         record = self.raw.inflect(grams)
         if not record:
-            raise ValueError
+            return self.normalized
         return record.word
 
 

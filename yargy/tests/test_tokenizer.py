@@ -92,8 +92,8 @@ def test_morph():
         Token('dvd', (0, 3), LATIN),
         Token('-', (3, 4), PUNCT),
         MorphToken('диски', (4, 9), RUSSIAN, forms=[
-            Form('диск', Grams({'NOUN', 'accs', 'inan', 'masc', 'plur'})),
-            Form('диск', Grams({'NOUN', 'inan', 'masc', 'nomn', 'plur'}))
+            Form('диск', Grams({'NOUN', 'inan', 'masc', 'nomn', 'plur'})),
+            Form('диск', Grams({'NOUN', 'accs', 'inan', 'masc', 'plur'}))
         ])
     ]
 
