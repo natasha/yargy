@@ -1,6 +1,5 @@
 
 
-from .base import PredicateBase
 from .constructors import (
     is_predicate,
     Predicate,
@@ -8,4 +7,4 @@ from .constructors import (
     OrPredicate,
     NotPredicate
 )
-from .relation import is_relation_predicate
+from .bank import *

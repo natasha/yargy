@@ -22,24 +22,28 @@ class Tree(Record):
 
     @property
     def normalized(self):
-        from .transformators import (
-            PropogateEmptyTransformator,
-            KeepInterpretationNodesTransformator,
-        )
-        return self.transform(
-            PropogateEmptyTransformator,
-            KeepInterpretationNodesTransformator
-        )
+        from .transformators import PropogateEmptyTransformator
+        return self.transform(PropogateEmptyTransformator)
+
+    @property
+    def relations(self):
+        from .transformators import RelationsTransformator
+        return self.transform(RelationsTransformator)
+
+    def constrain(self, relations):
+        from .transformators import ApplyRelationsTransformator
+        transform = ApplyRelationsTransformator(relations)
+        return transform(self)
 
     def interpret(self):
-        from .transformators import InterpretationTransformator
-        return self.normalized.transform(
+        from .transformators import (
+            KeepInterpretationNodesTransformator,
             InterpretationTransformator
         )
-
-    def replace_token_forms(self, mapping):
-        from .transformators import ReplaceTokenFormsTransformator
-        return ReplaceTokenFormsTransformator(mapping)(self)
+        return self.transform(
+            KeepInterpretationNodesTransformator,
+            InterpretationTransformator
+        )
 
     @property
     def as_dot(self):
@@ -64,11 +68,24 @@ def dfs_tree(root):
 
 
 class Node(Record):
-    __attributes__ = ['rule', 'children']
+    __attributes__ = ['rule', 'production', 'children']
 
-    def __init__(self, rule, children):
+    def __init__(self, rule, production, children):
         self.rule = rule
+        self.production = production
         self.children = children
+
+    @property
+    def main(self):
+        return self.children[self.production.main].main
+
+    @property
+    def interpretator(self):
+        return self.rule.interpretator
+
+    @property
+    def relation(self):
+        return self.rule.relation
 
     @property
     def label(self):
@@ -79,17 +96,17 @@ class Leaf(Node):
     __attributes__ = ['predicate', 'token']
 
     children = []
+    interpretator = None
+    relation = None
 
     def __init__(self, predicate, token):
         self.predicate = predicate
         self.token = token
 
     @property
+    def main(self):
+        return self.token
+
+    @property
     def label(self):
         return self.token.value
-
-
-class InterpretationNode(Node):
-    @property
-    def interpretator(self):
-        return self.rule.interpretator

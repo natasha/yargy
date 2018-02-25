@@ -9,35 +9,35 @@
 Токенизатор
 -----------
 
-Токенизатор реализован на регулярных выражениях. Для каждого типа
-токенов есть своё правило со своей регуляркой:
+В Yargy токенизатор реализован на регулярных выражениях. Для каждого
+типа токенов есть своё правило со своей регуляркой:
 
-.. code:: python
+.. code:: ipython3
 
-    from yargy.tokenizer import DEFAULT_RULES
+    from yargy.tokenizer import RULES
     
     
-    DEFAULT_RULES
+    RULES
 
 
 
 
 .. parsed-literal::
 
-    [RussianRule('[а-яё][а-яё\\-]*', set()),
-     LatinRule("[a-z]\\-?[a-z\\']*", {'LATN'}),
-     IntRule('\\d+', {'INT', 'NUMBER'}),
-     QuoteRule('["\\\'«»„“ʼʻ”]', set()),
-     PunctuationRule('[-\\\\/!#$%&()\\[\\]\\*\\+,\\.:;<=>?@^_`{|}~№…]', {'PUNCT'}),
-     EOLRule('[\n\r]+', {'END-OF-LINE'}),
-     OtherRule('\\S', {'OTHER'})]
+    [TokenRule('RU', '[а-яё]+'),
+     TokenRule('LATIN', '[a-z]+'),
+     TokenRule('INT', '\\d+'),
+     TokenRule('PUNCT',
+               '[-\\\\/!#$%&()\\[\\]\\*\\+,\\.:;<=>?@^_`{|}~№…"\\\'«»„“ʼʻ”]'),
+     TokenRule('EOL', '[\\n\\r]+'),
+     TokenRule('OTHER', '\\S')]
 
 
 
 Токенизатор инициализируется списком правил. По-умолчанию — это
-``DEFAULT_RULES``:
+``RULES``:
 
-.. code:: python
+.. code:: ipython3
 
     from yargy.tokenizer import Tokenizer
     
@@ -51,22 +51,25 @@
 
 .. parsed-literal::
 
-    [Token('a', (0, 1), [Form('a', {'LATN'})]),
-     Token('@', (1, 2), [Form('@', {'PUNCT'})]),
-     Token('mail', (2, 6), [Form('mail', {'LATN'})]),
-     Token('.', (6, 7), [Form('.', {'PUNCT'})]),
-     Token('ru', (7, 9), [Form('ru', {'LATN'})])]
+    [Token('a', [0, 1), 'LATIN'),
+     Token('@', [1, 2), 'PUNCT'),
+     Token('mail', [2, 6), 'LATIN'),
+     Token('.', [6, 7), 'PUNCT'),
+     Token('ru', [7, 9), 'LATIN')]
 
 
 
-Пользователь может убрать часть правил из списка или добавить новых:
+Пользователь может убрать часть правил из списка или добавить новых.
+Например, нужно убрать токены с переводами строк:
 
-.. code:: python
+.. code:: ipython3
 
-    from yargy.tokenizer import LatinRule
+    tokenizer = Tokenizer()
     
-    
-    tokenizer = Tokenizer([LatinRule()])
+    text = '''
+    abc
+    123
+    '''
     list(tokenizer(text))
 
 
@@ -74,25 +77,41 @@
 
 .. parsed-literal::
 
-    [Token('a', (0, 1), [Form('a', {'LATN'})]),
-     Token('mail', (2, 6), [Form('mail', {'LATN'})]),
-     Token('ru', (7, 9), [Form('ru', {'LATN'})])]
+    [Token('\n', [0, 1), 'EOL'),
+     Token('abc', [1, 4), 'LATIN'),
+     Token('\n', [4, 5), 'EOL'),
+     Token('123', [5, 8), 'INT'),
+     Token('\n', [8, 9), 'EOL')]
 
 
 
-Например, в Yargy есть примитивные правила для токенизации емейлов и
-телефонов. По-умолчанию они не используются:
+Уберём правило для ``'EOL'``:
 
-.. code:: python
+.. code:: ipython3
 
-    from yargy.tokenizer import EmailRule, PhoneRule
+    tokenizer = Tokenizer().remove_types('EOL')
+    
+    list(tokenizer(text))
+
+
+
+
+.. parsed-literal::
+
+    [Token('abc', [1, 4), 'LATIN'), Token('123', [5, 8), 'INT')]
+
+
+
+В Yargy есть примитивные правила для токенизации емейлов и телефонов.
+По-умолчанию они не используются:
+
+.. code:: ipython3
+
+    from yargy.tokenizer import EMAIL_RULE, PHONE_RULE
     
     
     text = 'email: ab@mail.ru call: 8 915 132 54 76'
-    tokenizer = Tokenizer(
-        [EmailRule(), PhoneRule()]
-        + DEFAULT_RULES
-    )
+    tokenizer = Tokenizer().add_rules(EMAIL_RULE, PHONE_RULE)
     list(tokenizer(text))
 
 
@@ -100,39 +119,28 @@
 
 .. parsed-literal::
 
-    [Token('email', (0, 5), [Form('email', {'LATN'})]),
-     Token(':', (5, 6), [Form(':', {'PUNCT'})]),
-     Token('ab@mail.ru', (7, 17), [Form('ab@mail.ru', {'EMAIL'})]),
-     Token('call', (18, 22), [Form('call', {'LATN'})]),
-     Token(':', (22, 23), [Form(':', {'PUNCT'})]),
-     Token(' 8 915 132 54 76', (23, 39), [Form(' 8 915 132 54 76', {'PHONE'})])]
+    [Token('email', [0, 5), 'LATIN'),
+     Token(':', [5, 6), 'PUNCT'),
+     Token('ab@mail.ru', [7, 17), 'EMAIL'),
+     Token('call', [18, 22), 'LATIN'),
+     Token(':', [22, 23), 'PUNCT'),
+     Token(' 8 915 132 54 76', [23, 39), 'PHONE')]
 
 
 
-Можно даже запрограммировать своё правило. Например, так выглядит
-простое правило для извлечения доменов:
+Можно создать и добавить своё правило. Например, так выглядит простое
+решение для извлечения доменов:
 
-.. code:: python
+.. code:: ipython3
 
     from yargy.tokenizer import TokenRule
     
     
-    class DomainRule(TokenRule):
-        pattern = '[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+'
-        grammemes = {'DOMAIN'}
+    DOMAIN_RULE = TokenRule('DOMAIN', '[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+')
+    
         
-        def normalize(self, value):
-            value = value.lower()
-            if value.startswith('www.'):
-                value = value[4:]
-            return value
-        
-        
-    text = 'www.VKontakte.ru'
-    tokenizer = Tokenizer(
-        [DomainRule()]
-        + DEFAULT_RULES
-    )
+    text = 'на сайте www.VKontakte.ru'
+    tokenizer = Tokenizer().add_rules(DOMAIN_RULE)
     list(tokenizer(text))
 
 
@@ -140,7 +148,40 @@
 
 .. parsed-literal::
 
-    [Token('www.VKontakte.ru', (0, 16), [Form('vkontakte.ru', {'DOMAIN'})])]
+    [Token('на', [0, 2), 'RU'),
+     Token('сайте', [3, 8), 'RU'),
+     Token('www.VKontakte.ru', [9, 25), 'DOMAIN')]
+
+
+
+По умолчанию, Yargy использует не ``Tokenizer``, а ``MorphTokenizer``.
+Для каждого токена с типом ``'RU'`` он определяет морфологию с помощью
+pymorphy2:
+
+.. code:: ipython3
+
+    from yargy.tokenizer import MorphTokenizer
+    
+    tokenizer = MorphTokenizer()
+    list(tokenizer('X век стал'))
+
+
+
+
+.. parsed-literal::
+
+    [Token('X', [0, 1), 'LATIN'),
+     MorphToken('век',
+                [2, 5),
+                'RU',
+                [Form('век', Grams(NOUN,inan,masc,nomn,sing)),
+                 Form('век', Grams(NOUN,accs,inan,masc,sing)),
+                 Form('век', Grams(ADVB)),
+                 Form('веко', Grams(NOUN,gent,inan,neut,plur))]),
+     MorphToken('стал',
+                [6, 10),
+                'RU',
+                [Form('стать', Grams(VERB,indc,intr,masc,past,perf,sing))])]
 
 
 
@@ -149,86 +190,77 @@
 Газеттир
 --------
 
-В Yargy реализовано два типа газеттиров: ``MorphPipeline`` и
-``CaselessPipeline``. ``MorphPipeline`` перед работой приводит слова к
-нормальной форме:
+При составлении правил часто используются списки слов и словосочетаний.
+Например, словарь профессий или географических объектов. Такие правила
+можно записывать стандартные средствами через ``rule``, ``or_``,
+``normalized``, ``caseless``:
 
-.. code:: python
+.. code:: ipython3
 
-    from yargy.pipelines import MorphPipeline
+    from yargy import rule, or_
+    from yargy.predicates import normalized, caseless
     
     
-    class Pipeline(MorphPipeline):
-        grammemes = {'Type'}
-        
-        keys = [
-            'электронный дневник',
-        ]
-        
+    POSITION = or_(
+        rule(normalized('генеральный'), normalized('директор')),
+        rule(normalized('бухгалтер'))
+    )
     
-    tokenizer = Tokenizer()
-    pipeline = Pipeline()
+    GEO = or_(
+        rule(normalized('Ростов'), '-', caseless('на'), '-', caseless('Дону')),
+        rule(normalized('Москва'))
+    )
+
+Это неудобно и легко ошибиться. Для составления словарей в Yargy
+используется газеттир. Реализовано два типа газеттиров:
+``morph_pipeline`` и ``caseless_pipeline``. ``morph_pipeline`` перед
+работой приводит слова к нормальной форме:
+
+.. code:: ipython3
+
+    from yargy import Parser
+    from yargy.pipelines import morph_pipeline
+    
+    
+    TYPE = morph_pipeline('электронный дневник')
+    
+    parser = Parser(TYPE)
     text = 'электронным дневником, электронные дневники, электронное дневнику'
-    list(pipeline(tokenizer(text)))
-
-
+    for match in parser.findall(text):
+        print([_.value for _ in match.tokens])
 
 
 .. parsed-literal::
 
-    [Multitoken('электронным дневником',
-                (0, 21),
-                [Form('электронный дневник', {'Type'})]),
-     Token(',', (21, 22), [Form(',', {'PUNCT'})]),
-     Multitoken('электронные дневники',
-                (23, 43),
-                [Form('электронный дневник', {'Type'})]),
-     Token(',', (43, 44), [Form(',', {'PUNCT'})]),
-     Multitoken('электронное дневнику',
-                (45, 65),
-                [Form('электронный дневник', {'Type'})])]
+    ['электронным', 'дневником']
+    ['электронные', 'дневники']
+    ['электронное', 'дневнику']
 
 
-
-Нужно быть аккуратным с пробелами в ``keys``. Слова должны быть
-разделены так же, как это бы сделал токенизатор. Например, чтобы
-обработать "dvd-диск", в ``keys`` должно быть написано ``dvd - диск``.
-Стандартный токенизатор Yargy разбивает "dvd-диск" на три токена.
-
-``CaselessPipeline`` используется, когда слова не нужно приводить к
+``caseless_pipeline`` используется, когда слова не нужно приводить к
 нормальной форме. Например, есть арабские имена: "Абд Аль-Азиз Бин
 Мухаммад", "Абд ар-Рахман Наср ас-Са ди". Их нужно обработать как есть:
 
-.. code:: python
+.. code:: ipython3
 
-    from yargy.pipelines import CaselessPipeline
+    from yargy.pipelines import caseless_pipeline
     
     
-    class Pipeline(CaselessPipeline):
-        grammemes = {'Name'}
-        keys = [
-            'Абд Аль-Азиз Бин Мухаммад',
-            'Абд ар-Рахман Наср ас-Са ди',
-        ]
+    NAME = caseless_pipeline(
+        'Абд Аль-Азиз Бин Мухаммад',
+        'Абд ар-Рахман Наср ас-Са ди'
+    )
         
-    tokenizer = Tokenizer()
-    pipeline = Pipeline()
+    parser = Parser(NAME)
     text = 'Абд Аль-Азиз Бин Мухаммад, АБД АР-РАХМАН НАСР АС-СА ДИ'
-    list(pipeline(tokenizer(text)))
-
-
+    for match in parser.findall(text):
+        print([_.value for _ in match.tokens])
 
 
 .. parsed-literal::
 
-    [Multitoken('Абд Аль-Азиз Бин Мухаммад',
-                (0, 25),
-                [Form('Абд Аль-Азиз Бин Мухаммад', {'Name'})]),
-     Token(',', (25, 26), [Form(',', {'PUNCT'})]),
-     Multitoken('АБД АР-РАХМАН НАСР АС-СА ДИ',
-                (27, 54),
-                [Form('Абд ар-Рахман Наср ас-Са ди', {'Name'})])]
-
+    ['АБД', 'АР', '-', 'РАХМАН', 'НАСР', 'АС', '-', 'СА', 'ДИ']
+    ['Абд', 'Аль', '-', 'Азиз', 'Бин', 'Мухаммад']
 
 
 .. _predicate:
@@ -241,12 +273,15 @@
    ~yargy.predicates.eq
    ~yargy.predicates.caseless
    ~yargy.predicates.in_
+   ~yargy.predicates.in_caseless
    ~yargy.predicates.gte
    ~yargy.predicates.lte
    ~yargy.predicates.length_eq
    ~yargy.predicates.normalized
    ~yargy.predicates.dictionary
    ~yargy.predicates.gram
+   ~yargy.predicates.type
+   ~yargy.predicates.tag
    ~yargy.predicates.custom
    ~yargy.predicates.true
    ~yargy.predicates.is_lower
@@ -259,12 +294,15 @@
 .. autoclass:: yargy.predicates.eq
 .. autoclass:: yargy.predicates.caseless
 .. autoclass:: yargy.predicates.in_
+.. autoclass:: yargy.predicates.in_caseless
 .. autoclass:: yargy.predicates.gte
 .. autoclass:: yargy.predicates.lte
 .. autoclass:: yargy.predicates.length_eq
 .. autoclass:: yargy.predicates.normalized
 .. autoclass:: yargy.predicates.dictionary
 .. autoclass:: yargy.predicates.gram
+.. autoclass:: yargy.predicates.type
+.. autoclass:: yargy.predicates.tag
 .. autoclass:: yargy.predicates.custom
 .. autoclass:: yargy.predicates.true
 .. autoclass:: yargy.predicates.is_lower
@@ -283,10 +321,11 @@
 используется метод ``attribute``. Например, в ``Date`` по-умолчанию год
 будет равен 2017:
 
-.. code:: python
+.. code:: ipython3
 
     from IPython.display import display
-    from yargy import Parser, rule, fact, attribute, and_, or_
+    from yargy import Parser, rule, and_, or_
+    from yargy.interpretation import fact, attribute
     from yargy.predicates import dictionary, gte, lte
     
     
@@ -341,16 +380,16 @@
     '''
     parser = Parser(DATE)
     for line in text.splitlines():
-        match = next(parser.match(line))
+        match = parser.match(line)
         display(match.fact)
 
 
 
 .. parsed-literal::
 
-    Date(year=2016,
+    Date(year='2016',
          month='июля',
-         day=18)
+         day='18')
 
 
 
@@ -358,26 +397,26 @@
 
     Date(year=2017,
          month='марта',
-         day=15)
+         day='15')
 
 
 Для дат деревья разбора выглядят просто: вершина-конструктор и несколько
 детей-атрибутов:
 
-.. code:: python
+.. code:: ipython3
 
     parser = Parser(DATE)
     for line in text.splitlines():
-        match = next(parser.match(line))
-        display(match.tree.normalized.as_dot)
+        match = parser.match(line)
+        display(match.tree.as_dot)
 
 
 
-.. image:: reference_files/reference_29_0.svg
+.. image:: reference_files/reference_34_0.svg
 
 
 
-.. image:: reference_files/reference_29_1.svg
+.. image:: reference_files/reference_34_1.svg
 
 
 Как будет себя вести алгоритм интерпретации, когда ребёнок конструктора
@@ -386,9 +425,9 @@
 вершин с токенами? Пойдём от простого к сложному. Когда под
 вершиной-атрибутом несколько токенов, они объединяются:
 
-.. code:: python
+.. code:: ipython3
 
-    from yargy.predicates import eq, gram, dictionary
+    from yargy.predicates import eq, type, dictionary
     
     
     Money = fact(
@@ -397,7 +436,7 @@
     )
     MONEY = rule(
         rule(
-            gram('INT'),
+            type('INT'),
             dictionary({
                 'тысяча',
                 'миллион'
@@ -413,19 +452,19 @@
     )
     
     parser = Parser(MONEY)
-    match = next(parser.match('5 тысяч$'))
+    match = parser.match('5 тысяч$')
     match.tree.as_dot
 
 
 
 
-.. image:: reference_files/reference_31_0.svg
+.. image:: reference_files/reference_36_0.svg
 
 
 
 В ``Money.value`` будет два слова:
 
-.. code:: python
+.. code:: ipython3
 
     match.fact
 
@@ -439,35 +478,35 @@
 
 
 
-Получить доступ к исходным токенам можно через атрибут ``raw``:
+Получить доступ к исходным токенам можно через атрибут ``_raw``, но
+обычно такой необходимости нет:
 
-.. code:: python
+.. code:: ipython3
 
-    match.fact.raw.value
+    match.fact._raw
 
 
 
 
 .. parsed-literal::
 
-    Chain([NormalizedToken(RawNormalizer(),
-                           Token(5, (0, 1), [Form(5, {'INT', 'NUMBER'})])),
-           NormalizedToken(RawNormalizer(),
-                           Token('тысяч',
-                                 (2, 7),
-                                 [Form('тысяча',
-                                       {'NOUN',
-                                        'femn',
-                                        'gent',
-                                        'inan',
-                                        'plur'})]))])
+    InterpretatorFact({'currency': Chain([Token('$', [7, 8), 'PUNCT')], None),
+                       'value': Chain([Token('5', [0, 1), 'INT'),
+                              MorphToken('тысяч',
+                                         [2, 7),
+                                         'RU',
+                                         [Form('тысяча',
+                                               Grams(NOUN,femn,gent,inan,plur))])],
+                             None)},
+                      set(),
+                      {'currency', 'value'})
 
 
 
-Когда под вершиной-атрибутом смесь из токенов и вершин-конструктов, они
-объединяются в список, а не строку:
+Когда под вершиной-атрибутом смесь из токенов и вершин-конструктов,
+интерпретация падает:
 
-.. code:: python
+.. code:: ipython3
 
     from yargy.predicates import true
     
@@ -494,35 +533,24 @@
     )
     
     parser = Parser(RULE)
-    match = next(parser.match('X Y'))
+    match = parser.match('X Y')
     match.tree.as_dot
 
 
 
 
-.. image:: reference_files/reference_37_0.svg
+.. image:: reference_files/reference_42_0.svg
 
 
 
-В ``A.x`` будет список из строки и объекта ``B``:
+.. code:: ipython3
 
-.. code:: python
-
-    match.fact
-
-
-
-
-.. parsed-literal::
-
-    A(x=['X', B(y='Y')])
-
-
+    # match.fact Будет TypeError
 
 Если под вершиной-атрибутом другая вершина-атрибут, нижняя просто
 исчезает:
 
-.. code:: python
+.. code:: ipython3
 
     from yargy.predicates import true
     
@@ -538,19 +566,19 @@
     ).interpretation(A)
     
     parser = Parser(RULE)
-    match = next(parser.match('X'))
+    match = parser.match('X')
     match.tree.as_dot
 
 
 
 
-.. image:: reference_files/reference_41_0.svg
+.. image:: reference_files/reference_45_0.svg
 
 
 
 "X" попадёт в ``A.y``, не в ``A.x``:
 
-.. code:: python
+.. code:: ipython3
 
     match.fact
 
@@ -567,7 +595,7 @@
 Что если под вершиной-конструктом несколько одинаковых вершин-атрибутов?
 Самый правый атрибут перезаписывает все остальные:
 
-.. code:: python
+.. code:: ipython3
 
     A = fact(
         'A',
@@ -580,19 +608,19 @@
     )
     
     parser = Parser(RULE)
-    match = next(parser.match('1 2 3'))
+    match = parser.match('1 2 3')
     match.tree.normalized.as_dot
 
 
 
 
-.. image:: reference_files/reference_45_0.svg
+.. image:: reference_files/reference_49_0.svg
 
 
 
 В ``A.x`` попадёт 3:
 
-.. code:: python
+.. code:: ipython3
 
     match.fact
 
@@ -601,7 +629,7 @@
 
 .. parsed-literal::
 
-    A(x=3)
+    A(x='3')
 
 
 
@@ -609,7 +637,7 @@
 вершин-атрибутов, не только самой правой. В этом случае поле помечается
 как ``repeatable``:
 
-.. code:: python
+.. code:: ipython3
 
     from yargy import not_
     
@@ -635,20 +663,20 @@
     
     parser = Parser(ITEM)
     text = '«Каштанка», «Дядя Ваня»'
-    match = next(parser.match(text))
-    match.tree.normalized.as_dot
+    match = parser.match(text)
+    match.tree.as_dot
 
 
 
 
-.. image:: reference_files/reference_49_0.svg
+.. image:: reference_files/reference_53_0.svg
 
 
 
 «Дядя Ваня» не перезапишет «Каштанка», они оба окажутся в
 ``Item.titles``:
 
-.. code:: python
+.. code:: ipython3
 
     match.fact
 
@@ -663,9 +691,10 @@
 
 Остался последний неочевидный случай, когда ребёнок
 вершины-конструктора, другая вершина-конструктор. Такая ситуация
-возникает при использовании рекурсивных грамматик:
+возникает при использовании рекурсивных грамматик. В примере ребёнок
+вершины ``Item`` другая вершина ``Item``:
 
-.. code:: python
+.. code:: ipython3
 
     from yargy import forward, or_
     
@@ -692,21 +721,22 @@
     
     parser = Parser(ITEM)
     text = '«Каштанка» 18 июня'
-    match = next(parser.match(text))
-    match.tree.normalized.as_dot
+    match = parser.match(text)
+    match.tree.as_dot
 
 
 
 
-.. image:: reference_files/reference_53_0.svg
+.. image:: reference_files/reference_57_0.svg
 
 
 
 В ходе интерпретации появится два объекта:
 ``Item(title='«Каштанка»', date=None)`` и
-``Item(title=None, date=Date(18, 'июня'))``. В конце произойдёт слияние:
+``Item(title=None, date=Date('18', 'июня'))``. В конце произойдёт
+слияние:
 
-.. code:: python
+.. code:: ipython3
 
     match.fact
 
@@ -718,7 +748,7 @@
     Item(title='«Каштанка»',
          date=Date(year=2017,
                    month='июня',
-                   day=18))
+                   day='18'))
 
 
 
@@ -727,14 +757,442 @@
 Нормализация
 ------------
 
-ТОДО про normalized , про raw, про то, что не только для атрибутов можно
-указывать, что если несколько токенов под атрибутом, про аргументы в
-inflected
+В Yargy реализованы четыре основных метода для нормализации:
+``normalized``, ``inflected``, ``custom`` и ``const``. ``normalized``
+возвращает нормальную форму слова, соответствует ``normal_form`` в
+pymorphy2:
+
+.. code:: ipython3
+
+    DATE = rule(
+        DAY.interpretation(
+            Date.day
+        ),
+        MONTH_NAME.interpretation(
+            Date.month
+        ),
+        YEAR.interpretation(
+            Date.year
+        )
+    ).interpretation(
+        Date
+    )
+    
+    parser = Parser(DATE)
+    match = parser.match('8 июня 2015')
+    match.fact
+
+
+
+
+.. parsed-literal::
+
+    Date(year='2015',
+         month='июня',
+         day='8')
+
+
+
+С ``normalized`` слово "июня" меняется на "июнь":
+
+.. code:: ipython3
+
+    DATE = rule(
+        DAY.interpretation(
+            Date.day
+        ),
+        MONTH_NAME.interpretation(
+            Date.month.normalized()
+        ),
+        YEAR.interpretation(
+            Date.year
+        )
+    ).interpretation(
+        Date
+    )
+    
+    parser = Parser(DATE)
+    match = parser.match('8 июня 2015')
+    match.fact
+
+
+
+
+.. parsed-literal::
+
+    Date(year='2015',
+         month='июнь',
+         day='8')
+
+
+
+Если в ``normalized`` попадает несколько токенов, каждый приводится к
+нормальной форме по отдельности:
+
+.. code:: ipython3
+
+    from yargy.interpretation import fact
+    from yargy.predicates import normalized
+    from IPython.display import display
+    
+    
+    Geo = fact(
+        'Geo',
+        ['name']
+    )
+    
+    RULE = rule(
+        normalized('Красная'),
+        normalized('площадь')
+    ).interpretation(
+        Geo.name.normalized()
+    ).interpretation(
+        Geo
+    )
+    
+    parser = Parser(RULE)
+    for match in parser.findall('на Красной площади'):
+        display(match.fact)
+
+
+
+.. parsed-literal::
+
+    Geo(name='красный площадь')
+
+
+Особым образом ведёт себя ``normalized``, когда идёт после газеттира.
+Результатом нормализации тогда будет ключ газеттира:
+
+.. code:: ipython3
+
+    from yargy.pipelines import morph_pipeline
+    
+    RULE = morph_pipeline(
+        'красная площадь',
+        'первомайская улица'
+    ).interpretation(
+        Geo.name.normalized()
+    ).interpretation(
+        Geo
+    )
+    
+    parser = Parser(RULE)
+    for match in parser.findall('c Красной площади на Первомайскую улицу'):
+        display(match.fact)
+
+
+
+.. parsed-literal::
+
+    Geo(name='красная площадь')
+
+
+
+.. parsed-literal::
+
+    Geo(name='первомайская улица')
+
+
+``inflected`` склоняет слово, соответствует методу ``inflect`` в
+pymorphy2:
+
+.. code:: ipython3
+
+    from yargy.interpretation import fact
+    from yargy.predicates import gram
+    
+    Name = fact(
+        'Name',
+        ['first']
+    )
+    
+    NAME = gram('Name').interpretation(
+        Name.first.inflected()
+    ).interpretation(
+        Name
+    )
+    
+    parser = Parser(NAME)
+    for match in parser.findall('Саше, Маше, Вадиму'):
+        display(match.fact)
+
+
+
+.. parsed-literal::
+
+    Name(first='саша')
+
+
+
+.. parsed-literal::
+
+    Name(first='маша')
+
+
+
+.. parsed-literal::
+
+    Name(first='вадим')
+
+
+В качестве аргумента ``inflected`` принимает набор граммем:
+
+.. code:: ipython3
+
+    NAME = gram('Name').interpretation(
+        Name.first.inflected({'accs', 'plur'})  # винительный падеж, множественное число
+    ).interpretation(
+        Name
+    )
+    
+    parser = Parser(NAME)
+    for match in parser.findall('Саша, Маша, Вадим'):
+        display(match.fact)
+
+
+
+.. parsed-literal::
+
+    Name(first='саш')
+
+
+
+.. parsed-literal::
+
+    Name(first='маш')
+
+
+
+.. parsed-literal::
+
+    Name(first='вадимов')
+
+
+``custom`` применяет к слову произвольную функцию:
+
+.. code:: ipython3
+
+    from yargy.interpretation import fact
+    from yargy.predicates import type
+    
+    Float = fact(
+        'Float',
+        ['value']
+    )
+    
+    
+    INT = type('INT')
+    FLOAT = rule(
+        INT,
+        '.',
+        INT
+    ).interpretation(
+        Float.value.custom(float)
+    ).interpretation(
+        Float
+    )
+    
+    parser = Parser(FLOAT)
+    match = parser.match('3.1415')
+    match.fact
+
+
+
+
+.. parsed-literal::
+
+    Float(value=3.1415)
+
+
+
+``custom`` может применяться вместе с ``normalized``. Тогда слово начала
+будет поставлено в нормальную форму, потом к нему будет применена
+функция:
+
+.. code:: ipython3
+
+    MONTHS = {
+        'январь': 1,
+        'февраль': 2,
+        'март': 3,
+        'апрель': 4,
+        'мая': 5,
+        'июнь': 6,
+        'июль': 7,
+        'август': 8,
+        'сентябрь': 9,
+        'октябрь': 10,
+        'ноябрь': 11,
+        'декабрь': 12
+    }
+    
+    DATE = rule(
+        DAY.interpretation(
+            Date.day.custom(int)
+        ),
+        MONTH_NAME.interpretation(
+            Date.month.normalized().custom(MONTHS.__getitem__)
+        ),
+        YEAR.interpretation(
+            Date.year.custom(int)
+        )
+    ).interpretation(
+        Date
+    )
+    
+    parser = Parser(DATE)
+    match = parser.match('8 июня 2015')
+    match.fact
+
+
+
+
+.. parsed-literal::
+
+    Date(year=2015,
+         month=6,
+         day=8)
+
+
+
+``const`` просто заменяет слово или словосочетания фиксированным
+значением:
+
+.. code:: ipython3
+
+    Era = fact(
+        'Era',
+        ['value']
+    )
+    
+    BC = morph_pipeline(
+        'до нашей эры',
+        'до н.э.'
+    ).interpretation(
+        Era.value.const('BC')
+    )
+    AD = morph_pipeline(
+        'наша эра',
+        'н.э.'
+    ).interpretation(
+        Era.value.const('AD')
+    )
+    ERA = or_(
+        BC,
+        AD
+    ).interpretation(
+        Era
+    )
+    
+    parser = Parser(ERA)
+    for match in parser.findall('наша эра, до н.э.'):
+        display(match.fact)
+
+
+
+.. parsed-literal::
+
+    Era(value='BC')
+
+
+
+.. parsed-literal::
+
+    Era(value='AD')
+
 
 .. _relation:
 
 Согласование
 ------------
 
-ТОДО список case\_relation, number\_relation .. несколько согласований в
-одной грамматике , согласование не только токенов
+В Yargy реализовано четыре типа согласований: ``gender_relation`` —
+согласование по роду, ``number_relation`` — по числу, ``case_relation``
+— по падежу, ``gnc_relation`` — по роду, числу и падежу. Ограничение на
+правило указывается с помощью метода ``match``:
+
+.. code:: ipython3
+
+    from yargy.relations import gnc_relation
+    
+    Name = fact(
+        'Name',
+        ['first', 'last']
+    )
+    
+    gnc = gnc_relation()
+    
+    NAME = rule(
+        gram('Name').interpretation(
+            Name.first.inflected()
+        ).match(gnc),
+        gram('Surn').interpretation(
+            Name.last.inflected()
+        ).match(gnc)
+    ).interpretation(
+        Name
+    )
+    
+    parser = Parser(NAME)
+    match = parser.match('Сашу Иванову')
+    display(match.fact)
+    display(match.tree.as_dot)
+
+
+
+.. parsed-literal::
+
+    Name(first='саша',
+         last='иванова')
+
+
+
+.. image:: reference_files/reference_83_1.svg
+
+
+Для указания главного слова в фразе используется пометка ``main``.
+По-умолчанию главное слово — самое левое:
+
+.. code:: ipython3
+
+    from yargy.relations import main
+    
+    POSITION = rule(
+        normalized('главный'),
+        main(normalized('бухгалтер'))
+    )
+    
+    POSITION.as_dot
+
+
+
+
+.. image:: reference_files/reference_85_0.svg
+
+
+
+.. code:: ipython3
+
+    from yargy.relations import case_relation
+    
+    case = case_relation()
+    
+    PERSON = rule(
+        POSITION.match(case),
+        NAME.match(case)
+    )
+    
+    
+    parser = Parser(PERSON)
+    assert not parser.match('главного бухгалтер марину игореву')
+    
+    match = parser.match('главного бухгалтера марину игореву')
+    match.tree.as_dot
+
+
+
+
+.. image:: reference_files/reference_86_0.svg
+
+

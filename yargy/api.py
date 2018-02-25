@@ -2,16 +2,17 @@
 from __future__ import unicode_literals
 
 from .utils import assert_type
-from .predicate import (
+from .predicates import (
+    eq,
     is_predicate,
-    PredicateBase,
+    Predicate,
     AndPredicate,
     OrPredicate,
     NotPredicate,
 )
-from .predicates import eq
-from .relation import (
+from .relations import (
     is_relation,
+    Main,
     Relation,
     AndRelation,
     OrRelation,
@@ -25,12 +26,6 @@ from .rule import (
     EmptyRule,
     ForwardRule,
 )
-from .interpretation import (
-    fact,
-    AttributeScheme,
-    NormalFormNormalizer,
-    InflectNormalizer
-)
 
 
 __all__ = [
@@ -41,16 +36,11 @@ __all__ = [
     'and_',
     'or_',
     'not_',
-
-    'fact',
-    'attribute',
-    'normalizer',
-    'inflector'
 ]
 
 
 def prepare_production_item(item):
-    if not isinstance(item, (PredicateBase, Rule)):
+    if not isinstance(item, (Predicate, Rule, Main)):
         return eq(item)
     else:
         return item
@@ -71,7 +61,8 @@ def and_(*items):
     elif all(is_relation(_) for _ in items):
         return AndRelation(items)
     else:
-        raise TypeError('mixed types')
+        types = [type(_) for _ in items]
+        raise TypeError('mixed types: %r' % types)
 
 
 def or_(*items):
@@ -82,17 +73,13 @@ def or_(*items):
     elif all(is_rule(_) for _ in items):
         return OrRule(items)
     else:
-        raise TypeError('mixed types')
+        types = [type(_) for _ in items]
+        raise TypeError('mixed types: %r' % types)
 
 
 def not_(item):
-    assert_type(item, (PredicateBase, Relation))
+    assert_type(item, (Predicate, Relation))
     if is_predicate(item):
         return NotPredicate(item)
     elif is_relation(item):
         return NotRelation(item)
-
-
-attribute = AttributeScheme
-normalizer = NormalFormNormalizer
-inflector = InflectNormalizer

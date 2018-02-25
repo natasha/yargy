@@ -15,6 +15,7 @@ RED = '#ff9896'
 PURPLE = '#f7b6d2'
 SILVER = '#eeeeee'
 GRAY = 'gray'
+DARKGRAY = '#888888'
 
 
 def dot2svg(source):
@@ -56,19 +57,20 @@ class style(Record):
 
 
 class Node(Record):
-    __attributes__ = ['id', 'style']
+    __attributes__ = ['item', 'style']
 
-    def __init__(self, id, style):
-        self.id = id
+    def __init__(self, item, style):
+        self.item = item
         self.style = style
 
 
 class Edge(Record):
-    __attributes__ = ['source', 'target']
+    __attributes__ = ['source', 'target', 'style']
 
-    def __init__(self, source, target):
+    def __init__(self, source, target, style):
         self.source = source
         self.target = target
+        self.style = style
 
 
 class Graph(Record):
@@ -77,19 +79,23 @@ class Graph(Record):
     graph_style = style(
         margin=0,
         nodesep=0,
-        ranksep=0
+        ranksep=0,
+        splines='splines',
     )
     node_style = style(
         shape='box',
-        fontname='sans',
-        fontsize=10,
         height=0,
         width=0,
+        fontname='sans',
+        fontsize=10,
         color='none',
         style='filled',
         fillcolor=SILVER
     )
     edge_style = style(
+        fontname='sans',
+        fontsize=8,
+        fontcolor=GRAY,
         arrowsize=0.3,
         color=GRAY
     )
@@ -97,30 +103,48 @@ class Graph(Record):
     def __init__(self):
         self.nodes = []
         self.edges = []
+        self.ids = {}
 
-    def add_node(self, *args):
-        node = Node(*args)
+    def add_node(self, item, style=None):
+        node = Node(item, style)
         self.nodes.append(node)
 
-    def add_edge(self, *args):
-        edge = Edge(*args)
+    def add_edge(self, source, target, style=None):
+        edge = Edge(source, target, style)
         self.edges.append(edge)
+
+    def id(self, item):
+        item_id = id(item)
+        if item_id not in self.ids:
+            self.ids[item_id] = len(self.ids)
+        return self.ids[item_id]
 
     @property
     def source(self):
-        yield 'digraph {id} {{'.format(id=id(self))
+        yield 'digraph G {'
         yield 'graph [{graph_style}];'.format(graph_style=str(self.graph_style))
         yield 'node [{node_style}];'.format(node_style=str(self.node_style))
         yield 'edge [{edge_style}];'.format(edge_style=str(self.edge_style))
         for node in self.nodes:
-            yield '{id} [{style}];'.format(
-                id=node.id,
+            pattern = (
+                '{index} [{style}];'
+                if node.style
+                else '{index}'
+            )
+            yield pattern.format(
+                index=self.id(node.item),
                 style=str(node.style)
             )
         for edge in self.edges:
-            yield '{source} -> {target};'.format(
-                source=edge.source,
-                target=edge.target
+            pattern = (
+                '{source} -> {target} [{style}];'
+                if edge.style
+                else '{source} -> {target};'
+            )
+            yield pattern.format(
+                source=self.id(edge.source),
+                target=self.id(edge.target),
+                style=str(edge.style)
             )
         yield '}'
 
@@ -129,11 +153,15 @@ class Graph(Record):
 
 
 class DotTransformator(Visitor):
+    def __init__(self):
+        self.graph = Graph()
+
+    def style(self, item, style):
+        self.graph.add_node(item, style)
+        for child in item.children:
+            self.graph.add_edge(item, child)
+
     def __call__(self, root):
-        graph = Graph()
         for item in root.walk():
-            style = self.visit(item)
-            graph.add_node(id(item), style)
-            for child in item.children:
-                graph.add_edge(id(item), id(child))
-        return graph
+            self.visit(item)
+        return self.graph

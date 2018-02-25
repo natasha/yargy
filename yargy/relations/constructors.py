@@ -7,37 +7,18 @@ from yargy.utils import (
 )
 
 
+class Main(Record):
+    __attributes__ = ['term']
+
+    def __init__(self, term):
+        from yargy.rule import Rule
+        from yargy.predicates import Predicate
+
+        assert_type(term, (Rule, Predicate))
+        self.term = term
+
+
 class Relation(Record):
-    def __init__(self):
-        self.sides = []
-
-    @property
-    def defined(self):
-        return len(self.sides) == 2
-
-    def register(self, predicate):
-        if self.defined:
-            raise ValueError('used > 2 times')
-        self.sides.append(predicate)
-        if self.defined and id(self.first) == id(self.second):
-            raise ValueError('first == second')
-
-    @property
-    def first(self):
-        return self.sides[0]
-
-    @property
-    def second(self):
-        return self.sides[1]
-
-    def side(self, predicate):
-        for index, side in enumerate(self.sides):
-            if id(side) == id(predicate):
-                return index
-
-    def other(self, side):
-        return (side + 1) % 2
-
     def __call__(self, token, other):
         raise NotImplementedError
 

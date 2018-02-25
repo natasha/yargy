@@ -2,9 +2,13 @@
 
 from .constructors import (
     is_relation,
+    Main,
     Relation,
     AndRelation,
     OrRelation,
     NotRelation
 )
-from .graph import Graph
+from .bank import *
+
+
+main = Main

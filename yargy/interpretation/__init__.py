@@ -1,13 +1,23 @@
 
 
-from .fact import is_fact, fact
+from .fact import fact
 from .attribute import AttributeScheme
 from .normalizer import (
-    InflectNormalizer,
-    NormalFormNormalizer
+    InflectedNormalizer,
+    NormalizedNormalizer,
+    ConstNormalizer,
+    FunctionNormalizer
 )
 from .interpretator import (
-    InterpretatorBase,
+    Interpretator,
     prepare_token_interpretator,
     prepare_rule_interpretator
 )
+
+
+attribute = AttributeScheme
+
+normalized = NormalizedNormalizer
+inflected = InflectedNormalizer
+const = ConstNormalizer
+custom = FunctionNormalizer

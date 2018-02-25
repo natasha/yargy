@@ -11,13 +11,10 @@ from .utils import Record
 from .token import get_tokens_span
 from .tree import (
     Node,
-    InterpretationNode,
     Leaf,
     Tree
 )
-from .tokenizer import Tokenizer
-from .predicate import is_relation_predicate
-from .relation import Graph as Relations
+from .tokenizer import MorphTokenizer
 from .rule.bnf import is_rule
 
 
@@ -36,7 +33,13 @@ class Chart(object):
                     yield state
 
     def __iter__(self):
-        return iter(self.columns)
+        size = len(self.columns)
+        for index in range(size):
+            column = self.columns[index]
+            next_column = None
+            if index + 1 < size:
+                next_column = self.columns[index + 1]
+            yield column, next_column
 
     def __getitem__(self, index):
         return self.columns[index]
@@ -110,20 +113,20 @@ class Column(object):
 
 class State(object):
     def __init__(self, rule, production, dot_index,
-                 start_column, stop_column, children,
-                 relations):
+                 start_column, stop_column,
+                 children):
         self.rule = rule
         self.production = production
         self.dot_index = dot_index
         self.start_column = start_column
         self.stop_column = stop_column
         self.children = children
-        self.relations = relations
 
     def __hash__(self):
         return hash((
             id(self.rule), id(self.production), self.dot_index,
-            self.start_column.index, self.stop_column.index
+            self.start_column.index, self.stop_column.index,
+            tuple(id(_) for _ in self.children)
         ))
 
     @property
@@ -133,6 +136,10 @@ class State(object):
     @property
     def next_term(self):
         return self.production.terms[self.dot_index]
+
+    @property
+    def parents(self):
+        return self.start_column.states_index[id(self.rule)]
 
     def __str__(self):
         terms = self.production.terms
@@ -164,48 +171,48 @@ class Match(Record):
         return fact.normalized
 
 
-def prepare_node(rule, children):
-    if rule.interpretator:
-        return InterpretationNode(rule, children)
-    else:
-        return Node(rule, children)
-
-
 class Parser(object):
-    def __init__(self, rule, tokenizer=None, pipelines=None):
-        self.rule = rule.normalized.as_bnf.start
-        self.tokenizer = tokenizer or Tokenizer()
-        self.pipelines = pipelines or []
+    def __init__(self, rule, tokenizer=None):
+        if not tokenizer:
+            tokenizer = MorphTokenizer()
+        self.tokenizer = tokenizer
+
+        rule = rule.activate(tokenizer)
+        rule = rule.normalized
+        self.rule = rule.as_bnf.start
+
         self.lock = Lock()
 
     def chart(self, text):
         with self.lock:
             stream = self.tokenizer(text)
-
-            for pipeline in self.pipelines:
-                stream = pipeline(stream)
-
             chart = Chart(stream)
-            for column in chart:
-                self.predict(column, self.rule)
+            for column, next_column in chart:
+                self.predict(column, next_column, self.rule)
                 for state in column:
                     if state.completed:
                         self.complete(column, state)
                     else:
                         next_term = state.next_term
                         if is_rule(next_term):
-                            self.predict(column, next_term)
-                        elif column.index + 1 < len(chart):
-                            next_column = chart[column.index + 1]
+                            self.predict(column, next_column, next_term)
+                        elif next_column:
                             self.scan(next_column, next_term, state)
             return chart
 
     def extract(self, text):
         chart = self.chart(text)
         for state in chart.matches(self.rule):
-            root = prepare_node(self.rule, state.children)
-            tree = Tree(root).replace_token_forms(state.relations.nodes)
-            yield Match(self.rule, tree)
+            root = Node(
+                self.rule,
+                state.production,
+                state.children
+            )
+            tree = Tree(root).normalized
+            relations = tree.relations
+            if relations.validate():
+                tree = tree.constrain(relations)
+                yield Match(self.rule, tree)
 
     def resolve(self, matches):
         matches = sorted(matches, key=lambda _: len(_.tokens), reverse=True)
@@ -222,54 +229,53 @@ class Parser(object):
 
     def match(self, text):
         # NOTE Not an optimal implementation. Assume `match` is used
-        # not very often
+        # not very often.
         for match in self.extract(text):
-            if match.span == (0, len(text)):
-                yield match
+            start, stop = match.span
+            if start == 0 and stop == len(text):
+                return match
 
-    def predict(self, column, rule):
-        for production in rule.productions:
+    def predict(self, column, next_column, rule):
+        productions = (
+            rule.predict(next_column.token)
+            if next_column
+            else rule.productions
+        )
+        for production in productions:
             state = State(
                 rule, production,
                 dot_index=0,
                 start_column=column,
                 stop_column=column,
                 children=[],
-                relations=Relations()
             )
             column.append(state)
 
     def scan(self, column, predicate, state):
         token = column.token
         if predicate(token):
-            relations = state.relations
-            if is_relation_predicate(predicate):
-                relations = relations.copy().add(token, predicate)
-                if not relations:
-                    return
-            node = Leaf(predicate, token)
+            node = Leaf(predicate, predicate.constrain(token))
             state = State(
                 state.rule, state.production,
                 dot_index=state.dot_index + 1,
                 start_column=state.start_column,
                 stop_column=column,
                 children=state.children + [node],
-                relations=relations
             )
             column.append(state)
 
     def complete(self, column, completed):
-        node = prepare_node(completed.rule, completed.children)
-        states = completed.start_column.states_index[id(completed.rule)]
-        for state in states:
-            relations = state.relations.copy().merge(completed.relations)
-            if relations:
-                state = State(
-                    state.rule, state.production,
-                    dot_index=state.dot_index + 1,
-                    start_column=state.start_column,
-                    stop_column=column,
-                    children=state.children + [node],
-                    relations=relations
-                )
-                column.append(state)
+        node = Node(
+            completed.rule,
+            completed.production,
+            completed.children
+        )
+        for state in completed.parents:
+            state = State(
+                state.rule, state.production,
+                dot_index=state.dot_index + 1,
+                start_column=state.start_column,
+                stop_column=column,
+                children=state.children + [node],
+            )
+            column.append(state)
