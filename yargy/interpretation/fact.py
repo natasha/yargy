@@ -131,5 +131,6 @@ class InterpretatorFact(Record):
                 value = [_.as_json for _ in value]
             elif key in self.modified:
                 value = value.as_json
-            data[key] = value
+            if value is not None:
+                data[key] = value
         return data

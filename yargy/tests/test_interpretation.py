@@ -79,7 +79,7 @@ def test_insted_attributes():
     record = match.fact
     assert record == F(a=None, b='a')
     assert record.spans == [(0, 1)]
-    assert record.as_json == {'a': None, 'b': 'a'}
+    assert record.as_json == {'b': 'a'}
 
 
 def test_nested_facts():
