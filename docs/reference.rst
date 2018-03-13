@@ -12,7 +12,7 @@
 В Yargy токенизатор реализован на регулярных выражениях. Для каждого
 типа токенов есть своё правило со своей регуляркой:
 
-.. code:: ipython3
+.. code:: python
 
     from yargy.tokenizer import RULES
     
@@ -37,7 +37,7 @@
 Токенизатор инициализируется списком правил. По-умолчанию — это
 ``RULES``:
 
-.. code:: ipython3
+.. code:: python
 
     from yargy.tokenizer import Tokenizer
     
@@ -62,7 +62,7 @@
 Пользователь может убрать часть правил из списка или добавить новых.
 Например, нужно убрать токены с переводами строк:
 
-.. code:: ipython3
+.. code:: python
 
     tokenizer = Tokenizer()
     
@@ -87,7 +87,7 @@
 
 Уберём правило для ``'EOL'``:
 
-.. code:: ipython3
+.. code:: python
 
     tokenizer = Tokenizer().remove_types('EOL')
     
@@ -105,7 +105,7 @@
 В Yargy есть примитивные правила для токенизации емейлов и телефонов.
 По-умолчанию они не используются:
 
-.. code:: ipython3
+.. code:: python
 
     from yargy.tokenizer import EMAIL_RULE, PHONE_RULE
     
@@ -131,7 +131,7 @@
 Можно создать и добавить своё правило. Например, так выглядит простое
 решение для извлечения доменов:
 
-.. code:: ipython3
+.. code:: python
 
     from yargy.tokenizer import TokenRule
     
@@ -158,7 +158,7 @@
 Для каждого токена с типом ``'RU'`` он определяет морфологию с помощью
 pymorphy2:
 
-.. code:: ipython3
+.. code:: python
 
     from yargy.tokenizer import MorphTokenizer
     
@@ -195,7 +195,7 @@ pymorphy2:
 можно записывать стандартные средствами через ``rule``, ``or_``,
 ``normalized``, ``caseless``:
 
-.. code:: ipython3
+.. code:: python
 
     from yargy import rule, or_
     from yargy.predicates import normalized, caseless
@@ -216,13 +216,13 @@ pymorphy2:
 ``morph_pipeline`` и ``caseless_pipeline``. ``morph_pipeline`` перед
 работой приводит слова к нормальной форме:
 
-.. code:: ipython3
+.. code:: python
 
     from yargy import Parser
     from yargy.pipelines import morph_pipeline
     
     
-    TYPE = morph_pipeline('электронный дневник')
+    TYPE = morph_pipeline(['электронный дневник'])
     
     parser = Parser(TYPE)
     text = 'электронным дневником, электронные дневники, электронное дневнику'
@@ -241,15 +241,15 @@ pymorphy2:
 нормальной форме. Например, есть арабские имена: "Абд Аль-Азиз Бин
 Мухаммад", "Абд ар-Рахман Наср ас-Са ди". Их нужно обработать как есть:
 
-.. code:: ipython3
+.. code:: python
 
     from yargy.pipelines import caseless_pipeline
     
     
-    NAME = caseless_pipeline(
+    NAME = caseless_pipeline([
         'Абд Аль-Азиз Бин Мухаммад',
         'Абд ар-Рахман Наср ас-Са ди'
-    )
+    ])
         
     parser = Parser(NAME)
     text = 'Абд Аль-Азиз Бин Мухаммад, АБД АР-РАХМАН НАСР АС-СА ДИ'
@@ -321,7 +321,7 @@ pymorphy2:
 используется метод ``attribute``. Например, в ``Date`` по-умолчанию год
 будет равен 2017:
 
-.. code:: ipython3
+.. code:: python
 
     from IPython.display import display
     from yargy import Parser, rule, and_, or_
@@ -403,7 +403,7 @@ pymorphy2:
 Для дат деревья разбора выглядят просто: вершина-конструктор и несколько
 детей-атрибутов:
 
-.. code:: ipython3
+.. code:: python
 
     parser = Parser(DATE)
     for line in text.splitlines():
@@ -425,7 +425,7 @@ pymorphy2:
 вершин с токенами? Пойдём от простого к сложному. Когда под
 вершиной-атрибутом несколько токенов, они объединяются:
 
-.. code:: ipython3
+.. code:: python
 
     from yargy.predicates import eq, type, dictionary
     
@@ -464,7 +464,7 @@ pymorphy2:
 
 В ``Money.value`` будет два слова:
 
-.. code:: ipython3
+.. code:: python
 
     match.fact
 
@@ -478,35 +478,10 @@ pymorphy2:
 
 
 
-Получить доступ к исходным токенам можно через атрибут ``_raw``, но
-обычно такой необходимости нет:
-
-.. code:: ipython3
-
-    match.fact._raw
-
-
-
-
-.. parsed-literal::
-
-    InterpretatorFact({'currency': Chain([Token('$', [7, 8), 'PUNCT')], None),
-                       'value': Chain([Token('5', [0, 1), 'INT'),
-                              MorphToken('тысяч',
-                                         [2, 7),
-                                         'RU',
-                                         [Form('тысяча',
-                                               Grams(NOUN,femn,gent,inan,plur))])],
-                             None)},
-                      set(),
-                      {'currency', 'value'})
-
-
-
 Когда под вершиной-атрибутом смесь из токенов и вершин-конструктов,
 интерпретация падает:
 
-.. code:: ipython3
+.. code:: python
 
     from yargy.predicates import true
     
@@ -539,18 +514,18 @@ pymorphy2:
 
 
 
-.. image:: reference_files/reference_42_0.svg
+.. image:: reference_files/reference_40_0.svg
 
 
 
-.. code:: ipython3
+.. code:: python
 
     # match.fact Будет TypeError
 
 Если под вершиной-атрибутом другая вершина-атрибут, нижняя просто
 исчезает:
 
-.. code:: ipython3
+.. code:: python
 
     from yargy.predicates import true
     
@@ -572,13 +547,13 @@ pymorphy2:
 
 
 
-.. image:: reference_files/reference_45_0.svg
+.. image:: reference_files/reference_43_0.svg
 
 
 
 "X" попадёт в ``A.y``, не в ``A.x``:
 
-.. code:: ipython3
+.. code:: python
 
     match.fact
 
@@ -595,7 +570,7 @@ pymorphy2:
 Что если под вершиной-конструктом несколько одинаковых вершин-атрибутов?
 Самый правый атрибут перезаписывает все остальные:
 
-.. code:: ipython3
+.. code:: python
 
     A = fact(
         'A',
@@ -614,13 +589,13 @@ pymorphy2:
 
 
 
-.. image:: reference_files/reference_49_0.svg
+.. image:: reference_files/reference_47_0.svg
 
 
 
 В ``A.x`` попадёт 3:
 
-.. code:: ipython3
+.. code:: python
 
     match.fact
 
@@ -637,7 +612,7 @@ pymorphy2:
 вершин-атрибутов, не только самой правой. В этом случае поле помечается
 как ``repeatable``:
 
-.. code:: ipython3
+.. code:: python
 
     from yargy import not_
     
@@ -669,14 +644,14 @@ pymorphy2:
 
 
 
-.. image:: reference_files/reference_53_0.svg
+.. image:: reference_files/reference_51_0.svg
 
 
 
 «Дядя Ваня» не перезапишет «Каштанка», они оба окажутся в
 ``Item.titles``:
 
-.. code:: ipython3
+.. code:: python
 
     match.fact
 
@@ -694,7 +669,7 @@ pymorphy2:
 возникает при использовании рекурсивных грамматик. В примере ребёнок
 вершины ``Item`` другая вершина ``Item``:
 
-.. code:: ipython3
+.. code:: python
 
     from yargy import forward, or_
     
@@ -727,7 +702,7 @@ pymorphy2:
 
 
 
-.. image:: reference_files/reference_57_0.svg
+.. image:: reference_files/reference_55_0.svg
 
 
 
@@ -736,7 +711,7 @@ pymorphy2:
 ``Item(title=None, date=Date('18', 'июня'))``. В конце произойдёт
 слияние:
 
-.. code:: ipython3
+.. code:: python
 
     match.fact
 
@@ -762,7 +737,7 @@ pymorphy2:
 возвращает нормальную форму слова, соответствует ``normal_form`` в
 pymorphy2:
 
-.. code:: ipython3
+.. code:: python
 
     DATE = rule(
         DAY.interpretation(
@@ -795,7 +770,7 @@ pymorphy2:
 
 С ``normalized`` слово "июня" меняется на "июнь":
 
-.. code:: ipython3
+.. code:: python
 
     DATE = rule(
         DAY.interpretation(
@@ -829,7 +804,7 @@ pymorphy2:
 Если в ``normalized`` попадает несколько токенов, каждый приводится к
 нормальной форме по отдельности:
 
-.. code:: ipython3
+.. code:: python
 
     from yargy.interpretation import fact
     from yargy.predicates import normalized
@@ -864,14 +839,14 @@ pymorphy2:
 Особым образом ведёт себя ``normalized``, когда идёт после газеттира.
 Результатом нормализации тогда будет ключ газеттира:
 
-.. code:: ipython3
+.. code:: python
 
     from yargy.pipelines import morph_pipeline
     
-    RULE = morph_pipeline(
+    RULE = morph_pipeline([
         'красная площадь',
         'первомайская улица'
-    ).interpretation(
+    ]).interpretation(
         Geo.name.normalized()
     ).interpretation(
         Geo
@@ -897,7 +872,7 @@ pymorphy2:
 ``inflected`` склоняет слово, соответствует методу ``inflect`` в
 pymorphy2:
 
-.. code:: ipython3
+.. code:: python
 
     from yargy.interpretation import fact
     from yargy.predicates import gram
@@ -938,7 +913,7 @@ pymorphy2:
 
 В качестве аргумента ``inflected`` принимает набор граммем:
 
-.. code:: ipython3
+.. code:: python
 
     NAME = gram('Name').interpretation(
         Name.first.inflected({'accs', 'plur'})  # винительный падеж, множественное число
@@ -971,7 +946,7 @@ pymorphy2:
 
 ``custom`` применяет к слову произвольную функцию:
 
-.. code:: ipython3
+.. code:: python
 
     from yargy.interpretation import fact
     from yargy.predicates import type
@@ -1010,7 +985,7 @@ pymorphy2:
 будет поставлено в нормальную форму, потом к нему будет применена
 функция:
 
-.. code:: ipython3
+.. code:: python
 
     MONTHS = {
         'январь': 1,
@@ -1059,23 +1034,23 @@ pymorphy2:
 ``const`` просто заменяет слово или словосочетания фиксированным
 значением:
 
-.. code:: ipython3
+.. code:: python
 
     Era = fact(
         'Era',
         ['value']
     )
     
-    BC = morph_pipeline(
+    BC = morph_pipeline([
         'до нашей эры',
         'до н.э.'
-    ).interpretation(
+    ]).interpretation(
         Era.value.const('BC')
     )
-    AD = morph_pipeline(
+    AD = morph_pipeline([
         'наша эра',
         'н.э.'
-    ).interpretation(
+    ]).interpretation(
         Era.value.const('AD')
     )
     ERA = or_(
@@ -1112,7 +1087,7 @@ pymorphy2:
 — по падежу, ``gnc_relation`` — по роду, числу и падежу. Ограничение на
 правило указывается с помощью метода ``match``:
 
-.. code:: ipython3
+.. code:: python
 
     from yargy.relations import gnc_relation
     
@@ -1148,13 +1123,13 @@ pymorphy2:
 
 
 
-.. image:: reference_files/reference_83_1.svg
+.. image:: reference_files/reference_81_1.svg
 
 
 Для указания главного слова в фразе используется пометка ``main``.
 По-умолчанию главное слово — самое левое:
 
-.. code:: ipython3
+.. code:: python
 
     from yargy.relations import main
     
@@ -1168,11 +1143,11 @@ pymorphy2:
 
 
 
-.. image:: reference_files/reference_85_0.svg
+.. image:: reference_files/reference_83_0.svg
 
 
 
-.. code:: ipython3
+.. code:: python
 
     from yargy.relations import case_relation
     
@@ -1193,6 +1168,6 @@ pymorphy2:
 
 
 
-.. image:: reference_files/reference_86_0.svg
+.. image:: reference_files/reference_84_0.svg
 
 
