@@ -25,12 +25,12 @@ Name = fact(
     ['first', 'last'],
 )
 Person = fact(
-	'Person',
+    'Person',
     ['position', 'name']
 )
 
 LAST = and_(
-	gram('Surn'),
+    gram('Surn'),
     not_(gram('Abbr')),
 )
 FIRST = and_(
@@ -39,29 +39,29 @@ FIRST = and_(
 )
 
 POSITION = morph_pipeline([
-	'управляющий директор',
+    'управляющий директор',
     'вице-мэр'
 ])
 
 gnc = gnc_relation()
 NAME = rule(
     FIRST.interpretation(
-		Name.first
-	).match(gnc),
+        Name.first
+    ).match(gnc),
     LAST.interpretation(
-		Name.last
-	).match(gnc)
+        Name.last
+    ).match(gnc)
 ).interpretation(
     Name
 )
 
 PERSON = rule(
     POSITION.interpretation(
-		Person.position
+        Person.position
     ).match(gnc),
     NAME.interpretation(
-		Person.name
-	)
+        Person.name
+    )
 ).interpretation(
     Person
 )
@@ -78,8 +78,8 @@ And in output you will see something like this:
 Person(
     position='управляющий директор',
     name=Name(
-		first='Иван',
-		last='Ульянов'
+        first='Иван',
+        last='Ульянов'
 )
 ```
 
@@ -92,5 +92,5 @@ Source code of `yargy` is distributed under MIT license (allows modification and
 # Support
 
 - Chat — https://telegram.me/natural_language_processing
-- Issues — https://github.com/natasha/natasha/issues
+- Issues — https://github.com/natasha/yargy/issues
 - Commercial support — http://lab.alexkuk.ru/natasha
