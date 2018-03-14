@@ -1,4 +1,4 @@
-# Yargy [![Build Status](https://travis-ci.org/natasha/yargy.svg?branch=master)](https://travis-ci.org/natasha/yargy) [![Build status](https://ci.appveyor.com/api/projects/status/ik1tf9n32yh9wfy5?svg=true)](https://ci.appveyor.com/project/dveselov/yargy) [![Documentation Status](https://readthedocs.org/projects/yargy/badge/?version=latest)](http://yargy.readthedocs.io/en/latest/?badge=latest)
+# Yargy [![Build Status](https://travis-ci.org/natasha/yargy.svg?branch=master)](https://travis-ci.org/natasha/yargy) [![Build status](https://ci.appveyor.com/api/projects/status/ik1tf9n32yh9wfy5?svg=true)](https://ci.appveyor.com/project/dveselov/yargy) [![Documentation Status](https://readthedocs.org/projects/yargy/badge/?version=latest)](http://yargy.readthedocs.io/) [![PyPI](https://img.shields.io/pypi/v/yargy.svg)](https://pypi.python.org/pypi/yargy)
 
 `Yargy` is a Earley parser, that uses russian morphology for facts extraction process, and written in pure python
 
