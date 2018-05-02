@@ -2,7 +2,11 @@
 from __future__ import unicode_literals
 
 from yargy.compat import string_type
-from yargy.utils import Record, assert_type
+from yargy.utils import (
+    Record,
+    assert_type,
+    assert_greater_equals
+)
 from yargy.visitor import TransformatorsComposition
 from yargy.predicates import is_predicate, Predicate
 from yargy.relations import Main
@@ -70,8 +74,15 @@ class Rule(Record):
     def optional(self):
         return OptionalRule(self)
 
-    def repeatable(self):
-        return RepeatableRule(self)
+    def repeatable(self, min=None, max=None):
+        if min and max:
+            return MinMaxBoundedRule(self, min, max)
+        elif min:
+            return MinBoundedRule(self, min)
+        elif max:
+            return MaxBoundedRule(self, max)
+        else:
+            return RepeatableRule(self)
 
     def named(self, name):
         return NamedRule(self, name)
@@ -190,6 +201,37 @@ class RepeatableRule(ExtendedRule):
 
 class RepeatableOptionalRule(RepeatableRule, OptionalRule):
     pass
+
+
+class BoundedRule(ExtendedRule):
+    pass
+
+
+class MinBoundedRule(BoundedRule):
+    __attributes__ = ['rule', 'min']
+
+    def __init__(self, rule, min):
+        BoundedRule.__init__(self, rule)
+        assert_greater_equals(min, 1)
+        self.min = min
+
+
+class MaxBoundedRule(BoundedRule):
+    __attributes__ = ['rule', 'max']
+
+    def __init__(self, rule, max):
+        BoundedRule.__init__(self, rule)
+        assert_greater_equals(max, 1)
+        self.max = max
+
+
+class MinMaxBoundedRule(MinBoundedRule, MaxBoundedRule):
+    __attributes__ = ['rule', 'min', 'max']
+
+    def __init__(self, rule, min, max):
+        MinBoundedRule.__init__(self, rule, min)
+        MaxBoundedRule.__init__(self, rule, max)
+        assert_greater_equals(max, min)
 
 
 class NamedRule(WrapperRule):

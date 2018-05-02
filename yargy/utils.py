@@ -28,6 +28,14 @@ def assert_equals(item, value):
         ))
 
 
+def assert_greater_equals(a, b):
+    if a < b:
+        raise ValueError('expected a>=b, got a={a!r}, b={b!r}'.format(
+            a=a,
+            b=b
+        ))
+
+
 def assert_not_empty(item):
     if len(item) == 0:
         raise ValueError('expected not empty')

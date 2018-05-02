@@ -35,6 +35,19 @@ def test_repeatable_optional():
         A.optional().optional(),
         "R0 -> 'a' | e",
     )
+    assert_bnf(
+        A.repeatable(max=2).repeatable(),
+        "R0 -> 'a' | 'a' R0"
+    )
+    assert_bnf(
+        A.repeatable().repeatable(min=1, max=2),
+        "R0 -> 'a' | 'a' R0"
+    )
+    assert_bnf(
+        A.optional().repeatable(max=2),
+        'R0 -> R1 | e',
+        "R1 -> 'a' | 'a' 'a'"
+    )
 
 
 def test_or():
@@ -113,4 +126,30 @@ def test_loop():
     assert_bnf(
         A,
         'A -> A'
+    )
+
+
+def test_bounded():
+    A = rule('a')
+    with pytest.raises(ValueError):
+        A.repeatable(min=-1)
+    with pytest.raises(ValueError):
+        A.repeatable(min=-1)
+    with pytest.raises(ValueError):
+        A.repeatable(min=2, max=1)
+
+    assert_bnf(
+        A.repeatable(max=3),
+        "R0 -> 'a' | 'a' R1",
+        "R1 -> 'a' | 'a' 'a'"
+    )
+    assert_bnf(
+        A.repeatable(min=2),
+        "R0 -> 'a' R1",
+        "R1 -> 'a' | 'a' R1"
+    )
+    assert_bnf(
+        A.repeatable(min=2, max=3),
+        "R0 -> 'a' R1",
+        "R1 -> 'a' | 'a' 'a'"
     )
