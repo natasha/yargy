@@ -28,18 +28,21 @@ class Chart(object):
 
     def matches(self, rule):
         for column in self.columns:
-            for state in column:
-                if state.completed and id(state.rule) == id(rule):
-                    yield state
+            for state in column.matches(rule):
+                yield state
 
     def __iter__(self):
-        size = len(self.columns)
+        size = len(self)
         for index in range(size):
             column = self.columns[index]
             next_column = None
             if index + 1 < size:
                 next_column = self.columns[index + 1]
             yield column, next_column
+
+    @property
+    def last_column(self):
+        return self.columns[len(self) - 1]
 
     def __getitem__(self, index):
         return self.columns[index]
@@ -76,6 +79,11 @@ class Column(object):
     def __iter__(self):
         return iter(self.states)
 
+    def matches(self, rule):
+        for state in self:
+            if state.completed and id(state.rule) == id(rule):
+                yield state
+
     def append(self, state):
         value = hash(state)
         if value not in self.hashes:
@@ -94,6 +102,10 @@ class Column(object):
             index=self.index,
             token=self.token
         )
+
+    @property
+    def first(self):
+        return self.index == 0
 
     @property
     def source(self):
@@ -183,12 +195,13 @@ class Parser(object):
 
         self.lock = Lock()
 
-    def chart(self, text):
+    def chart(self, text, all=True):
         with self.lock:
             stream = self.tokenizer(text)
             chart = Chart(stream)
             for column, next_column in chart:
-                self.predict(column, next_column, self.rule)
+                if column.first or all:
+                    self.predict(column, next_column, self.rule)
                 for state in column:
                     if state.completed:
                         self.complete(column, state)
@@ -200,9 +213,14 @@ class Parser(object):
                             self.scan(next_column, next_term, state)
             return chart
 
-    def extract(self, text):
-        chart = self.chart(text)
-        for state in chart.matches(self.rule):
+    def extract(self, text, all=True):
+        chart = self.chart(text, all=all)
+        matches = (
+            chart
+            if all
+            else chart.last_column
+        ).matches(self.rule)
+        for state in matches:
             root = Node(
                 self.rule,
                 state.production,
@@ -228,12 +246,8 @@ class Parser(object):
         return self.resolve(matches)
 
     def match(self, text):
-        # NOTE Not an optimal implementation. Assume `match` is used
-        # not very often.
-        for match in self.extract(text):
-            start, stop = match.span
-            if start == 0 and stop == len(text):
-                return match
+        for match in self.extract(text, all=False):
+            return match
 
     def predict(self, column, next_column, rule):
         productions = (
