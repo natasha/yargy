@@ -306,22 +306,22 @@ class ReplaceExtendedTransformator(RuleTransformator):
     def visit_MinBoundedRule(self, item):
         from yargy.api import rule
 
-        return rule(
-            *repeat(item.rule, item.min - 1),
+        items = repeat(item.rule, item.min - 1) + [
             self.visit_RepeatableRule(item)
-        )
+        ]
+        return rule(*items)
 
     def visit_MaxBoundedRule(self, item):
         return bound(item.rule, item.max)
-    
+
     def visit_MinMaxBoundedRule(self, item):
         from yargy.api import rule
 
         child, min, max = item
-        return rule(
-            *repeat(child, min - 1),
+        items = repeat(child, min - 1) + [
             bound(child, max - min + 1)
-        )
+        ]
+        return rule(*items)
 
 
 class DotRuleTransformator(DotTransformator, InplaceRuleTransformator):
