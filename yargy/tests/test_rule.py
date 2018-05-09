@@ -68,18 +68,20 @@ def test_activate():
     from yargy.pipelines import pipeline
     from yargy.predicates import gram
     from yargy.tokenizer import MorphTokenizer
+    from yargy.parser import Context
 
     tokenizer = MorphTokenizer()
+    context = Context(tokenizer)
 
     A = pipeline(['a']).named('A')
-    B = A.activate(tokenizer)
+    B = A.activate(context)
     assert_bnf(
         B,
         'A -> pipeline'
     )
 
     A = rule(gram('NOUN')).named('A')
-    B = A.activate(tokenizer)
+    B = A.activate(context)
     assert_bnf(
         B,
         "A -> gram('NOUN')"

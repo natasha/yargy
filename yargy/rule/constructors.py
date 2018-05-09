@@ -98,9 +98,9 @@ class Rule(Record):
     def transform(self, *transformators):
         return TransformatorsComposition(transformators)(self)
 
-    def activate(self, tokenizer):
+    def activate(self, context):
         from .transformators import ActivateTransformator
-        return ActivateTransformator(tokenizer)(self)
+        return ActivateTransformator(context)(self)
 
     @property
     def normalized(self):

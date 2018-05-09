@@ -142,18 +142,18 @@ class RuleTransformator(Visitor):
 
 
 class ActivateTransformator(InplaceRuleTransformator):
-    def __init__(self, tokenizer):
+    def __init__(self, context):
         super(ActivateTransformator, self).__init__()
-        self.tokenizer = tokenizer
+        self.context = context
 
     def visit_term(self, item):
         if is_predicate(item):
-            return item.activate(self.tokenizer)
+            return item.activate(self.context)
         else:
             return item
 
     def visit_PipelineRule(self, item):
-        item.pipeline = item.pipeline.activate(self.tokenizer)
+        item.pipeline = item.pipeline.activate(self.context)
         return item
 
 

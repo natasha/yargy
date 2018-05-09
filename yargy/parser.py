@@ -7,14 +7,24 @@ from collections import defaultdict
 from intervaltree import IntervalTree
 
 from yargy.compat import str
-from .utils import Record
+from .utils import (
+    Record,
+    assert_type
+)
 from .token import get_tokens_span
 from .tree import (
     Node,
     Leaf,
     Tree
 )
-from .tokenizer import MorphTokenizer
+from .tokenizer import (
+    Tokenizer,
+    MorphTokenizer
+)
+from .tagger import (
+    Tagger,
+    PassTagger
+)
 from .rule.bnf import is_rule
 
 
@@ -238,13 +248,28 @@ def order_rank(states):
     )
 
 
+class Context(Record):
+    __attributes__ = ['tokenizer', 'tagger']
+
+    def __init__(self, tokenizer, tagger=None):
+        self.tokenizer = tokenizer
+        self.tagger = tagger
+
+
 class Parser(object):
-    def __init__(self, rule, tokenizer=None):
+    def __init__(self, rule, tokenizer=None, tagger=None):
         if not tokenizer:
             tokenizer = MorphTokenizer()
+        assert_type(tokenizer, Tokenizer)
         self.tokenizer = tokenizer
 
-        rule = rule.activate(tokenizer)
+        if not tagger:
+            tagger = PassTagger()
+        assert_type(tagger, Tagger)
+        self.tagger = tagger
+
+        context = Context(tokenizer, tagger)
+        rule = rule.activate(context)
         rule = rule.normalized
         self.rule = rule.as_bnf.start
 
@@ -252,8 +277,9 @@ class Parser(object):
 
     def chart(self, text, all=True):
         with self.lock:
-            stream = self.tokenizer(text)
-            chart = Chart(stream)
+            tokens = self.tokenizer(text)
+            tokens = self.tagger(tokens)
+            chart = Chart(tokens)
             for column, next_column in chart:
                 if column.first or all:
                     self.predict(column, next_column, self.rule)

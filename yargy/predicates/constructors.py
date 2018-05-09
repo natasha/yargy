@@ -45,7 +45,7 @@ def is_predicate(item):
 
 
 class PredicateScheme(Predicate):
-    def activate(self, tokenizer):
+    def activate(self, context):
         # return Predicate not a scheme
         raise NotImplementedError
 
@@ -65,9 +65,9 @@ class PredicatesComposition(Predicate):
     def __call__(self, token):
         return self.operator(_(token) for _ in self.predicates)
 
-    def activate(self, tokenizer):
+    def activate(self, context):
         return self.__class__(
-            _.activate(tokenizer)
+            _.activate(context)
             for _ in self.predicates
         )
 
@@ -99,8 +99,8 @@ class NotPredicate(Predicate):
     def __call__(self, token):
         return not self.predicate(token)
 
-    def activate(self, tokenizer):
-        return NotPredicate(self.predicate.activate(tokenizer))
+    def activate(self, context):
+        return NotPredicate(self.predicate.activate(context))
 
     @property
     def label(self):

@@ -150,9 +150,9 @@ class PipelineScheme(Pipeline):
             tokenizer.split(line)
         )
 
-    def activate(self, tokenizer):
+    def activate(self, context):
         return self.pipeline(
-            self.get_key(_, tokenizer)
+            self.get_key(_, context.tokenizer)
             for _ in self.lines
         )
 

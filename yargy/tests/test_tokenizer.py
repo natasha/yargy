@@ -26,7 +26,6 @@ from yargy.tokenizer import (
 
     Tokenizer,
     MorphTokenizer,
-    TagMorphTokenizer
 )
 
 
@@ -94,34 +93,6 @@ def test_morph():
         MorphToken('диски', (4, 9), RUSSIAN, forms=[
             Form('диск', Grams({'NOUN', 'inan', 'masc', 'nomn', 'plur'})),
             Form('диск', Grams({'NOUN', 'accs', 'inan', 'masc', 'plur'}))
-        ])
-    ]
-
-
-INSIDE = 'I'
-OUTSIDE = 'O'
-
-
-def tagger(tokens):
-    for token in tokens:
-        if token.type == INT and int(token.value) % 2 == 1:
-            tag = INSIDE
-        else:
-            tag = OUTSIDE
-        yield token.tagged(tag)
-
-
-def test_tagger():
-    tokenizer = TagMorphTokenizer(tagger)
-    tokens = list(tokenizer('3-ёх морей'))
-    assert tokens == [
-        TagToken('3', (0, 1), INT, tag=INSIDE),
-        TagToken('-', (1, 2), PUNCT, tag=OUTSIDE),
-        MorphTagToken('ёх', (2, 4), RUSSIAN, tag=OUTSIDE, forms=[
-            Form('ёх', Grams({'UNKN'}))
-        ]),
-        MorphTagToken('морей', (5, 10), RUSSIAN, tag=OUTSIDE, forms=[
-            Form('море', Grams({'NOUN', 'gent', 'inan', 'neut', 'plur'}))
         ])
     ]
 

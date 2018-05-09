@@ -122,13 +122,3 @@ class MorphTokenizer(Tokenizer):
                 yield token.morphed(forms)
             else:
                 yield token
-
-
-class TagMorphTokenizer(MorphTokenizer):
-    def __init__(self, tagger, rules=RULES, morph=None):
-        super(TagMorphTokenizer, self).__init__(rules, morph)
-        self.tagger = tagger
-
-    def __call__(self, text):
-        tokens = MorphTokenizer.__call__(self, text)
-        return self.tagger(tokens)
