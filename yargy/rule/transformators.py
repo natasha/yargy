@@ -262,8 +262,8 @@ def bound(item, count):
         return item
     else:
         return or_(
-            item,
-            rule(item, bound(item, count - 1))
+            rule(item, bound(item, count - 1)),
+            item
         )
 
 
@@ -279,8 +279,8 @@ class ReplaceExtendedTransformator(RuleTransformator):
         temp = forward()
         return temp.define(
             or_(
-                child,
-                rule(child, temp)
+                rule(child, temp),
+                child
             )
         )
 
@@ -297,8 +297,8 @@ class ReplaceExtendedTransformator(RuleTransformator):
         temp = forward()
         return temp.define(
             or_(
-                child,
                 rule(child, temp),
+                child,
                 empty(),
             )
         )

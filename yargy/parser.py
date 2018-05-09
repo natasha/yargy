@@ -80,7 +80,7 @@ class Column(object):
         return iter(self.states)
 
     def matches(self, rule):
-        for state in self:
+        for state in self.states:
             if state.completed and id(state.rule) == id(rule):
                 yield state
 
@@ -126,13 +126,14 @@ class Column(object):
 class State(object):
     def __init__(self, rule, production, dot_index,
                  start_column, stop_column,
-                 children):
+                 children, rank):
         self.rule = rule
         self.production = production
         self.dot_index = dot_index
         self.start_column = start_column
         self.stop_column = stop_column
         self.children = children
+        self.rank = rank
 
     def __hash__(self):
         return hash((
@@ -152,6 +153,14 @@ class State(object):
     @property
     def parents(self):
         return self.start_column.states_index[id(self.rule)]
+
+    @property
+    def span(self):
+        return self.start_column.index, self.stop_column.index
+
+    def __len__(self):
+        start, stop = self.span
+        return stop - start
 
     def __str__(self):
         terms = self.production.terms
@@ -181,6 +190,52 @@ class Match(Record):
     def fact(self):
         fact = self.tree.interpret()
         return fact.normalized
+
+
+def prepare_match(state):
+    root = Node(
+        state.rule,
+        state.production,
+        state.children
+    )
+    tree = Tree(root).normalized
+    relations = tree.relations
+    if relations.validate():
+        tree = tree.constrain(relations)
+        return Match(state.rule, tree)
+
+
+def prepare_matches(states):
+    for state in states:
+        match = prepare_match(state)
+        if match:
+            yield match
+
+
+def prepare_resolved_matches(states):
+    tree = IntervalTree()
+    for state in states:
+        start, stop = state.span
+        if not tree[start:stop]:
+            match = prepare_match(state)
+            if match:
+                tree[start:stop] = match
+                yield match
+
+
+def order_span_rank(states):
+    return sorted(
+        states,
+        # longest first, same size sort by rank
+        key=lambda _: (-len(_), _.rank)
+    )
+
+
+def order_rank(states):
+    return sorted(
+        states,
+        key=lambda _: _.rank
+    )
 
 
 class Parser(object):
@@ -213,40 +268,28 @@ class Parser(object):
                             self.scan(next_column, next_term, state)
             return chart
 
-    def extract(self, text, all=True):
+    def matches(self, text, all=True):
         chart = self.chart(text, all=all)
-        matches = (
+        return (
             chart
             if all
             else chart.last_column
         ).matches(self.rule)
-        for state in matches:
-            root = Node(
-                self.rule,
-                state.production,
-                state.children
-            )
-            tree = Tree(root).normalized
-            relations = tree.relations
-            if relations.validate():
-                tree = tree.constrain(relations)
-                yield Match(self.rule, tree)
 
-    def resolve(self, matches):
-        matches = sorted(matches, key=lambda _: len(_.tokens), reverse=True)
-        tree = IntervalTree()
-        for match in matches:
-            start, stop = match.span
-            if not tree[start:stop]:
-                tree[start:stop] = match
-                yield match
+    def extract(self, text, all=True):
+        states = self.matches(text, all=all)
+        states = order_rank(states)
+        return prepare_matches(states)
 
     def findall(self, text):
-        matches = self.extract(text)
-        return self.resolve(matches)
+        states = self.matches(text)
+        states = order_span_rank(states)
+        return prepare_resolved_matches(states)
 
     def match(self, text):
-        for match in self.extract(text, all=False):
+        states = self.matches(text, all=False)
+        states = order_span_rank(states)
+        for match in prepare_resolved_matches(states):
             return match
 
     def predict(self, column, next_column, rule):
@@ -255,13 +298,14 @@ class Parser(object):
             if next_column
             else rule.productions
         )
-        for production in productions:
+        for index, production in enumerate(productions):
             state = State(
                 rule, production,
                 dot_index=0,
                 start_column=column,
                 stop_column=column,
                 children=[],
+                rank=[index]
             )
             column.append(state)
 
@@ -275,6 +319,7 @@ class Parser(object):
                 start_column=state.start_column,
                 stop_column=column,
                 children=state.children + [node],
+                rank=state.rank
             )
             column.append(state)
 
@@ -291,5 +336,6 @@ class Parser(object):
                 start_column=state.start_column,
                 stop_column=column,
                 children=state.children + [node],
+                rank=state.rank + [completed.rank]
             )
             column.append(state)
