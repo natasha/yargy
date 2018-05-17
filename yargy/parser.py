@@ -1,7 +1,6 @@
 # coding: utf-8
 from __future__ import unicode_literals
 
-from threading import Lock
 from collections import defaultdict
 
 from intervaltree import IntervalTree
@@ -273,26 +272,23 @@ class Parser(object):
         rule = rule.normalized
         self.rule = rule.as_bnf.start
 
-        self.lock = Lock()
-
     def chart(self, text, all=True):
-        with self.lock:
-            tokens = self.tokenizer(text)
-            tokens = self.tagger(tokens)
-            chart = Chart(tokens)
-            for column, next_column in chart:
-                if column.first or all:
-                    self.predict(column, next_column, self.rule)
-                for state in column:
-                    if state.completed:
-                        self.complete(column, state)
-                    else:
-                        next_term = state.next_term
-                        if is_rule(next_term):
-                            self.predict(column, next_column, next_term)
-                        elif next_column:
-                            self.scan(next_column, next_term, state)
-            return chart
+        tokens = self.tokenizer(text)
+        tokens = self.tagger(tokens)
+        chart = Chart(tokens)
+        for column, next_column in chart:
+            if column.first or all:
+                self.predict(column, next_column, self.rule)
+            for state in column:
+                if state.completed:
+                    self.complete(column, state)
+                else:
+                    next_term = state.next_term
+                    if is_rule(next_term):
+                        self.predict(column, next_column, next_term)
+                    elif next_column:
+                        self.scan(next_column, next_term, state)
+        return chart
 
     def matches(self, text, all=True):
         chart = self.chart(text, all=all)
