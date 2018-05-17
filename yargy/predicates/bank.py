@@ -62,19 +62,23 @@ def morph_required(method):
     return wrapper
 
 
-def get_tokenizer():
+def mock_tokenizer():
     from yargy.tokenizer import MorphTokenizer
     return MorphTokenizer()
 
 
+def mock_context():
+    from yargy.parser import Context
+    return Context(mock_tokenizer())
+
+
 def tokenize(string):
-    tokenizer = get_tokenizer()
+    tokenizer = mock_tokenizer()
     return list(tokenizer(string))
 
 
 def activate(scheme):
-    tokenizer = get_tokenizer()
-    return scheme.activate(tokenizer)
+    return scheme.activate(mock_context())
 
 
 class true(Predicate):
@@ -302,8 +306,8 @@ class normalized(ParameterPredicateScheme):
 
     """
 
-    def activate(self, tokenizer):
-        normalized = tokenizer.morph.normalized(self.value)
+    def activate(self, context):
+        normalized = context.tokenizer.morph.normalized(self.value)
         return DictionaryPredicate(normalized)
 
 
@@ -319,10 +323,10 @@ class dictionary(ParameterPredicateScheme):
 
     """
 
-    def activate(self, tokenizer):
+    def activate(self, context):
         normalized = set()
         for item in self.value:
-            normalized.update(tokenizer.morph.normalized(item))
+            normalized.update(context.tokenizer.morph.normalized(item))
         return DictionaryPredicate(normalized)
 
     @property
@@ -359,8 +363,8 @@ class gram(ParameterPredicateScheme):
 
     """
 
-    def activate(self, tokenizer):
-        tokenizer.morph.check_gram(self.value)
+    def activate(self, context):
+        context.tokenizer.morph.check_gram(self.value)
         return GramPredicate(self.value)
 
 
@@ -395,8 +399,8 @@ class type(ParameterPredicateScheme):
 
     """
 
-    def activate(self, tokenizer):
-        tokenizer.check_type(self.value)
+    def activate(self, context):
+        context.tokenizer.check_type(self.value)
         return TypePredicate(self.value)
 
 
@@ -414,8 +418,8 @@ class tag(ParameterPredicateScheme):
 
     """
 
-    def activate(self, tokenizer):
-        tokenizer.tagger.check_tag(self.value)
+    def activate(self, context):
+        context.tagger.check_tag(self.value)
         return TagPredicate(self.value)
 
 
@@ -480,10 +484,10 @@ class custom(PredicateScheme):
             types = [types]
         self.types = types
 
-    def activate(self, tokenizer):
+    def activate(self, context):
         if self.types:
             for type in self.types:
-                tokenizer.check_type(type)
+                context.tokenizer.check_type(type)
         return CustomPredicate(self.function, self.types)
 
 
