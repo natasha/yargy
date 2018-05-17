@@ -19,6 +19,10 @@ class Predicate(Record):
         from yargy.api import rule
         return rule(self).repeatable(min=min, max=max)
 
+    def named(self, name):
+        from yargy.api import rule
+        return rule(self).named(name)
+
     def interpretation(self, attribute):
         from yargy.api import rule
         from yargy.interpretation import prepare_token_interpretator
