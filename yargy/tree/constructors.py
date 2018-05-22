@@ -6,10 +6,11 @@ from yargy.visitor import TransformatorsComposition
 
 
 class Tree(Record):
-    __attributes__ = ['root']
+    __attributes__ = ['root', 'range']
 
-    def __init__(self, root):
+    def __init__(self, root, range):
         self.root = root
+        self.range = range
 
     def walk(self, types=None):
         items = dfs_tree(self.root)
@@ -50,6 +51,17 @@ class Tree(Record):
         from .transformators import DotTreeTransformator
         return self.transform(DotTreeTransformator)
 
+    @property
+    def cover(self):
+        start, stop = self.range
+        return stop - start
+
+    def __lt__(self, other):
+        a, b = self.cover, other.cover
+        if a == b:
+            return self.root < other.root
+        return a > b
+
 
 def bfs_tree(root):
     queue = [root]
@@ -68,12 +80,21 @@ def dfs_tree(root):
 
 
 class Node(Record):
-    __attributes__ = ['rule', 'production', 'children']
+    __attributes__ = ['rule', 'production', 'rank', 'children']
 
-    def __init__(self, rule, production, children):
+    def __init__(self, rule, production, rank, children):
         self.rule = rule
         self.production = production
+        self.rank = rank
         self.children = children
+
+    def attached(self, node):
+        return Node(
+            self.rule,
+            self.production,
+            self.rank,
+            self.children + [node]
+        )
 
     @property
     def main(self):
@@ -90,6 +111,27 @@ class Node(Record):
     @property
     def label(self):
         return self.rule.label
+
+    def __lt__(self, other):
+        if id(self.rule) != id(other.rule):
+            raise TypeError('Node() < Node() with different rules')
+
+        if id(self) == id(other):
+            return False
+
+        if self.rank == other.rank:
+            for a, b in zip(self.children, other.children):
+                if is_leaf(a):
+                    continue
+                if a.rank < b.rank:
+                    return True
+                elif a.rank > b.rank:
+                    return False
+                elif a.rank == b.rank and a < b:
+                    return True
+            return False
+
+        return self.rank < other.rank
 
 
 class Leaf(Node):
@@ -110,3 +152,7 @@ class Leaf(Node):
     @property
     def label(self):
         return self.token.value
+
+
+def is_leaf(item):
+    return isinstance(item, Leaf)

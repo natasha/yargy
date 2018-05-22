@@ -33,12 +33,13 @@ class InplaceTreeTransformator(Visitor):
 class TreeTransformator(Visitor):
     def __call__(self, tree):
         root = self.visit(tree.root)
-        return Tree(root)
+        return Tree(root, tree.range)
 
     def visit_Node(self, item):
         return Node(
             item.rule,
             item.production,
+            item.rank,
             [self.visit(_) for _ in item.children]
         )
 
@@ -56,7 +57,12 @@ class PropogateEmptyTransformator(TreeTransformator):
     def visit_Node(self, item):
         children = self.visit_children(item)
         if children:
-            return Node(item.rule, item.production, children)
+            return Node(
+                item.rule,
+                item.production,
+                item.rank,
+                children
+            )
 
 
 class KeepInterpretationNodesTransformator(TreeTransformator):
@@ -76,7 +82,12 @@ class KeepInterpretationNodesTransformator(TreeTransformator):
     def visit_Node(self, item):
         if item.interpretator:
             children = [self.visit(_) for _ in self.flatten(item)]
-            return Node(item.rule, item.production, children)
+            return Node(
+                item.rule,
+                item.production,
+                item.rank,
+                children
+            )
         else:
             super(KeepInterpretationNodesTransformator, self).visit_Node(item)
 

@@ -41,7 +41,7 @@ class Chart(object):
                 yield state
 
     def __iter__(self):
-        size = len(self)
+        size = len(self.columns)
         for index in range(size):
             column = self.columns[index]
             next_column = None
@@ -51,13 +51,10 @@ class Chart(object):
 
     @property
     def last_column(self):
-        return self.columns[len(self) - 1]
+        return self.columns[len(self.columns) - 1]
 
     def __getitem__(self, index):
         return self.columns[index]
-
-    def __len__(self):
-        return len(self.columns)
 
     def __repr__(self):
         return 'Chart({columns!r}, ...)'.format(
@@ -135,20 +132,19 @@ class Column(object):
 class State(object):
     def __init__(self, rule, production, dot_index,
                  start_column, stop_column,
-                 children, rank):
+                 node):
         self.rule = rule
         self.production = production
         self.dot_index = dot_index
         self.start_column = start_column
         self.stop_column = stop_column
-        self.children = children
-        self.rank = rank
+        self.node = node
 
     def __hash__(self):
         return hash((
             id(self.rule), id(self.production), self.dot_index,
             self.start_column.index, self.stop_column.index,
-            tuple(id(_) for _ in self.children)
+            tuple(id(_) for _ in self.node.children)
         ))
 
     @property
@@ -164,12 +160,8 @@ class State(object):
         return self.start_column.states_index[id(self.rule)]
 
     @property
-    def span(self):
+    def range(self):
         return self.start_column.index, self.stop_column.index
-
-    def __len__(self):
-        start, stop = self.span
-        return stop - start
 
     def __str__(self):
         terms = self.production.terms
@@ -189,11 +181,14 @@ class State(object):
 class Match(Record):
     __attributes__ = ['tokens', 'span']
 
-    def __init__(self, rule, tree):
-        self.rule = rule
+    def __init__(self, tree):
         self.tree = tree
         self.tokens = [_.token for _ in tree.walk(types=Leaf)]
         self.span = get_tokens_span(self.tokens)
+
+    @property
+    def rule(self):
+        return self.tree.root.rule
 
     @property
     def fact(self):
@@ -201,17 +196,20 @@ class Match(Record):
         return fact.normalized
 
 
-def prepare_match(state):
-    root = Node(
-        state.rule,
-        state.production,
-        state.children
-    )
-    tree = Tree(root).normalized
+def prepare_trees(states):
+    for state in states:
+        yield Tree(
+            state.node,
+            state.range
+        )
+
+
+def prepare_match(tree):
+    tree = tree.normalized
     relations = tree.relations
     if relations.validate():
         tree = tree.constrain(relations)
-        return Match(state.rule, tree)
+        return Match(tree)
 
 
 def prepare_matches(states):
@@ -221,30 +219,15 @@ def prepare_matches(states):
             yield match
 
 
-def prepare_resolved_matches(states):
-    tree = IntervalTree()
-    for state in states:
-        start, stop = state.span
-        if not tree[start:stop]:
-            match = prepare_match(state)
+def prepare_resolved_matches(trees):
+    intervals = IntervalTree()
+    for tree in trees:
+        start, stop = tree.range
+        if not intervals[start:stop]:
+            match = prepare_match(tree)
             if match:
-                tree[start:stop] = match
+                intervals[start:stop] = match
                 yield match
-
-
-def order_span_rank(states):
-    return sorted(
-        states,
-        # longest first, same size sort by rank
-        key=lambda _: (-len(_), _.rank)
-    )
-
-
-def order_rank(states):
-    return sorted(
-        states,
-        key=lambda _: _.rank
-    )
 
 
 class Context(Record):
@@ -300,18 +283,20 @@ class Parser(object):
 
     def extract(self, text, all=True):
         states = self.matches(text, all=all)
-        states = order_rank(states)
-        return prepare_matches(states)
+        trees = prepare_trees(states)
+        return prepare_matches(trees)
 
     def findall(self, text):
         states = self.matches(text)
-        states = order_span_rank(states)
-        return prepare_resolved_matches(states)
+        trees = prepare_trees(states)
+        trees = sorted(trees)
+        return prepare_resolved_matches(trees)
 
     def match(self, text):
         states = self.matches(text, all=False)
-        states = order_span_rank(states)
-        for match in prepare_resolved_matches(states):
+        trees = prepare_trees(states)
+        trees = sorted(trees)
+        for match in prepare_matches(trees):
             return match
 
     def predict(self, column, next_column, rule):
@@ -321,43 +306,40 @@ class Parser(object):
             else rule.productions
         )
         for index, production in enumerate(productions):
+            node = Node(
+                rule, production,
+                rank=index,
+                children=[]
+            )
             state = State(
                 rule, production,
                 dot_index=0,
                 start_column=column,
                 stop_column=column,
-                children=[],
-                rank=[index]
+                node=node
             )
             column.append(state)
 
     def scan(self, column, predicate, state):
         token = column.token
         if predicate(token):
-            node = Leaf(predicate, predicate.constrain(token))
+            leaf = Leaf(predicate, predicate.constrain(token))
             state = State(
                 state.rule, state.production,
                 dot_index=state.dot_index + 1,
                 start_column=state.start_column,
                 stop_column=column,
-                children=state.children + [node],
-                rank=state.rank
+                node=state.node.attached(leaf)
             )
             column.append(state)
 
     def complete(self, column, completed):
-        node = Node(
-            completed.rule,
-            completed.production,
-            completed.children
-        )
         for state in completed.parents:
             state = State(
                 state.rule, state.production,
                 dot_index=state.dot_index + 1,
                 start_column=state.start_column,
                 stop_column=column,
-                children=state.children + [node],
-                rank=state.rank + [completed.rank]
+                node=state.node.attached(completed.node)
             )
             column.append(state)
