@@ -74,15 +74,15 @@ class Rule(Record):
     def optional(self):
         return OptionalRule(self)
 
-    def repeatable(self, min=None, max=None):
+    def repeatable(self, min=None, max=None, reverse=False):
         if min and max:
-            return MinMaxBoundedRule(self, min, max)
+            return MinMaxBoundedRule(self, min, max, reverse)
         elif min:
-            return MinBoundedRule(self, min)
+            return MinBoundedRule(self, min, reverse)
         elif max:
-            return MaxBoundedRule(self, max)
+            return MaxBoundedRule(self, max, reverse)
         else:
-            return RepeatableRule(self)
+            return RepeatableRule(self, reverse)
 
     def named(self, name):
         return NamedRule(self, name)
@@ -196,7 +196,12 @@ class OptionalRule(ExtendedRule):
 
 
 class RepeatableRule(ExtendedRule):
-    pass
+    __attributes__ = ['rule', 'reverse']
+
+    def __init__(self, rule, reverse):
+        ExtendedRule.__init__(self, rule)
+        assert_type(reverse, bool)
+        self.reverse = reverse
 
 
 class RepeatableOptionalRule(RepeatableRule, OptionalRule):
@@ -208,29 +213,33 @@ class BoundedRule(ExtendedRule):
 
 
 class MinBoundedRule(BoundedRule):
-    __attributes__ = ['rule', 'min']
+    __attributes__ = ['rule', 'min', 'reverse']
 
-    def __init__(self, rule, min):
+    def __init__(self, rule, min, reverse):
         BoundedRule.__init__(self, rule)
         assert_greater_equals(min, 1)
+        assert_type(reverse, bool)
         self.min = min
+        self.reverse = reverse
 
 
 class MaxBoundedRule(BoundedRule):
-    __attributes__ = ['rule', 'max']
+    __attributes__ = ['rule', 'max', 'reverse']
 
-    def __init__(self, rule, max):
+    def __init__(self, rule, max, reverse):
         BoundedRule.__init__(self, rule)
         assert_greater_equals(max, 1)
+        assert_type(reverse, bool)
         self.max = max
+        self.reverse = reverse
 
 
 class MinMaxBoundedRule(MinBoundedRule, MaxBoundedRule):
-    __attributes__ = ['rule', 'min', 'max']
+    __attributes__ = ['rule', 'min', 'max', 'reverse']
 
-    def __init__(self, rule, min, max):
-        MinBoundedRule.__init__(self, rule, min)
-        MaxBoundedRule.__init__(self, rule, max)
+    def __init__(self, rule, min, max, reverse):
+        MinBoundedRule.__init__(self, rule, min, reverse)
+        MaxBoundedRule.__init__(self, rule, max, reverse)
         assert_greater_equals(max, min)
 
 

@@ -15,9 +15,9 @@ class Predicate(Record):
         from yargy.api import rule
         return rule(self).optional()
 
-    def repeatable(self, min=None, max=None):
+    def repeatable(self, min=None, max=None, reverse=False):
         from yargy.api import rule
-        return rule(self).repeatable(min=min, max=max)
+        return rule(self).repeatable(min=min, max=max, reverse=reverse)
 
     def named(self, name):
         from yargy.api import rule

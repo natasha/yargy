@@ -108,19 +108,22 @@ class RuleTransformator(Visitor):
         return OptionalRule(self.visit(item.rule))
 
     def visit_RepeatableRule(self, item):
-        return RepeatableRule(self.visit(item.rule))
+        return RepeatableRule(self.visit(item.rule, item.reverse))
 
     def visit_RepeatableOptionalRule(self, item):
-        return RepeatableOptionalRule(self.visit(item.rule))
+        return RepeatableOptionalRule(self.visit(item.rule, item.reverse))
 
     def visit_MinBoundedRule(self, item):
-        return MinBoundedRule(self.visit(item.rule), item.min)
+        return MinBoundedRule(self.visit(item.rule), item.min, item.reverse)
 
     def visit_MaxBoundedRule(self, item):
-        return MaxBoundedRule(self.visit(item.rule), item.max)
+        return MaxBoundedRule(self.visit(item.rule), item.max, item.reverse)
 
     def visit_MinMaxBoundedRule(self, item):
-        return MinMaxBoundedRule(self.visit(item.rule), item.min, item.max)
+        return MinMaxBoundedRule(
+            self.visit(item.rule),
+            item.min, item.max, item.reverse
+        )
 
     def visit_NamedRule(self, item):
         return NamedRule(self.visit(item.rule), item.name)
@@ -161,16 +164,16 @@ class SquashExtendedTransformator(RuleTransformator):
     def visit_RepeatableRule(self, item):
         child = item.rule
         if isinstance(child, (OptionalRule, RepeatableOptionalRule)):
-            return self.visit(RepeatableOptionalRule(child.rule))
+            return self.visit(RepeatableOptionalRule(child.rule, item.reverse))
         elif isinstance(child, (RepeatableRule, BoundedRule)):
-            return self.visit(RepeatableRule(child.rule))
+            return self.visit(RepeatableRule(child.rule, item.reverse))
         else:
-            return RepeatableRule(self.visit(child))
+            return RepeatableRule(self.visit(child), item.reverse)
 
     def visit_OptionalRule(self, item):
         child = item.rule
         if isinstance(child, (RepeatableRule, RepeatableOptionalRule)):
-            return self.visit(RepeatableOptionalRule(child.rule))
+            return self.visit(RepeatableOptionalRule(child.rule, child.reverse))
         elif isinstance(child, OptionalRule):
             return self.visit(OptionalRule(child.rule))
         else:
@@ -180,16 +183,16 @@ class SquashExtendedTransformator(RuleTransformator):
         child = item.rule
         if isinstance(child, (RepeatableRule, BoundedRule,
                               OptionalRule, RepeatableOptionalRule)):
-            return self.visit(RepeatableOptionalRule(child.rule))
+            return self.visit(RepeatableOptionalRule(child.rule, item.reverse))
         else:
-            return RepeatableOptionalRule(self.visit(child))
+            return RepeatableOptionalRule(self.visit(child), item.reverse)
 
     def visit_BoundedRule(self, item):
         child = item.rule
         if isinstance(child, RepeatableRule):
-            return self.visit(RepeatableRule(child.rule))
+            return self.visit(RepeatableRule(child.rule, child.reverse))
         elif isinstance(child, RepeatableOptionalRule):
-            return self.visit(RepeatableOptionalRule(child.rule))
+            return self.visit(RepeatableOptionalRule(child.rule, child.reverse))
         raise TypeError
 
     def visit_MinBoundedRule(self, item):
@@ -197,18 +200,22 @@ class SquashExtendedTransformator(RuleTransformator):
         if isinstance(child, (RepeatableRule, RepeatableOptionalRule)):
             return self.visit_BoundedRule(item)
         elif isinstance(child, OptionalRule):
-            return self.visit(OptionalRule(MinBoundedRule(child.rule, item.min)))
+            return self.visit(OptionalRule(MinBoundedRule(
+                child.rule, item.min, item.reverse
+            )))
         else:
-            return MinBoundedRule(self.visit(child), item.min)
+            return MinBoundedRule(self.visit(child), item.min, item.reverse)
 
     def visit_MaxBoundedRule(self, item):
         child = item.rule
         if isinstance(child, (RepeatableRule, RepeatableOptionalRule)):
             return self.visit_BoundedRule(item)
         elif isinstance(child, OptionalRule):
-            return self.visit(OptionalRule(MaxBoundedRule(child.rule, item.max)))
+            return self.visit(OptionalRule(MaxBoundedRule(
+                child.rule, item.max, item.reverse
+            )))
         else:
-            return MaxBoundedRule(self.visit(child), item.max)
+            return MaxBoundedRule(self.visit(child), item.max, item.reverse)
 
     def visit_MinMaxBoundedRule(self, item):
         child = item.rule
@@ -216,10 +223,13 @@ class SquashExtendedTransformator(RuleTransformator):
             return self.visit_BoundedRule(item)
         elif isinstance(child, OptionalRule):
             return self.visit(OptionalRule(MinMaxBoundedRule(
-                child.rule, item.min, item.max
+                child.rule, item.min, item.max, item.reverse
             )))
         else:
-            return MinMaxBoundedRule(self.visit(child), item.min, item.max)
+            return MinMaxBoundedRule(
+                self.visit(child),
+                item.min, item.max, item.reverse
+            )
 
 
 class FlattenTransformator(RuleTransformator):
@@ -255,16 +265,59 @@ class ReplaceEmptyTransformator(RuleTransformator):
         return Rule([EmptyProduction()])
 
 
-def bound(item, count):
+def max_bound(item, count, reverse=False):
     from yargy.api import rule, or_
 
     if count == 1:
         return item
     else:
-        return or_(
-            rule(item, bound(item, count - 1)),
-            item
+        a = rule(
+            item,
+            max_bound(item, count - 1, reverse)
         )
+        b = item
+        if reverse:
+            a, b = b, a
+        return or_(a, b)
+
+
+def repeatable(item, reverse=False):
+    from yargy.api import forward, or_, rule
+
+    temp = forward()
+    a = rule(item, temp)
+    b = item
+    if reverse:
+        a, b = b, a
+    return temp.define(
+        or_(
+            a,
+            b
+        )
+    )
+
+
+def optional(item):
+    from yargy.api import or_, empty
+
+    return or_(empty(), item)
+
+
+def repeatable_optional(item, reverse=False):
+    from yargy.api import forward, or_, rule, empty
+
+    temp = forward()
+    a = rule(item, temp)
+    b = item
+    if reverse:
+        a, b = b, a
+    return temp.define(
+        or_(
+            empty(),
+            a,
+            b
+        )
+    )
 
 
 def repeat(item, count):
@@ -273,54 +326,36 @@ def repeat(item, count):
 
 class ReplaceExtendedTransformator(RuleTransformator):
     def visit_RepeatableRule(self, item):
-        from yargy.api import forward, or_, rule
-
         child = self.visit(item.rule)
-        temp = forward()
-        return temp.define(
-            or_(
-                rule(child, temp),
-                child
-            )
-        )
+        return repeatable(child, item.reverse)
 
     def visit_OptionalRule(self, item):
-        from yargy.api import or_, empty
-
         child = self.visit(item.rule)
-        return or_(child, empty())
+        return optional(child)
 
     def visit_RepeatableOptionalRule(self, item):
-        from yargy.api import forward, or_, rule, empty
-
         child = self.visit(item.rule)
-        temp = forward()
-        return temp.define(
-            or_(
-                rule(child, temp),
-                child,
-                empty(),
-            )
-        )
+        return repeatable_optional(child, item.reverse)
 
     def visit_MinBoundedRule(self, item):
-        from yargy.api import rule
+        child = self.visit(item.rule)
+        items = repeat(child, item.min - 1)
+        items.append(repeatable(child, item.reverse))
 
-        items = repeat(item.rule, item.min - 1) + [
-            self.visit_RepeatableRule(item)
-        ]
+        from yargy.api import rule
         return rule(*items)
 
     def visit_MaxBoundedRule(self, item):
-        return bound(item.rule, item.max)
+        child = self.visit(item.rule)
+        return max_bound(child, item.max, item.reverse)
 
     def visit_MinMaxBoundedRule(self, item):
-        from yargy.api import rule
+        rule, min, max, reverse = item
+        child = self.visit(rule)
+        items = repeat(child, min - 1)
+        items.append(max_bound(child, max - min + 1, reverse))
 
-        child, min, max = item
-        items = repeat(child, min - 1) + [
-            bound(child, max - min + 1)
-        ]
+        from yargy.api import rule
         return rule(*items)
 
 
@@ -387,6 +422,27 @@ class DotRuleTransformator(DotTransformator, InplaceRuleTransformator):
         self.style(
             item,
             style(label='RepeatableOptional', fillcolor=ORANGE)
+        )
+
+    def visit_MinBoundedRule(self, item):
+        self.style(
+            item,
+            style(label='MinBounded >=%d' % item.min, fillcolor=ORANGE)
+        )
+
+    def visit_MaxBoundedRule(self, item):
+        self.style(
+            item,
+            style(label='MaxBounded <=%d' % item.max, fillcolor=ORANGE)
+        )
+
+    def visit_MinMaxBoundedRule(self, item):
+        self.style(
+            item,
+            style(
+                label='MinMaxBounded [item.min, item.max]'.format(item=item),
+                fillcolor=ORANGE
+            )
         )
 
     def visit_NamedRule(self, item):

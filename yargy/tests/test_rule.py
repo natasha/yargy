@@ -17,15 +17,15 @@ def test_repeatable_optional():
     A = rule('a')
     assert_bnf(
         A.optional().repeatable(),
-        "R0 -> 'a' R0 | 'a' | e",
+        "R0 -> e | 'a' R0 | 'a'",
     )
     assert_bnf(
         A.repeatable().optional(),
-        "R0 -> 'a' R0 | 'a' | e",
+        "R0 -> e | 'a' R0 | 'a'",
     )
     assert_bnf(
         A.repeatable().optional().repeatable(),
-        "R0 -> 'a' R0 | 'a' | e",
+        "R0 -> e | 'a' R0 | 'a'",
     )
     assert_bnf(
         A.repeatable().repeatable(),
@@ -33,7 +33,7 @@ def test_repeatable_optional():
     )
     assert_bnf(
         A.optional().optional(),
-        "R0 -> 'a' | e",
+        "R0 -> e | 'a'",
     )
     assert_bnf(
         A.repeatable(max=2).repeatable(),
@@ -45,8 +45,28 @@ def test_repeatable_optional():
     )
     assert_bnf(
         A.optional().repeatable(max=2),
-        'R0 -> R1 | e',
+        'R0 -> e | R1',
         "R1 -> 'a' 'a' | 'a'"
+    )
+    assert_bnf(
+        A.repeatable(reverse=True).optional(),
+        "R0 -> e | 'a' | 'a' R0"
+    )
+    assert_bnf(
+        A.repeatable().repeatable(reverse=True),
+        "R0 -> 'a' | 'a' R0"
+    )
+    assert_bnf(
+        A.repeatable(reverse=True).repeatable(min=1, max=2),
+        "R0 -> 'a' | 'a' R0"
+    )
+    assert_bnf(
+        A.repeatable().repeatable(min=2, reverse=True),
+        "R0 -> 'a' R0 | 'a'"
+    )
+    assert_bnf(
+        A.repeatable(max=2, reverse=True),
+        "R0 -> 'a' | 'a' 'a'"
     )
 
 

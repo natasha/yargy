@@ -121,16 +121,17 @@ class Node(Record):
 
         if self.rank == other.rank:
             for a, b in zip(self.children, other.children):
-                if is_leaf(a):
+                if is_leaf(a):  # b is also leaf
+                    continue
+                if id(a) == id(b):
                     continue
                 if a.rank < b.rank:
                     return True
                 elif a.rank > b.rank:
                     return False
-                elif a.rank == b.rank and a < b:
-                    return True
+                elif a.rank == b.rank:
+                    return a < b
             return False
-
         return self.rank < other.rank
 
 
