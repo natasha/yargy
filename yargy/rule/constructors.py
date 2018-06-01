@@ -71,8 +71,8 @@ class Rule(Record):
     def children(self):
         return self.productions
 
-    def optional(self):
-        return OptionalRule(self)
+    def optional(self, reverse=False):
+        return OptionalRule(self, reverse)
 
     def repeatable(self, min=None, max=None, reverse=False):
         if min and max:
@@ -188,7 +188,12 @@ class WrapperRule(Rule):
 
 
 class ExtendedRule(WrapperRule):
-    pass
+    __attributes__ = ['rule', 'reverse']
+
+    def __init__(self, rule, reverse):
+        WrapperRule.__init__(self, rule)
+        assert_type(reverse, bool)
+        self.reverse = reverse
 
 
 class OptionalRule(ExtendedRule):
@@ -196,16 +201,18 @@ class OptionalRule(ExtendedRule):
 
 
 class RepeatableRule(ExtendedRule):
-    __attributes__ = ['rule', 'reverse']
-
-    def __init__(self, rule, reverse):
-        ExtendedRule.__init__(self, rule)
-        assert_type(reverse, bool)
-        self.reverse = reverse
+    pass
 
 
 class RepeatableOptionalRule(RepeatableRule, OptionalRule):
-    pass
+    __attributes__ = ['rule', 'reverse_repeatable', 'reverse_optional']
+
+    def __init__(self, rule, reverse_repeatable, reverse_optional):
+        WrapperRule.__init__(self, rule)
+        assert_type(reverse_repeatable, bool)
+        assert_type(reverse_optional, bool)
+        self.reverse_repeatable = reverse_repeatable
+        self.reverse_optional = reverse_optional
 
 
 class BoundedRule(ExtendedRule):
@@ -216,22 +223,18 @@ class MinBoundedRule(BoundedRule):
     __attributes__ = ['rule', 'min', 'reverse']
 
     def __init__(self, rule, min, reverse):
-        BoundedRule.__init__(self, rule)
+        BoundedRule.__init__(self, rule, reverse)
         assert_greater_equals(min, 1)
-        assert_type(reverse, bool)
         self.min = min
-        self.reverse = reverse
 
 
 class MaxBoundedRule(BoundedRule):
     __attributes__ = ['rule', 'max', 'reverse']
 
     def __init__(self, rule, max, reverse):
-        BoundedRule.__init__(self, rule)
+        BoundedRule.__init__(self, rule, reverse)
         assert_greater_equals(max, 1)
-        assert_type(reverse, bool)
         self.max = max
-        self.reverse = reverse
 
 
 class MinMaxBoundedRule(MinBoundedRule, MaxBoundedRule):
