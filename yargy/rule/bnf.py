@@ -90,6 +90,21 @@ def lift(item):
 
 
 class BNFTransformator(RuleTransformator):
+    def __init__(self):
+        super(BNFTransformator, self).__init__()
+        self.parents = {}
+
+    def __call__(self, root):
+        for item in root.walk():
+            for child in item.children:
+                child_id = id(child)
+                count = self.parents.get(child_id, 0)
+                self.parents[child_id] = count + 1
+        return super(BNFTransformator, self).__call__(root)
+
+    def is_shared(self, item):
+        return self.parents[id(item)] > 1
+
     def raise_TypeError(self, item):
         raise TypeError(type(item))
 
@@ -104,7 +119,11 @@ class BNFTransformator(RuleTransformator):
         item = item.rule
         if is_forward_rule(item):
             return lift(item)
-        return self.visit(item)
+        shared = self.is_shared(item)
+        item = self.visit(item)
+        if shared:
+            item = lift(item)
+        return item
 
     def visit_NamedRule(self, item):
         name = item.name

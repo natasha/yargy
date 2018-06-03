@@ -139,6 +139,18 @@ def test_bnf():
         "R1 -> 'a' R1 | 'a'"
     )
 
+    A = rule('a')
+    B = A.named('B')
+    C = A.named('C')
+    D = rule(B, C).named('D')
+    assert_bnf(
+        D,
+        'D -> B C',
+        'B -> R0',
+        'C -> R0',
+        "R0 -> 'a'"
+    )
+
 
 def test_loop():
     A = forward()
