@@ -10,6 +10,7 @@ from .normalizer import (
     NormalizedNormalizer,
     ConstNormalizer,
     FunctionNormalizer,
+    FunctionFunctionNormalizer,
     MorphFunctionNormalizer,
 )
 
@@ -137,9 +138,29 @@ class FunctionAttribute(CustomAttribute):
         self.attribute = attribute
         self.function = function
 
+    def custom(self, function):
+        return FunctionFunctionAttribute(
+            self.attribute,
+            self.function,
+            function
+        )
+
     @property
     def normalizer(self):
         return FunctionNormalizer(self.function)
+
+
+class FunctionFunctionAttribute(CustomAttribute):
+    __attributes__ = ['attribute', 'first', 'second']
+
+    def __init__(self, attribute, first, second):
+        self.attribute = attribute
+        self.first = first
+        self.second = second
+
+    @property
+    def normalizer(self):
+        return FunctionFunctionNormalizer(self.first, self.second)
 
 
 class InflectedFunctionAttribute(MorphAttribute, CustomAttribute):

@@ -146,6 +146,17 @@ def test_rule_custom():
     assert match.fact == 3.14
 
 
+def test_rule_custom_custom():
+    MAPPING = {'a': 1}
+    RULE = rule(
+        'A'
+    ).interpretation(
+        custom(str.lower).custom(MAPPING.get)
+    )
+    parser = Parser(RULE)
+    match = parser.match('A')
+    assert match.fact == 1
+
 def text_normalized():
     RULE = rule(
         'московским'
@@ -268,6 +279,22 @@ def test_attribute_custom():
     assert record == F(a=1)
     assert record.spans == [(0, 1)]
     assert record.as_json == {'a': 1}
+
+
+def test_attribute_custom_custom():
+    F = fact('F', 'a')
+    MAPPING = {'a' : 1}
+    RULE = rule(
+        'A'
+    ).interpretation(
+        F.a.custom(str.lower).custom(MAPPING.get)
+    ).interpretation(
+        F
+    )
+    parser = Parser(RULE)
+    match = parser.match('A')
+    record = match.fact
+    assert record == F(a=1)
 
 
 def test_attribute_normalized():

@@ -82,6 +82,12 @@ class FunctionNormalizer(CustomNormalizer):
     def __init__(self, function):
         self.function = function
 
+    def custom(self, function):
+        return FunctionFunctionNormalizer(
+            self.function,
+            function
+        )
+
     def __call__(self, item):
         value = item.normalized
         return self.function(value)
@@ -90,6 +96,25 @@ class FunctionNormalizer(CustomNormalizer):
     def label(self):
         return 'custom({name})'.format(
             name=self.function.__name__
+        )
+
+
+class FunctionFunctionNormalizer(CustomNormalizer):
+    __attributes__ = ['first', 'second']
+
+    def __init__(self, first, second):
+        self.first = first
+        self.second = second
+
+    def __call__(self, item):
+        value = item.normalized
+        return self.second(self.first(value))
+
+    @property
+    def label(self):
+        return 'custom({first}).custom({second})'.format(
+            first=self.first.__name__,
+            second=self.second.__name__
         )
 
 
