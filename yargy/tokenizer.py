@@ -56,19 +56,25 @@ RULES = [
 
 class Tokenizer(object):
     def __init__(self, rules=RULES):
+        self.reset(rules)
+
+    def reset(self, rules):
         for rule in rules:
             assert_type(rule, TokenRule)
         self.rules = rules
         self.regexp, self.mapping, self.types = self.compile(rules)
 
     def add_rules(self, *rules):
-        self.__init__(list(rules) + self.rules)
+        self.reset(list(rules) + self.rules)
         return self
 
     def remove_types(self, *types):
         for type in types:
             self.check_type(type)
-        self.__init__([_ for _ in self.rules if _.type not in types])
+        self.reset([
+            _ for _ in self.rules
+            if _.type not in types
+        ])
         return self
 
     def check_type(self, type):
