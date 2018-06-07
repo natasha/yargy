@@ -157,6 +157,7 @@ def test_rule_custom_custom():
     match = parser.match('A')
     assert match.fact == 1
 
+
 def text_normalized():
     RULE = rule(
         'московским'
@@ -283,7 +284,7 @@ def test_attribute_custom():
 
 def test_attribute_custom_custom():
     F = fact('F', 'a')
-    MAPPING = {'a' : 1}
+    MAPPING = {'a': 1}
     RULE = rule(
         'A'
     ).interpretation(
