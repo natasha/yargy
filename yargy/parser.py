@@ -292,6 +292,10 @@ class Parser(object):
         trees = sorted(trees)
         return prepare_resolved_matches(trees)
 
+    def find(self, text):
+        for match in self.findall(text):
+            return match
+
     def match(self, text):
         states = self.matches(text, all=False)
         trees = prepare_trees(states)
