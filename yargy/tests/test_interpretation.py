@@ -6,6 +6,7 @@ from yargy import (
     rule,
     Parser
 )
+from yargy.compat import str
 from yargy.predicates import (
     eq
 )
