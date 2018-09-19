@@ -114,7 +114,8 @@ class FactDefinitionMeta(type):
         return super().__new__(mcs, typename, new_base_classes, class_attr)
 
 
-class FactDefinition(Fact, metaclass=FactDefinitionMeta):
+class FactDefinition(Fact):
+    __metaclass__ = FactDefinitionMeta
     _ROOT_FACT_DEFINITION = True
 
 
