@@ -90,7 +90,7 @@ class FactDefinitionMeta(type):
                 )
 
             # Saving root class to metaclass attributes
-            mcs.BASE_FACT_DEFINITION_CLS = super().__new__(mcs, typename, base_classes, class_attr)
+            mcs.BASE_FACT_DEFINITION_CLS = super(FactDefinitionMeta, mcs).__new__(mcs, typename, base_classes, class_attr)
             return mcs.BASE_FACT_DEFINITION_CLS
 
         if not _PY36:
@@ -111,7 +111,7 @@ class FactDefinitionMeta(type):
 
         new_base_classes = (generated_fact_cls,)
 
-        return super().__new__(mcs, typename, new_base_classes, class_attr)
+        return super(FactDefinitionMeta, mcs).__new__(mcs, typename, new_base_classes, class_attr)
 
 
 class FactDefinition(Fact):
