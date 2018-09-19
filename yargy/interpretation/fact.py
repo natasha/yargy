@@ -81,8 +81,13 @@ class FactDefinitionMeta(type):
         if class_attr.get('_ROOT_FACT_DEFINITION', False):
             # Checking for attempt to redeclare base definition class
             if mcs.BASE_FACT_DEFINITION_CLS is not None:
-                raise TypeError(f"Attempt to redeclare base fact definition class "
-                                f"'{mcs.BASE_FACT_DEFINITION_CLS.__name__}' by '{typename}'")
+                raise TypeError(
+                    "Attempt to redeclare base fact definition class"
+                    " '{current_base_cls_name}' by '{new_base_cls_name}'".format(
+                        current_base_cls_name=mcs.BASE_FACT_DEFINITION_CLS.__name__,
+                        new_base_cls_name=typename
+                    )
+                )
 
             # Saving root class to metaclass attributes
             mcs.BASE_FACT_DEFINITION_CLS = super().__new__(mcs, typename, base_classes, class_attr)
@@ -94,15 +99,15 @@ class FactDefinitionMeta(type):
         # TODO CONSIDER: research ability of mixins support
         # TODO CONSIDER: research ability of transitive inheritance from base class
         if base_classes != (mcs.BASE_FACT_DEFINITION_CLS,):
-            raise TypeError(f"Class {typename} must be inherited directly from FactDefinition only."
-                            f" Mixins and transitive inheritance are not currently supported")
+            raise TypeError("Class '{}' must be inherited directly from FactDefinition only."
+                            " Mixins and transitive inheritance are not currently supported".format(typename))
 
         annotations = class_attr.get("__annotations__")
 
         if not annotations:
-            raise TypeError(f"No annotations declared in fact definition class '{typename}'")
+            raise TypeError("No annotations declared in fact definition class '{}'".format(typename))
 
-        generated_fact_cls = fact(f"{type}AutoGen", list(annotations))
+        generated_fact_cls = fact("{}AutoGen".format(typename), list(annotations))
 
         new_base_classes = (generated_fact_cls,)
 
