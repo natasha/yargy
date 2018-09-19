@@ -1,6 +1,8 @@
 # coding: utf-8
 from __future__ import unicode_literals
 
+import six
+
 import sys
 
 from collections import OrderedDict
@@ -114,8 +116,7 @@ class FactDefinitionMeta(type):
         return super(FactDefinitionMeta, mcs).__new__(mcs, typename, new_base_classes, class_attr)
 
 
-class FactDefinition(Fact):
-    __metaclass__ = FactDefinitionMeta
+class FactDefinition(six.with_metaclass(FactDefinitionMeta, Fact)):
     _ROOT_FACT_DEFINITION = True
 
 
