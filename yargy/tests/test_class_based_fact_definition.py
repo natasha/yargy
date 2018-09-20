@@ -1,5 +1,7 @@
-from yargy.interpretation.fact import FactDefinition, Fact
+from yargy.interpretation.fact import Fact
 from yargy.interpretation.attribute import Attribute
+
+from yargy.shortcuts import FactDefinition
 
 
 def test_smoke_subclass():
