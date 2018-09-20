@@ -9,6 +9,7 @@ REQUIREMENTS = [
     'pymorphy2==0.8',
     'backports.functools-lru-cache==1.3',
     'intervaltree==2.1.0',
+    'six==1.11.0',
 ]
 
 setup(
