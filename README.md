@@ -4,7 +4,7 @@
 
 # Install
 
-`Yargy` supports both Python 2.7+ / 3.3+ versions including PyPy.
+`Yargy` supports both Python 2.7+ / 3.4+ versions including PyPy.
 
 ```bash
 $ pip install yargy
