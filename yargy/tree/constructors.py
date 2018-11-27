@@ -51,16 +51,17 @@ class Tree(Record):
         from .transformators import DotTreeTransformator
         return self.transform(DotTreeTransformator)
 
-    @property
-    def cover(self):
-        start, stop = self.range
-        return stop - start
-
     def __lt__(self, other):
-        a, b = self.cover, other.cover
-        if a == b:
+        if self.range == other.range:
             return self.root < other.root
-        return a > b
+
+        start, stop = self.range
+        other_start, other_stop = other.range
+
+        if start == other_start:
+            return stop > other_stop
+
+        return start < other_start
 
 
 def bfs_tree(root):

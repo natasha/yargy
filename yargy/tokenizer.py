@@ -4,8 +4,8 @@ from __future__ import unicode_literals
 import re
 
 from .utils import Record, assert_type
+from .span import Span
 from .token import (
-    Span,
     Token,
     MorphToken
 )

@@ -1,17 +1,8 @@
 # coding: utf-8
 from __future__ import unicode_literals
 
-from collections import namedtuple
-
 from .utils import Record
-
-
-class Span(namedtuple('Span', ['start', 'stop'])):
-    def __repr__(self):
-        return '[{self.start}, {self.stop})'.format(self=self)
-
-    def _repr_pretty_(self, printer, cycle):
-        printer.text(repr(self))
+from .span import Span
 
 
 class Token(Record):

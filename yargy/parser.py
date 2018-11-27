@@ -3,14 +3,13 @@ from __future__ import unicode_literals
 
 from collections import defaultdict
 
-from intervaltree import IntervalTree
-
 from yargy.compat import str
 from .utils import (
     Record,
     assert_type
 )
 from .token import get_tokens_span
+from .span import resolve_spans
 from .tree import (
     Node,
     Leaf,
@@ -220,14 +219,18 @@ def prepare_matches(states):
 
 
 def prepare_resolved_matches(trees):
-    intervals = IntervalTree()
+    spans = []
+    span_matches = {}
     for tree in trees:
-        start, stop = tree.range
-        if not intervals[start:stop]:
+        span = tree.range
+        if span not in span_matches:
             match = prepare_match(tree)
             if match:
-                intervals[start:stop] = match
-                yield match
+                spans.append(span)
+                span_matches[span] = match
+
+    for span in resolve_spans(spans):
+        yield span_matches[span]
 
 
 class Context(Record):
