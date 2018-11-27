@@ -2,7 +2,7 @@
 
 `Yargy` is a Earley parser, that uses russian morphology for facts extraction process, and written in pure python
 
-# Install
+## Install
 
 `Yargy` supports both Python 2.7+ / 3.4+ versions including PyPy.
 
@@ -10,7 +10,7 @@
 $ pip install yargy
 ```
 
-# Usage
+## Usage
 
 ```python
 from yargy import Parser, rule, and_, not_
@@ -85,11 +85,11 @@ Person(
 
 For more examples, details on grammar syntax, predicates and pipelines see [Yargy documentation](http://yargy.readthedocs.io/ru/latest/).
 
-# License
+## License
 
 Source code of `yargy` is distributed under MIT license (allows modification and commercial usage)
 
-# Support
+## Support
 
 - Chat — https://telegram.me/natural_language_processing
 - Issues — https://github.com/natasha/yargy/issues
