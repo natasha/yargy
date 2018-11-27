@@ -8,7 +8,6 @@ environment:
     # isn't covered by this document) at the time of writing.
 
     - PYTHON: "C:\\Python27"
-    - PYTHON: "C:\\Python33"
     - PYTHON: "C:\\Python34"
     - PYTHON: "C:\\Python35"
     - PYTHON: "C:\\Python27-x64"
@@ -33,4 +32,4 @@ test_script:
   # Note that you must use the environment variable %PYTHON% to refer to
   # the interpreter you're using - Appveyor does not do anything special
   # to put the Python version you want to use on PATH.
-  - "%PYTHON%\\python.exe -m pytest --pep8 --doctest-modules -v yargy"
+  - "%PYTHON%\\python.exe -m pytest --pep8 --flakes --doctest-modules -v yargy"
