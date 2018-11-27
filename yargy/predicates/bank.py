@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 
 from functools import wraps
 
-from yargy.compat import string_type
 from yargy.tokenizer import INT
 from yargy.token import (
     is_tag_token,

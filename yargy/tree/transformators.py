@@ -2,7 +2,6 @@
 from __future__ import unicode_literals
 
 from yargy.visitor import Visitor
-from yargy.utils import assert_type
 from yargy.dot import (
     style,
     DotTransformator,

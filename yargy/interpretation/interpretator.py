@@ -126,7 +126,7 @@ class Interpretator(Record):
     label = 'Interpretator'
 
     def __call__(self, input):
-        raise NotImplemented
+        raise NotImplementedError
 
 
 class FactInterpretator(Interpretator):

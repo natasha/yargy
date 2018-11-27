@@ -10,7 +10,6 @@ from yargy.dot import (
     RED,
     PURPLE,
     GREEN,
-    GRAY,
     DARKGRAY
 )
 
@@ -21,7 +20,6 @@ from .constructors import (
     EmptyProduction,
     Rule,
     OrRule,
-    ExtendedRule,
     OptionalRule,
     RepeatableRule,
     BoundedRule,
@@ -33,8 +31,6 @@ from .constructors import (
     InterpretationRule,
     RelationRule,
     ForwardRule,
-    EmptyRule,
-    PipelineRule
 )
 
 

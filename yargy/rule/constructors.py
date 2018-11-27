@@ -8,7 +8,7 @@ from yargy.utils import (
     assert_greater_equals
 )
 from yargy.visitor import TransformatorsComposition
-from yargy.predicates import is_predicate, Predicate
+from yargy.predicates import Predicate
 from yargy.relations import Main
 
 
@@ -284,6 +284,8 @@ class ForwardRule(Rule):
         self.rule = None
 
     def define(self, item, *items):
+        from yargy import rule
+
         if not items and is_rule(item):
             if isinstance(item, ForwardRule):
                 raise ValueError('forward(forward(...)) not allowed')

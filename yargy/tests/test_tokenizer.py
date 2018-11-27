@@ -9,8 +9,6 @@ from yargy.morph import (
 from yargy.token import (
     Token,
     MorphToken,
-    TagToken,
-    MorphTagToken,
 
     join_tokens
 )

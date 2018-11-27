@@ -1,13 +1,10 @@
 # coding: utf-8
 from __future__ import unicode_literals
-import pytest
 
 from yargy import (
     Parser,
     rule,
-    or_
 )
-from yargy.tokenizer import MorphTokenizer
 from yargy.pipelines import (
     pipeline,
     caseless_pipeline,

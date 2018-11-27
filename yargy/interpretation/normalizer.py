@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 
 from yargy.utils import Record, assert_type
 from yargy.token import (
-    join_tokens,
     join_normalized_tokens,
     join_inflected_tokens
 )

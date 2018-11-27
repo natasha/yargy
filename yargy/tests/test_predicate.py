@@ -8,7 +8,6 @@ from yargy.parser import Context
 from yargy.tokenizer import MorphTokenizer
 from yargy.predicates import (
     normalized,
-    dictionary,
     gram,
     custom
 )

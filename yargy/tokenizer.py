@@ -5,10 +5,7 @@ import re
 
 from .utils import Record, assert_type
 from .span import Span
-from .token import (
-    Token,
-    MorphToken
-)
+from .token import Token
 
 
 class TokenRule(Record):
