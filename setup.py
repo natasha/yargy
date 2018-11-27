@@ -12,7 +12,7 @@ REQUIREMENTS = [
 
 setup(
     name='yargy',
-    version='0.11.0',
+    version='0.12.0',
     description='Tiny rule-based facts extraction package',
     url='https://github.com/natasha/yargy',
     author='Yargy contributors',
