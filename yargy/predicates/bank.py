@@ -268,6 +268,24 @@ class in_(ParameterPredicate):
         return 'in_(...)'
 
 
+class contains_(ParameterPredicate):
+    """a in b
+    >>> predicate = contains_({'sml', 'ml'})
+    >>> a, b = tokenize('Сбербанк 1')
+    >>> predicate(a)
+    True
+    >>> predicate(b)
+    False
+    """
+
+    def __call__(self, token):
+        return any(v in token.value for v in self.value)
+
+    @property
+    def label(self):
+        return 'contains_(...)'
+
+
 class in_caseless(ParameterPredicate):
     """a.lower() in b
 
