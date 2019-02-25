@@ -159,7 +159,7 @@ def test_rule_custom_custom():
     assert match.fact == 1
 
 
-def text_normalized():
+def test_normalized():
     RULE = rule(
         'московским'
     ).interpretation(
