@@ -2,7 +2,8 @@
 test:
 	pytest --pep8 --flakes --doctest-modules -v yargy \
 		--cov-report term-missing --cov-report xml \
-		--cov-config setup.cfg --cov yargy
+		--cov-config setup.cfg --cov yargy \
+		--nbval-lax --current-env docs/*.ipynb
 
 wheel:
 	python setup.py bdist_wheel
