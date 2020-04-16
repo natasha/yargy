@@ -14,6 +14,9 @@ class Span(Record):
             return tuple(self) == other
         return Record.__eq__(self, other)
 
+    def __lt__(self, other):
+        return tuple(self) < tuple(other)
+
     def __repr__(self):
         return '[{self.start}, {self.stop})'.format(self=self)
 
