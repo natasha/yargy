@@ -1,8 +1,19 @@
 
-from collections import namedtuple
+from yargy.record import Record
 
 
-class Span(namedtuple('Span', ['start', 'stop'])):
+class Span(Record):
+    __attributes__ = ['start', 'stop']
+
+    def __init__(self, start, stop):
+        self.start = start
+        self.stop = stop
+
+    def __eq__(self, other):
+        if type(other) == tuple:
+            return tuple(self) == other
+        return Record.__eq__(self, other)
+
     def __repr__(self):
         return '[{self.start}, {self.stop})'.format(self=self)
 
