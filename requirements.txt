@@ -1,8 +1,0 @@
-# common
-pymorphy2==0.8
-backports.functools-lru-cache==1.3
-
-# dev
-pytest==3.2.1
-pytest-pep8==1.0.6
-pytest-flakes==4.0.0
