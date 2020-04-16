@@ -1,15 +1,10 @@
-# coding: utf-8
-from __future__ import unicode_literals
 import pytest
 
 from yargy import (
     rule,
     Parser
 )
-from yargy.compat import str
-from yargy.predicates import (
-    eq
-)
+from yargy.predicates import eq
 from yargy.interpretation import (
     fact,
     attribute,

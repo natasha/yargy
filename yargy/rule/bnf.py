@@ -1,8 +1,5 @@
-# coding: utf-8
-from __future__ import unicode_literals
 
 from yargy.utils import Record
-from yargy.compat import str
 
 from .transformators import (
     RuleTransformator,

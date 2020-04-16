@@ -1,9 +1,6 @@
-# coding: utf-8
-from __future__ import unicode_literals
 
 from subprocess import Popen, PIPE
 
-from yargy.compat import str
 from .utils import Record
 from .visitor import Visitor
 

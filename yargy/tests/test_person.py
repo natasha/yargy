@@ -1,5 +1,3 @@
-# coding: utf-8
-from __future__ import unicode_literals
 
 from yargy import Parser, rule, and_, not_
 from yargy.interpretation import fact

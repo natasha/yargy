@@ -1,9 +1,8 @@
-# coding: utf-8
-from __future__ import unicode_literals
+
+from functools import lru_cache
 
 from pymorphy2 import MorphAnalyzer as PymorphyAnalyzer
 
-from .compat import lru_cache
 from .utils import Record
 
 

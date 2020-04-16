@@ -1,7 +1,4 @@
-# coding: utf-8
-from __future__ import unicode_literals
 
-from yargy.compat import string_type
 from yargy.utils import (
     Record,
     assert_type,
@@ -251,7 +248,7 @@ class NamedRule(WrapperRule):
 
     def __init__(self, rule, name):
         super(NamedRule, self).__init__(rule)
-        assert_type(name, string_type)
+        assert_type(name, str)
         self.name = name
 
 

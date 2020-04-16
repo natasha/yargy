@@ -1,7 +1,5 @@
-# coding: utf-8
-from __future__ import unicode_literals
-import pytest
 
+import pytest
 
 from yargy import and_, or_, not_
 from yargy.parser import Context

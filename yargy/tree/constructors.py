@@ -1,5 +1,3 @@
-# coding: utf-8
-from __future__ import unicode_literals
 
 from yargy.utils import Record
 from yargy.visitor import TransformatorsComposition

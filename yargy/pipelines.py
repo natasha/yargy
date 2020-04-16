@@ -1,9 +1,6 @@
-# coding: utf-8
-from __future__ import unicode_literals
 
 from collections import defaultdict
 
-from .compat import string_type
 from .utils import Record, assert_type
 from .rule.constructors import Production
 from .rule.bnf import BNFRule
@@ -141,7 +138,7 @@ class PipelineScheme(Pipeline):
     def __init__(self, lines):
         lines = list(lines)
         for line in lines:
-            assert_type(line, string_type)
+            assert_type(line, str)
         self.lines = lines
 
     def get_key(self, line, tokenizer):
