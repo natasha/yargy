@@ -1,10 +1,12 @@
-# Yargy [![Build Status](https://travis-ci.org/natasha/yargy.svg?branch=master)](https://travis-ci.org/natasha/yargy) [![Build status](https://ci.appveyor.com/api/projects/status/ik1tf9n32yh9wfy5?svg=true)](https://ci.appveyor.com/project/dveselov/yargy) [![Documentation Status](https://readthedocs.org/projects/yargy/badge/?version=latest)](http://yargy.readthedocs.io/) [![PyPI](https://img.shields.io/pypi/v/yargy.svg)](https://pypi.python.org/pypi/yargy)
+<img src="https://github.com/natasha/natasha-logos/blob/master/yargy.svg">
 
-`Yargy` is a Earley parser, that uses russian morphology for facts extraction process, and written in pure python
+![CI](https://github.com/natasha/yargy/workflows/CI/badge.svg) [![codecov](https://codecov.io/gh/natasha/yargy/branch/master/graph/badge.svg)](https://codecov.io/gh/natasha/yargy)
+
+Yargy is an Earley parser similar to <a href="https://yandex.ru/dev/tomita">Tomita parser</a>. Yargy uses rules and dictionaries to extract structured information from Russian texts.
 
 ## Install
 
-`Yargy` supports both Python 2.7+ / 3.4+ versions including PyPy.
+Yargy supports Python 3.5+, PyPy 3, depends only on Pymorphy2.
 
 ```bash
 $ pip install yargy
@@ -71,26 +73,36 @@ parser = Parser(PERSON)
 match = parser.match('управляющий директор Иван Ульянов')
 print(match)
 
-```
-
-And in output you will see something like this:
-```python
 Person(
     position='управляющий директор',
     name=Name(
         first='Иван',
         last='Ульянов'
 )
+
 ```
 
-For more examples, details on grammar syntax, predicates and pipelines see [Yargy documentation](http://yargy.readthedocs.io/ru/latest/).
-
-## License
-
-Source code of `yargy` is distributed under MIT license (allows modification and commercial usage)
+For more examples, details on grammar syntax, predicates and pipelines see <a href="http://yargy.readthedocs.io/ru/latest/">Yargy documentation</a>.
 
 ## Support
 
 - Chat — https://telegram.me/natural_language_processing
 - Issues — https://github.com/natasha/yargy/issues
-- Commercial support — http://lab.alexkuk.ru/natasha
+
+## Development
+
+Test:
+
+```bash
+make test
+```
+
+Package:
+
+```bash
+make version
+git push
+git push --tags
+
+make clean wheel upload
+```
