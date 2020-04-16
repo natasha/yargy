@@ -82,7 +82,14 @@ Person(
 
 ```
 
-For more examples, details on grammar syntax, predicates and pipelines see <a href="http://yargy.readthedocs.io/ru/latest/">Yargy documentation</a>.
+## Documentation
+
+All materials are in Russian:
+
+* <a href="http://nbviewer.jupyter.org/github/">Getting started</a>
+* <a href="https://www.youtube.com/watch?v=NQxzx0qYgK8">Video from workshop</a>, 1h 40m
+* <a href="https://github.com/natasha/yargy-examples">Examples</a>
+* <a href="http://nbviewer.jupyter.org/github/">Reference</a>
 
 ## Support
 
