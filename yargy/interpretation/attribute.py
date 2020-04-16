@@ -1,8 +1,7 @@
 
-from yargy.utils import (
-    Record,
-    assert_equals
-)
+from yargy.record import Record
+from yargy.check import assert_equals
+
 from .normalizer import (
     InflectedNormalizer,
     NormalizedNormalizer,

@@ -1,7 +1,8 @@
 
 from collections import defaultdict
 
-from .utils import Record, assert_type
+from .record import Record
+from .check import assert_type
 from .rule.constructors import Production
 from .rule.bnf import BNFRule
 from .token import is_morph_token

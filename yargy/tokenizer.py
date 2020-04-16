@@ -1,7 +1,8 @@
 
 import re
 
-from .utils import Record, assert_type
+from .record import Record
+from .check import assert_type
 from .span import Span
 from .token import Token
 

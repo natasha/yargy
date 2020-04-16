@@ -3,7 +3,7 @@ from functools import lru_cache
 
 from pymorphy2 import MorphAnalyzer as PymorphyAnalyzer
 
-from .utils import Record
+from .record import Record
 
 
 class Gender(Record):

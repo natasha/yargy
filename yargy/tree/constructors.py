@@ -1,5 +1,5 @@
 
-from yargy.utils import Record
+from yargy.record import Record
 from yargy.visitor import TransformatorsComposition
 
 

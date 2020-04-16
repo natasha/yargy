@@ -1,10 +1,9 @@
 
 from collections import defaultdict
 
-from .utils import (
-    Record,
-    assert_type
-)
+from .record import Record
+from .check import assert_type
+
 from .token import get_tokens_span
 from .span import resolve_spans
 from .tree import (

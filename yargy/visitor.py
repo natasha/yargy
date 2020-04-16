@@ -1,5 +1,5 @@
 
-from .utils import assert_subclass
+from .check import assert_subclass
 
 
 class Visitor(object):

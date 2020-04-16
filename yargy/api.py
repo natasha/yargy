@@ -1,5 +1,5 @@
 
-from .utils import assert_type
+from .check import assert_type
 from .predicates import (
     eq,
     is_predicate,

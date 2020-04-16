@@ -2,7 +2,7 @@
 from collections import defaultdict
 from itertools import combinations
 
-from yargy.utils import Record
+from yargy.record import Record
 
 
 class Edge(Record):

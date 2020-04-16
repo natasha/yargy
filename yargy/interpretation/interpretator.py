@@ -1,7 +1,8 @@
 
 from inspect import isclass
 
-from yargy.utils import Record, assert_subclass
+from yargy.record import Record
+from yargy.check import assert_subclass
 from yargy.token import (
     is_token,
     join_tokens,

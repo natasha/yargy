@@ -1,14 +1,15 @@
 
 from collections import OrderedDict
 
-from yargy.utils import Record, KVRecord
+from yargy.record import Record
+
 from .attribute import (
     AttributeSchemeBase,
     RepeatableAttribute
 )
 
 
-class Fact(KVRecord):
+class Fact(Record):
     __attributes__ = []
     _raw = None
 

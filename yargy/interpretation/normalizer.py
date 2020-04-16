@@ -1,5 +1,6 @@
 
-from yargy.utils import Record, assert_type
+from yargy.record import Record
+from yargy.check import assert_type
 from yargy.token import (
     join_normalized_tokens,
     join_inflected_tokens

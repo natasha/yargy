@@ -1,7 +1,7 @@
 
 from subprocess import Popen, PIPE
 
-from .utils import Record
+from .record import Record
 from .visitor import Visitor
 
 

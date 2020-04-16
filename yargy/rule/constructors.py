@@ -1,6 +1,6 @@
 
-from yargy.utils import (
-    Record,
+from yargy.record import Record
+from yargy.check import (
     assert_type,
     assert_greater_equals
 )

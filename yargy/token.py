@@ -1,5 +1,5 @@
 
-from .utils import Record
+from .record import Record
 from .span import Span
 
 
