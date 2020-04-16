@@ -84,6 +84,12 @@ class Form(Record):
             return self.normalized
         return record.word
 
+    def __repr__(self):
+        return 'Form({self.normalized!r}, {self.grams!r})'.format(self=self)
+
+    def _repr_pretty_(self, printer, cycle):
+        printer.text(repr(self))
+
 
 def prepare_form(raw):
     normalized = raw.normal_form
