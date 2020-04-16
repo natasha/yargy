@@ -491,7 +491,7 @@ class DotRuleTransformator(DotTransformator, InplaceRuleTransformator):
         self.style(
             item,
             style(
-                label='MinMaxBounded [item.min, item.max]'.format(item=item),
+                label='MinMaxBounded [{item.min}, {item.max}]'.format(item=item),
                 fillcolor=ORANGE
             )
         )
