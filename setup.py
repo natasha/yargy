@@ -5,30 +5,33 @@ from sys import version_info
 from setuptools import setup, find_packages
 
 
-REQUIREMENTS = [
-    'pymorphy2==0.8',
-    'backports.functools-lru-cache==1.3',
-]
+with open('README.md') as file:
+    description = file.read()
+
+
+with open('requirements/main.txt') as file:
+    requirements = [_.strip() for _ in file]
+
 
 setup(
     name='yargy',
     version='0.12.0',
-    description='Tiny rule-based facts extraction package',
+
+    description='Rule-based facts extraction for Russian language',
+    long_description=description,
+    long_description_content_type='text/markdown',
+
     url='https://github.com/natasha/yargy',
     author='Yargy contributors',
-    author_email='d.a.veselov@yandex.ru',
+    author_email='d.a.veselov@yandex.ru, alex@alexkuk.ru',
     license='MIT',
+
     classifiers=[
-        'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
     ],
-    keywords='natural language processing, russian morphology',
+    keywords='natural language processing, russian morphology, glr, parser',
+
     packages=find_packages(),
-    install_requires=REQUIREMENTS,
+    install_requires=requirements,
 )
