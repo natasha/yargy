@@ -5,7 +5,7 @@ test:
 		--cov-config setup.cfg --cov yargy 
 
 doc-test:
-	pytest --nbval-lax --current-env docs/*.ipynb		
+	pytest --nbval-lax --current-env docs/*.ipynb
 
 wheel:
 	python setup.py bdist_wheel
