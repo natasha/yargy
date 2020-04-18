@@ -148,6 +148,12 @@ class Graph(Record):
     def _repr_svg_(self):
         return dot2svg('\n'.join(self.source))
 
+    def __repr__(self):
+        return '%s(nodes=[...], edges=[...])' % self.__class__.__name__
+
+    def _repr_pretty_(self, printer, cycle):
+        printer.text(repr(self))
+
 
 class DotTransformator(Visitor):
     def __init__(self):
