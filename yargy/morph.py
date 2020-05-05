@@ -98,8 +98,10 @@ def prepare_form(raw):
 
 
 class MorphAnalyzer(object):
-    def __init__(self):
-        self.raw = PymorphyAnalyzer()
+    def __init__(self, raw=None):
+        if not raw:
+            raw = PymorphyAnalyzer()
+        self.raw = raw
 
     def check_gram(self, gram):
         if not self.raw.TagClass.grammeme_is_known(gram):
@@ -113,10 +115,11 @@ class MorphAnalyzer(object):
         return {_.normalized for _ in self(word)}
 
 
-DEFAULT_SIZE = 100000
+CACHE_SIZE = 10000
 
 
 class CachedMorphAnalyzer(MorphAnalyzer):
-    def __init__(self, size=DEFAULT_SIZE):
+    def __init__(self):
         super(CachedMorphAnalyzer, self).__init__()
-        self.__call__ = lru_cache(size)(self.__call__)
+
+    __call__ = lru_cache(CACHE_SIZE)(MorphAnalyzer.__call__)
