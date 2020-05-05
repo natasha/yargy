@@ -7,13 +7,13 @@ test:
 doc-test:
 	pytest --nbval-lax --current-env docs/*.ipynb
 
-wheel:
-	python setup.py bdist_wheel
+package:
+	python setup.py sdist bdist_wheel
 
 version:
 	bumpversion minor
 
-upload:
+publish:
 	twine upload dist/*
 
 clean:
