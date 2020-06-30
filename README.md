@@ -98,6 +98,7 @@ All materials are in Russian:
 
 - Chat — https://telegram.me/natural_language_processing
 - Issues — https://github.com/natasha/yargy/issues
+- Commercial support — https://lab.alexkuk.ru
 
 ## Development
 
