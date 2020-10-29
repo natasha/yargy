@@ -12,7 +12,7 @@ with open('requirements/main.txt') as file:
 
 setup(
     name='yargy',
-    version='0.14.0',
+    version='0.15.0',
 
     description='Rule-based facts extraction for Russian language',
     long_description=description,
