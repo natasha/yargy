@@ -78,6 +78,7 @@ Person(
     name=Name(
         first='Иван',
         last='Ульянов'
+    )
 )
 
 ```
