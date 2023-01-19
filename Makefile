@@ -3,17 +3,6 @@ test:
 	flake8
 	pytest -vv yargy
 
-doc-test:
-	pytest --nbval-lax --current-env docs/*.ipynb
-
-package:
-	python setup.py sdist bdist_wheel
-
-version:
-	bumpversion minor
-
-publish:
-	twine upload dist/*
 
 clean:
 	find . \

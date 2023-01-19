@@ -112,9 +112,11 @@ make test
 Package:
 
 ```bash
-make version
+bumpversion minor
 git push
 git push --tags
 
-make clean wheel upload
+make clean
+python setup.py sdist bdist_wheel
+twine upload dist/*
 ```
