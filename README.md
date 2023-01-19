@@ -2,11 +2,11 @@
 
 ![CI](https://github.com/natasha/yargy/workflows/CI/badge.svg)
 
-Yargy is an Earley parser similar to <a href="https://yandex.ru/dev/tomita">Tomita parser</a>. Yargy uses rules and dictionaries to extract structured information from Russian texts.
+Yargy uses rules and dictionaries to extract structured information from Russian texts. Yargy is similar to <a href="https://yandex.ru/dev/tomita">Tomita parser</a>.
 
 ## Install
 
-Yargy supports Python 3.5+, PyPy 3, depends only on Pymorphy2.
+Yargy supports Python 3.7+, PyPy 3, depends only on <a href="http://github.com/pymorphy2/pymorphy2">Pymorphy2</a>.
 
 ```bash
 $ pip install yargy
@@ -97,11 +97,23 @@ All materials are in Russian:
 
 ## Support
 
-- Chat — https://telegram.me/natural_language_processing
+- Chat — https://t.me/natural_language_processing
 - Issues — https://github.com/natasha/yargy/issues
 - Commercial support — https://lab.alexkuk.ru
 
 ## Development
+
+Dev env:
+
+```bash
+pyenv virtualenv 3.11.0 natasha-yargy
+pyenv activate natasha-yargy
+
+pip install -r requirements/dev.txt
+pip install -e .
+
+pyenv virtualenv-delete natasha-yargy
+```
 
 Test:
 
