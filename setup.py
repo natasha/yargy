@@ -6,10 +6,6 @@ with open('README.md') as file:
     description = file.read()
 
 
-with open('requirements/main.txt') as file:
-    requirements = [_.strip() for _ in file]
-
-
 setup(
     name='yargy',
     version='0.15.0',
@@ -30,5 +26,7 @@ setup(
     keywords='natural language processing, russian morphology, glr, parser',
 
     packages=find_packages(),
-    install_requires=requirements,
+    install_requires=[
+        'pymorphy2'
+    ]
 )
