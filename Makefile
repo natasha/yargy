@@ -3,6 +3,11 @@ test:
 	flake8
 	pytest -vv yargy
 
+exec-docs:
+	jupyter nbconvert \
+		--to notebook \
+		--execute docs/*.ipynb \
+		--inplace
 
 clean:
 	find . \
