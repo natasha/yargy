@@ -1,6 +1,4 @@
 pymorphy2==0.8
 
-pytest==5.2.2
-pytest-cov==2.8.1
-pytest-flakes==4.0.0
-pytest-pep8==1.0.6
+pytest==7.2.1
+flake8==6.0.0

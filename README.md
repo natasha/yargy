@@ -1,6 +1,6 @@
 <img src="https://github.com/natasha/natasha-logos/blob/master/yargy.svg">
 
-![CI](https://github.com/natasha/yargy/workflows/CI/badge.svg) [![codecov](https://codecov.io/gh/natasha/yargy/branch/master/graph/badge.svg)](https://codecov.io/gh/natasha/yargy)
+![CI](https://github.com/natasha/yargy/workflows/CI/badge.svg)
 
 Yargy is an Earley parser similar to <a href="https://yandex.ru/dev/tomita">Tomita parser</a>. Yargy uses rules and dictionaries to extract structured information from Russian texts.
 

@@ -1,8 +1,7 @@
 
 test:
-	pytest --pep8 --flakes --doctest-modules -v yargy \
-		--cov-report term-missing --cov-report xml \
-		--cov-config setup.cfg --cov yargy 
+	flake8
+	pytest -vv yargy
 
 doc-test:
 	pytest --nbval-lax --current-env docs/*.ipynb
@@ -24,5 +23,4 @@ clean:
 		-o -name .DS_Store \
 		| xargs rm -rf
 
-	rm -rf dist/ build/ .pytest_cache/ .cache/ \
-		*.egg-info/ coverage.xml .coverage
+	rm -rf dist/ build/ .pytest_cache/ .cache/ *.egg-info/
