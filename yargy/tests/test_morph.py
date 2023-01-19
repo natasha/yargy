@@ -17,7 +17,7 @@ def morph():
 def test_morph(morph):
     forms = morph('сирота')
     assert forms == [
-        Form('сирота', Grams({'Ms-f', 'NOUN', 'anim', 'femn', 'nomn', 'sing'}))
+        Form('сирота', Grams({'ms-f', 'NOUN', 'anim', 'nomn', 'sing'}))
     ]
 
     grams = forms[0].grams
