@@ -8,7 +8,7 @@ with open('README.md') as file:
 
 setup(
     name='yargy',
-    version='0.15.0',
+    version='0.15.1',
 
     description='Rule-based facts extraction for Russian language',
     long_description=description,
