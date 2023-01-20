@@ -1,3 +1,0 @@
-nbconvert
-pytest
-flake8

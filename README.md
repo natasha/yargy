@@ -106,13 +106,19 @@ All materials are in Russian:
 Dev env
 
 ```bash
-pyenv virtualenv 3.11.0 natasha-yargy
-pyenv activate natasha-yargy
+brew install graphviz
 
-pip install -r requirements/dev.txt
+python -m venv ~/.venvs/natasha-yargy
+source ~/.venvs/natasha-yargy/bin/activate
+
+pip install \
+	ipykernel \
+	nbconvert \
+	pytest \
+	flake8
 pip install -e .
 
-pyenv virtualenv-delete natasha-yargy
+python -m ipykernel install --user --name natasha-yargy
 ```
 
 Test + lint

@@ -4,7 +4,6 @@ test:
 	pytest -vv --doctest-modules yargy tests
 
 exec-docs:
-	jupyter nbconvert \
-		--ClearMetadataPreprocessor.enabled=True \
+	python -m nbconvert \
 		--execute --to notebook --inplace \
 		docs/*.ipynb
