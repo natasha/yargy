@@ -1,6 +1,6 @@
 <img src="https://github.com/natasha/natasha-logos/blob/master/yargy.svg">
 
-![CI](https://github.com/natasha/yargy/workflows/test/badge.svg)
+![CI](https://github.com/natasha/yargy/actions/workflows/test.yml/badge.svg)
 
 Yargy uses rules and dictionaries to extract structured information from Russian texts. Yargy is similar to <a href="https://yandex.ru/dev/tomita">Tomita parser</a>.
 
