@@ -88,7 +88,7 @@ Person(
 All materials are in Russian:
 
 * <a href="https://habr.com/ru/post/349864/">Overview</a>
-* <a href="https://www.youtube.com/watch?v=NQxzx0qYgK8">Video from workshop</a>, 1h 40m
+* <a href="https://www.youtube.com/watch?v=NQxzx0qYgK8">Video from workshop</a>
 * <a href="https://nbviewer.jupyter.org/github/natasha/yargy/blob/master/docs/index.ipynb">Getting started</a>
 * <a href="https://nbviewer.jupyter.org/github/natasha/yargy/blob/master/docs/ref.ipynb">Reference</a>
 * <a href="https://nbviewer.jupyter.org/github/natasha/yargy/blob/master/docs/cookbook.ipynb">Cookbook</a>
