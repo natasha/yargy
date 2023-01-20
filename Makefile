@@ -5,6 +5,7 @@ test:
 
 exec-docs:
 	jupyter nbconvert \
+		--ClearMetadataPreprocessor.enabled=True \
 		--execute --to notebook --inplace \
 		docs/*.ipynb
 
