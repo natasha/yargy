@@ -5,9 +5,8 @@ test:
 
 exec-docs:
 	jupyter nbconvert \
-		--to notebook \
-		--execute docs/*.ipynb \
-		--inplace
+		--execute --to notebook --inplace \
+		docs/*.ipynb
 
 clean:
 	find . \
