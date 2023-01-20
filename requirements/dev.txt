@@ -1,6 +1,3 @@
-bumpversion
-twine
 nbconvert
-
 pytest
 flake8

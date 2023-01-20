@@ -103,7 +103,7 @@ All materials are in Russian:
 
 ## Development
 
-Dev env:
+Dev env
 
 ```bash
 pyenv virtualenv 3.11.0 natasha-yargy
@@ -115,20 +115,30 @@ pip install -e .
 pyenv virtualenv-delete natasha-yargy
 ```
 
-Test:
+Test + lint
 
 ```bash
 make test
 ```
 
-Package:
+Update docs
 
 ```bash
-bumpversion minor
+make exec-docs
+
+# Manually check git diff docs/, commit
+```
+
+Release
+
+```bash
+# Update setup.py version
+
+git commit -am 'Up version'
+git tag v0.15.0
+
 git push
 git push --tags
 
-make clean
-python setup.py sdist bdist_wheel
-twine upload dist/*
+# Github Action builds dist and publishes to PyPi
 ```
