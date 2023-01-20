@@ -25,7 +25,9 @@ setup(
     ],
     keywords='natural language processing, russian morphology, glr, parser',
 
-    packages=find_packages(),
+    packages=find_packages(
+        exclude=['tests']
+    ),
     install_requires=[
         'pymorphy2'
     ]
