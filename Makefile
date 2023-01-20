@@ -1,7 +1,7 @@
 
 test:
-	flake8
-	pytest -vv yargy
+	flake8 yargy tests
+	pytest -vv --doctest-modules yargy tests
 
 exec-docs:
 	jupyter nbconvert \
