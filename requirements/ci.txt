@@ -1,0 +1,4 @@
+pymorphy2==0.9.1
+pymorphy2-dicts-ru==2.4.417127.4579844
+pytest==7.2.1
+flake8==5.0.4
