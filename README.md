@@ -111,7 +111,7 @@ brew install graphviz
 python -m venv ~/.venvs/natasha-yargy
 source ~/.venvs/natasha-yargy/bin/activate
 
-pip install requirements/dev.txt
+pip install -r requirements/dev.txt
 pip install -e .
 
 python -m ipykernel install --user --name natasha-yargy
